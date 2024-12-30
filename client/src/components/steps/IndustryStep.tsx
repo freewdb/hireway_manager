@@ -1,17 +1,32 @@
+import { useQuery } from "@tanstack/react-query";
 import WizardStep from "../wizard/WizardStep";
 import { useWizard } from "../wizard/WizardContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const industries = [
-  { code: "tech", name: "Technology" },
-  { code: "mfg", name: "Manufacturing" },
-  { code: "health", name: "Healthcare" },
-  { code: "fin", name: "Financial Services" },
-  { code: "retail", name: "Retail" },
-];
+interface Industry {
+  id: number;
+  name: string;
+  naicsCode: string;
+}
 
 const IndustryStep = () => {
   const { updateData, data } = useWizard();
+
+  const { data: industries, isLoading } = useQuery<Industry[]>({
+    queryKey: ["/api/industries"],
+  });
+
+  if (isLoading) {
+    return (
+      <WizardStep title="Select Industry" stepNumber={0}>
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </WizardStep>
+    );
+  }
 
   return (
     <WizardStep title="Select Industry" stepNumber={0}>
@@ -19,7 +34,7 @@ const IndustryStep = () => {
         <p className="text-muted-foreground">
           Choose the industry that best describes your company.
         </p>
-        
+
         <Select
           value={data.industry}
           onValueChange={(value) => updateData("industry", value)}
@@ -28,9 +43,9 @@ const IndustryStep = () => {
             <SelectValue placeholder="Select an industry" />
           </SelectTrigger>
           <SelectContent>
-            {industries.map((industry) => (
-              <SelectItem key={industry.code} value={industry.code}>
-                {industry.name}
+            {industries?.map((industry) => (
+              <SelectItem key={industry.id} value={industry.naicsCode}>
+                {industry.name} ({industry.naicsCode})
               </SelectItem>
             ))}
           </SelectContent>
