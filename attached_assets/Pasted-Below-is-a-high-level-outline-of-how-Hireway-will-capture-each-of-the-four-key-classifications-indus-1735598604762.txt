@@ -1,0 +1,110 @@
+Below is a high-level outline of how Hireway will capture each of the four key classifications—industry, company characteristics, occupation, and hiring scenario/context—and use them to generate a recommended trial structure. The focus is on keeping the flow simple and intuitive for end-users (employers) while still leveraging the underlying logic described in your documentation.
+
+1. Overview of the Four Classifications
+	1.	Industry Classification
+	•	What it is: Broad industry identifiers (e.g., NAICS, SIC).
+	•	Why it matters: Determines industry-specific compliance, skill emphases, and contextual nuances.
+	2.	Company Characteristics
+	•	What it is: Size, stage (startup vs. established), location, and type (for-profit, nonprofit, etc.).
+	•	Why it matters: Influences risk tolerance, cultural factors, and organizational priorities.
+	3.	Occupation/Role Classification
+	•	What it is: Role taxonomy (e.g., O*NET/SOC).
+	•	Why it matters: Identifies core skills, tasks, and role-specific performance metrics.
+	4.	Hiring Scenario/Context
+	•	What it is: The reason for the hire (new role, replacement, expansion).
+	•	Why it matters: Determines focus on continuity, adaptability, or replication of existing success.
+
+Each classification is orthogonal—meaning they can independently vary and thus combine in many ways. This modularity ensures that any combination (e.g., small startup + software engineer + new role) can produce a relevant, customized trial configuration.
+
+2. Simple, Intuitive User Flow
+
+Below is a step-by-step user flow that feels straightforward while still collecting all necessary inputs:
+	1.	Ask for the Industry
+	•	Present a short, auto-complete list or a simple dropdown based on NAICS/SIC major categories (e.g., “Technology,” “Manufacturing,” “Healthcare,” etc.).
+	•	User Action: Select the industry that best describes their company.
+	2.	Ask for Basic Company Characteristics
+	•	Size: small, medium, large (or a quick range-based input, e.g., “1-50 employees,” “51-500,” “500+”).
+	•	Stage/Type: e.g., startup, scaling business, established enterprise.
+	•	Location (optional short input): Could be used if specific regulatory or geographical considerations matter.
+	•	User Action: Choose from short, plain-language options (e.g., “We’re a small, local startup in growth mode”).
+	3.	Ask for the Occupation/Role
+	•	Use a concise role selector that maps to an internal O*NET-based library of common roles (e.g., “Accountant,” “Software Developer,” “Sales Manager”).
+	•	Allow a free-text option with smart matching (e.g., if user types “Front-end Engineer,” system suggests “Software Engineer” or “Web Developer” in O*NET).
+	•	User Action: Pick the best matching job category.
+	4.	Ask for the Hiring Scenario
+	•	Provide 2–3 simple scenarios:
+	1.	New Role: No previous benchmark or incumbent.
+	2.	Replacement: Filling a previously existing position.
+	3.	Expansion: Increasing headcount in a known role/team.
+	•	User Action: Select the scenario that best fits.
+
+By the end of these four questions, the system has enough information to combine universal pillars with scenario-specific attributes.
+
+3. Mapping the Inputs to the Trial Configuration
+
+Once the user completes the short classification flow, Hireway’s rules engine or recommendation logic does the following under the hood:
+	1.	Match the Industry to Known Attributes
+	•	E.g., Manufacturing → heavier emphasis on safety and compliance.
+	•	E.g., Healthcare → emphasis on regulatory compliance, patient privacy, etc.
+	•	Outcome: Weighted importance of certain universal pillars (e.g., reliability and safety) and/or introduction of specialized attributes (e.g., compliance steps).
+	2.	Factor in Company Characteristics
+	•	Size & Stage: For a small startup, place heavier weighting on adaptability and cross-functional teamwork. For a large, established firm, weigh process-orientation and reliability.
+	•	Outcome: Adjust which universal pillars (performance, reliability, teamwork, culture fit) are emphasized and the cadence of evaluations (startups might have more frequent check-ins).
+	3.	Use Occupation/Role Classification to Identify Role-Specific Metrics
+	•	Pull from an internal O*NET-based template for that role (e.g., key skills, tasks, typical performance indicators).
+	•	Outcome: A role-specific “component” that plugs into the universal pillars (e.g., for a software developer: coding proficiency, debugging, collaborative problem-solving).
+	4.	Incorporate Hiring Scenario Nuances
+	•	New Role: Emphasize discovery-oriented milestones (e.g., “defining success metrics,” “flexibility in role scope”), and early-phase adaptability.
+	•	Replacement: Compare to existing performance benchmarks; focus on continuity of core tasks.
+	•	Expansion: Evaluate synergy with an existing team; measure ability to scale existing processes.
+	•	Outcome: Fine-tunes recommended trial length, focus areas, and evaluation milestones.
+
+4. Generating the Recommended Trial Structure
+
+After the system integrates inputs from all four dimensions, it produces a customized trial plan with the following components:
+	1.	Trial Length & Phases
+	•	E.g., 6-week trial with early (Week 1–2), mid (Week 3–4), and late (Week 5–6) evaluation points.
+	•	Determined by role complexity, industry expectations, and company size/risk profile.
+	2.	Universal Evaluation Pillars
+	•	Performance, Reliability, Teamwork, Culture Fit → Always present, but with different relative weighting depending on the inputs.
+	3.	Role-Specific Evaluations
+	•	Key tasks or skills from ONET templates* → For a Marketing Manager, include campaign planning and analytics; for a Machine Operator, include safety compliance and production throughput.
+	4.	Scenario-Based Custom Checks
+	•	New Role: Early emphasis on establishing scope, creative problem-solving, or identifying skill gaps.
+	•	Replacement: “Benchmark parity” check—does the candidate match or improve upon the predecessor’s metrics?
+	•	Expansion: Collaboration with existing team, knowledge sharing, or consistent process adoption.
+	5.	Evaluation Cadence & Feedback Loop
+	•	Weekly or bi-weekly check-ins that gather quick data from both manager and candidate.
+	•	Certain high-priority attributes (e.g., safety or technical competence) might get evaluated earlier if the role/industry demands it.
+
+5. Ensuring Simplicity for the User
+
+To keep this process intuitive and low-friction:
+	•	Limit the Classification Questions to four main inputs:
+	1.	Industry
+	2.	Company Type & Size
+	3.	Role/Occupation
+	4.	Hiring Scenario
+	•	Provide a Clean, Guided Interface rather than a laundry list of queries. Think of a step-by-step wizard with minimal free-text fields and clear dropdowns.
+	•	Surface only the Most Relevant Options at each step. For example, if the user picks “Tech Startup” in the first step, subsequent prompts can reflect typical tech-based roles to reduce cognitive load.
+	•	Automate the Recommendation so that once the four inputs are provided, the user sees a ready-made trial outline—no complicated fine-tuning unless they want to customize further.
+
+6. Putting It All Together
+
+In Summary:
+	1.	The user answers four simple questions about their industry, company, role, and scenario.
+	2.	Under the hood, Hireway references a curated taxonomy (NAICS + O*NET) and a rules engine to link each classification to relevant evaluation metrics.
+	3.	The system outputs a recommended trial structure (length, phases, universal pillars, role-specific metrics, scenario-based emphasis).
+	4.	The user can review and adjust any suggested details (e.g., trial duration or weight of certain performance metrics) to suit unique needs.
+
+This straightforward flow ensures that:
+	•	Users don’t get bogged down with arcane classification steps.
+	•	Hireway’s logic (industry compliance, occupation-specific attributes, scenario nuance) is still captured.
+	•	The resulting trial plan is both standardized (universal pillars) and personalized (role/industry/scenario-based additions).
+
+Next Steps for Implementation
+	•	Prototype the 4-Question “Wizard” in your UI/UX mockups.
+	•	Integrate with O*NET (or a similar roles database) for role-specific skill data.
+	•	Refine the Rules Engine with early adopter feedback—over time, add ML/LLM-based refinements once enough data is gathered.
+
+By following this outline, Hireway can systematically derive all necessary data to build a robust yet user-friendly trial employment framework—bridging the gap between high-level conceptual logic and a seamless, intuitive user experience.
