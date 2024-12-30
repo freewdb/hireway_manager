@@ -9,7 +9,23 @@ interface WizardStepProps {
 }
 
 const WizardStep = ({ children, title, stepNumber }: WizardStepProps) => {
-  const { currentStep, nextStep, prevStep, isComplete } = useWizard();
+  const { currentStep, nextStep, prevStep, data } = useWizard();
+
+  // Check if the current step has a value
+  const isStepComplete = () => {
+    switch (stepNumber) {
+      case 0:
+        return !!data.industry;
+      case 1:
+        return !!data.companySize && !!data.companyStage;
+      case 2:
+        return !!data.role;
+      case 3:
+        return !!data.scenario;
+      default:
+        return false;
+    }
+  };
 
   if (currentStep !== stepNumber) {
     return null;
@@ -41,7 +57,7 @@ const WizardStep = ({ children, title, stepNumber }: WizardStepProps) => {
         </Button>
         <Button
           onClick={nextStep}
-          disabled={!isComplete}
+          disabled={!isStepComplete()}
         >
           {stepNumber === 3 ? "Generate Trial Plan" : "Next"}
         </Button>

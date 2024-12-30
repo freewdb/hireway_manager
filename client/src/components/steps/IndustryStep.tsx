@@ -37,7 +37,9 @@ const IndustryStep = () => {
 
         <Select
           value={data.industry}
-          onValueChange={(value) => updateData("industry", value)}
+          onValueChange={(value) => {
+            updateData("industry", value);
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select an industry" />
@@ -45,7 +47,7 @@ const IndustryStep = () => {
           <SelectContent>
             {industries?.map((industry) => (
               <SelectItem key={industry.id} value={industry.naicsCode}>
-                {industry.name} ({industry.naicsCode})
+                {industry.name}
               </SelectItem>
             ))}
           </SelectContent>
