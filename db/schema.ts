@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, jsonb, varchar, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const industries = pgTable("industries", {
@@ -16,12 +16,45 @@ export const companies = pgTable("companies", {
   industryId: integer("industry_id").references(() => industries.id),
 });
 
+// SOC Classification tables
+export const socMajorGroups = pgTable("soc_major_groups", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 2 }).notNull().unique(), // e.g., "11"
+  title: text("title").notNull(), // e.g., "Management Occupations"
+  description: text("description"),
+});
+
+export const socMinorGroups = pgTable("soc_minor_groups", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 4 }).notNull().unique(), // e.g., "11-3"
+  majorGroupCode: varchar("major_group_code", { length: 2 })
+    .notNull()
+    .references(() => socMajorGroups.code),
+  title: text("title").notNull(), // e.g., "Operations Specialties Managers"
+  description: text("description"),
+});
+
+export const socDetailedOccupations = pgTable("soc_detailed_occupations", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 7 }).notNull().unique(), // e.g., "11-3021"
+  minorGroupCode: varchar("minor_group_code", { length: 4 })
+    .notNull()
+    .references(() => socMinorGroups.code),
+  title: text("title").notNull(), // e.g., "Computer and Information Systems Managers"
+  description: text("description"),
+  alternativeTitles: jsonb("alternative_titles"), // Array of common alternative titles
+  skills: jsonb("skills"), // Required skills for this occupation
+  tasks: jsonb("tasks"), // Common tasks performed in this role
+});
+
 export const roles = pgTable("roles", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  onetCode: text("onet_code").notNull(),
+  socCode: varchar("soc_code", { length: 7 })
+    .notNull()
+    .references(() => socDetailedOccupations.code),
   description: text("description"),
-  skills: jsonb("skills").notNull(),
+  customSkills: jsonb("custom_skills"), // Additional skills specific to this role
 });
 
 export const trialPlans = pgTable("trial_plans", {
@@ -35,7 +68,11 @@ export const trialPlans = pgTable("trial_plans", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Type definitions
 export type Industry = typeof industries.$inferSelect;
-export type Role = typeof roles.$inferSelect;
 export type Company = typeof companies.$inferSelect;
+export type SocMajorGroup = typeof socMajorGroups.$inferSelect;
+export type SocMinorGroup = typeof socMinorGroups.$inferSelect;
+export type SocDetailedOccupation = typeof socDetailedOccupations.$inferSelect;
+export type Role = typeof roles.$inferSelect;
 export type TrialPlan = typeof trialPlans.$inferSelect;

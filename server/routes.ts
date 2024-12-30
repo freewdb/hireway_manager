@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { industries, roles, companies, trialPlans } from "@db/schema";
+import { industries, roles, companies, trialPlans, socMajorGroups, socMinorGroups, socDetailedOccupations } from "@db/schema";
 import { eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
@@ -12,6 +12,30 @@ export function registerRoutes(app: Express): Server {
       res.json(allIndustries);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch industries" });
+    }
+  });
+
+  // Get SOC hierarchy
+  app.get("/api/soc-hierarchy", async (_req, res) => {
+    try {
+      const majorGroups = await db.select().from(socMajorGroups);
+      const minorGroups = await db.select().from(socMinorGroups);
+      const occupations = await db.select().from(socDetailedOccupations);
+
+      // Build the hierarchy
+      const hierarchy = majorGroups.map(major => ({
+        ...major,
+        minorGroups: minorGroups
+          .filter(minor => minor.majorGroupCode === major.code)
+          .map(minor => ({
+            ...minor,
+            occupations: occupations.filter(occ => occ.minorGroupCode === minor.code)
+          }))
+      }));
+
+      res.json({ majorGroups: hierarchy });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch SOC hierarchy" });
     }
   });
 
@@ -41,11 +65,11 @@ export function registerRoutes(app: Express): Server {
       const plan = await db.select()
         .from(trialPlans)
         .where(eq(trialPlans.id, parseInt(req.params.id)));
-      
+
       if (plan.length === 0) {
         return res.status(404).json({ error: "Trial plan not found" });
       }
-      
+
       res.json(plan[0]);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch trial plan" });
