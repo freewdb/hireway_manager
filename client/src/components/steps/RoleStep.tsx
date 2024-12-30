@@ -4,6 +4,7 @@ import { useWizard } from "../wizard/WizardContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 
 const commonRoles = [
   "Software Engineer",
@@ -18,11 +19,16 @@ const commonRoles = [
 
 const RoleStep = () => {
   const { updateData, data } = useWizard();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(data.role || "");
 
   const filteredRoles = commonRoles.filter(role =>
     role.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleRoleSelect = (role: string) => {
+    setSearchTerm(role);
+    updateData("role", role);
+  };
 
   return (
     <WizardStep title="Select Role" stepNumber={2}>
@@ -33,26 +39,25 @@ const RoleStep = () => {
             placeholder="Start typing to search roles..."
             value={searchTerm}
             onChange={(e) => {
-              setSearchTerm(e.target.value);
-              updateData("role", e.target.value);
+              const value = e.target.value;
+              setSearchTerm(value);
+              updateData("role", value);
             }}
           />
         </div>
 
-        {searchTerm && (
-          <ScrollArea className="h-48 border rounded-md p-2">
-            <div className="space-y-2">
+        {searchTerm && filteredRoles.length > 0 && (
+          <ScrollArea className="h-48 border rounded-md">
+            <div className="p-2 space-y-1">
               {filteredRoles.map((role) => (
-                <button
+                <Button
                   key={role}
-                  className="w-full text-left px-3 py-2 rounded hover:bg-accent"
-                  onClick={() => {
-                    setSearchTerm(role);
-                    updateData("role", role);
-                  }}
+                  variant="ghost"
+                  className="w-full justify-start font-normal hover:bg-accent"
+                  onClick={() => handleRoleSelect(role)}
                 >
                   {role}
-                </button>
+                </Button>
               ))}
             </div>
           </ScrollArea>
