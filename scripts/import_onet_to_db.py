@@ -25,6 +25,34 @@ def get_db_connection():
         port=os.environ['PGPORT']
     )
 
+def import_industry_data(cur):
+    """Import initial industry data."""
+    logger.info("Importing industry data...")
+    industries = [
+        ("Information Technology", "51", "Computer systems and software services", "Tech & Software"),
+        ("Healthcare", "62", "Healthcare services and facilities", "Healthcare & Medical"),
+        ("Manufacturing", "31-33", "Manufacturing and production", "Manufacturing"),
+        ("Finance", "52", "Financial services and banking", "Finance & Banking"),
+        ("Retail", "44-45", "Retail trade", "Retail & Commerce"),
+        ("Education", "61", "Educational services", "Education & Training"),
+        ("Construction", "23", "Construction and building", "Construction & Building"),
+        ("Professional Services", "54", "Professional and technical services", "Professional Services"),
+    ]
+
+    execute_values(
+        cur,
+        """
+        INSERT INTO industries (name, naics_code, description, display_name)
+        VALUES %s
+        ON CONFLICT (naics_code) DO UPDATE SET
+            name = EXCLUDED.name,
+            description = EXCLUDED.description,
+            display_name = EXCLUDED.display_name
+        """,
+        industries
+    )
+    logger.info(f"Imported {len(industries)} industries")
+
 def import_data_to_db():
     """Import the CSV data into PostgreSQL database."""
     logger.info("Starting database import...")
@@ -43,13 +71,17 @@ def import_data_to_db():
         cur = conn.cursor()
 
         try:
-            # Extract and import major groups (2-digit codes)
+            # First import industries
+            import_industry_data(cur)
+
+            # Extract and import major groups
             logger.info("Importing major groups...")
             major_groups = []
             for code in occupations_df['onetsoc_code'].str[:2].unique():
+                title = occupations_df[occupations_df['onetsoc_code'].str.startswith(code)]['title'].iloc[0]
                 major_groups.append({
                     'code': code,
-                    'title': f"Major Group {code}",
+                    'title': f"{title.split(',')[0]} Group",
                     'description': None
                 })
 
@@ -65,13 +97,14 @@ def import_data_to_db():
                 [(g['code'], g['title'], g['description']) for g in major_groups]
             )
 
-            # Extract and import minor groups (4-digit codes)
+            # Extract and import minor groups
             logger.info("Importing minor groups...")
             minor_groups = []
             for code in occupations_df['onetsoc_code'].str[:4].unique():
+                title = occupations_df[occupations_df['onetsoc_code'].str.startswith(code)]['title'].iloc[0]
                 minor_groups.append({
                     'code': code,
-                    'title': f"Minor Group {code}",
+                    'title': f"{title.split(',')[0]} Subgroup",
                     'description': None,
                     'major_group_code': code[:2]
                 })
