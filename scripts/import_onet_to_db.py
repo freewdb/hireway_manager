@@ -30,14 +30,10 @@ def import_data_to_db():
     logger.info("Starting database import...")
 
     try:
-        # Read CSV files
-        logger.info("Reading occupation data files...")
+        # Read occupation data CSV
+        logger.info("Reading occupation data file...")
         occupations_df = pd.read_csv('attached_assets/occupation_data.csv')
-        alt_titles_df = pd.read_csv('attached_assets/alternate_titles.csv')
-        metadata_df = pd.read_csv('attached_assets/occupation_level_metadata.csv')
-
         logger.info(f"Found {len(occupations_df)} occupations")
-        logger.info(f"Found {len(alt_titles_df)} alternative titles")
 
         conn = get_db_connection()
         cur = conn.cursor()
@@ -106,16 +102,14 @@ def import_data_to_db():
 
             for _, row in occupations_df.iterrows():
                 soc_code = row['onetsoc_code'].split('.')[0]  # Remove decimal part
-                alt_titles = alt_titles_df[alt_titles_df['onetsoc_code'] == row['onetsoc_code']]['title'].tolist()
-
                 detailed_occupations.append({
                     'code': soc_code,
                     'title': row['title'],
                     'description': row['description'],
                     'minor_group_code': soc_code[:4],
-                    'alternative_titles': alt_titles,
-                    'skills': [],  # Can be populated later if we have skills data
-                    'tasks': []    # Can be populated later if we have tasks data
+                    'alternative_titles': [],  # Empty list since we don't have alternate titles
+                    'skills': [],  # Empty list since we don't have skills data
+                    'tasks': []    # Empty list since we don't have tasks data
                 })
 
             logger.info(f"Importing {len(detailed_occupations)} detailed occupations...")
