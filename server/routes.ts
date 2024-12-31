@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { industries, roles, companies, trialPlans, socMajorGroups, socMinorGroups, socDetailedOccupations } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { eq, ilike } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
   // Get industries
@@ -15,12 +15,26 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get SOC hierarchy
-  app.get("/api/soc-hierarchy", async (_req, res) => {
+  // Get SOC hierarchy with search capability
+  app.get("/api/soc-hierarchy", async (req, res) => {
     try {
+      const searchTerm = req.query.search as string | undefined;
+
+      // Get base data
       const majorGroups = await db.select().from(socMajorGroups);
       const minorGroups = await db.select().from(socMinorGroups);
-      const occupations = await db.select().from(socDetailedOccupations);
+
+      // If searching, filter occupations based on title or alternative titles
+      let occupations;
+      if (searchTerm) {
+        occupations = await db.select()
+          .from(socDetailedOccupations)
+          .where(
+            ilike(socDetailedOccupations.title, `%${searchTerm}%`)
+          );
+      } else {
+        occupations = await db.select().from(socDetailedOccupations);
+      }
 
       // Build the hierarchy
       const hierarchy = majorGroups.map(major => ({
@@ -36,6 +50,52 @@ export function registerRoutes(app: Express): Server {
       res.json({ majorGroups: hierarchy });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch SOC hierarchy" });
+    }
+  });
+
+  // Get all job titles (including alternative titles)
+  app.get("/api/job-titles", async (req, res) => {
+    try {
+      const searchTerm = req.query.search as string | undefined;
+
+      const query = db.select({
+        code: socDetailedOccupations.code,
+        title: socDetailedOccupations.title,
+        alternativeTitles: socDetailedOccupations.alternativeTitles,
+        minorGroupCode: socDetailedOccupations.minorGroupCode,
+      })
+      .from(socDetailedOccupations);
+
+      if (searchTerm) {
+        query.where(ilike(socDetailedOccupations.title, `%${searchTerm}%`));
+      }
+
+      const results = await query;
+
+      // Flatten the results to include both primary and alternative titles
+      const flattenedTitles = results.flatMap(occupation => {
+        const titles = [{ 
+          title: occupation.title, 
+          code: occupation.code,
+          isAlternative: false 
+        }];
+
+        if (occupation.alternativeTitles) {
+          const altTitles = (occupation.alternativeTitles as string[]).map(alt => ({
+            title: alt,
+            code: occupation.code,
+            isAlternative: true
+          }));
+          titles.push(...altTitles);
+        }
+
+        return titles;
+      });
+
+      res.json(flattenedTitles);
+    } catch (error) {
+      console.error('Error fetching job titles:', error);
+      res.status(500).json({ error: "Failed to fetch job titles" });
     }
   });
 

@@ -1,12 +1,10 @@
 import requests
-import pandas as pd
-from bs4 import BeautifulSoup
 import json
 from pathlib import Path
 import os
+import logging
 from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
-import logging
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -19,161 +17,104 @@ class DetailedOccupation:
     description: str
     alternative_titles: List[str]
     minor_group_code: str
-    skills: List[Dict[str, str]]
     tasks: List[str]
 
-@dataclass
-class MinorGroup:
-    code: str
-    title: str
-    description: str
-    major_group_code: str
-
-@dataclass
-class MajorGroup:
-    code: str
-    title: str
-    description: str
-
 class OnetDataFetcher:
-    BASE_URL = "https://www.onetonline.org"
+    ONET_BASE_URL = "https://www.onetcenter.org/dl_files/database/db_29_1_mysql"
 
     def __init__(self):
-        self.session = requests.Session()
-        self.major_groups: Dict[str, MajorGroup] = {}
-        self.minor_groups: Dict[str, MinorGroup] = {}
-        self.detailed_occupations: Dict[str, DetailedOccupation] = {}
+        self.occupations: Dict[str, DetailedOccupation] = {}
 
-    def fetch_soc_structure(self):
-        """Fetch the complete SOC hierarchy structure."""
-        logger.info("Fetching SOC structure...")
+    def fetch_onet_data(self):
+        """Fetch occupation data and alternate titles from O*NET."""
+        logger.info("Fetching O*NET data...")
 
-        response = self.session.get(f"{self.BASE_URL}/find/all")
-        soup = BeautifulSoup(response.text, 'lxml')
+        # Download the SQL files
+        occupation_sql = self._download_file("03_occupation_data.sql")
+        alternate_titles_sql = self._download_file("29_alternate_titles.sql")
 
-        # Process major groups
-        major_groups = soup.find_all('div', class_='aw-soc-major')
-        for major in major_groups:
-            major_code = major.find('span', class_='aw-soc2').text.strip()
-            major_title = major.find('span', class_='aw-soc3').text.strip()
+        # Parse occupation data
+        self._parse_occupation_data(occupation_sql)
+        # Parse alternate titles
+        self._parse_alternate_titles(alternate_titles_sql)
 
-            self.major_groups[major_code] = MajorGroup(
-                code=major_code,
-                title=major_title,
-                description=self._fetch_group_description(major_code)
-            )
+        self.save_to_json()
 
-            # Process minor groups within this major group
-            minor_groups = major.find_all('div', class_='aw-soc-minor')
-            for minor in minor_groups:
-                minor_code = minor.find('span', class_='aw-soc2').text.strip()
-                minor_title = minor.find('span', class_='aw-soc3').text.strip()
+    def _download_file(self, filename: str) -> str:
+        """Download a file from O*NET and return its contents."""
+        url = f"{self.ONET_BASE_URL}/{filename}"
+        logger.info(f"Downloading {url}")
 
-                self.minor_groups[minor_code] = MinorGroup(
-                    code=minor_code,
-                    title=minor_title,
-                    description=self._fetch_group_description(minor_code),
-                    major_group_code=major_code
-                )
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.text
 
-                # Process detailed occupations within this minor group
-                occupations = minor.find_all('div', class_='aw-soc-detailed')
-                for occ in occupations:
-                    occ_code = occ.find('span', class_='aw-soc2').text.strip()
-                    occ_title = occ.find('span', class_='aw-soc3').text.strip()
+    def _parse_occupation_data(self, sql_content: str):
+        """Parse occupation data SQL file."""
+        logger.info("Parsing occupation data...")
 
-                    detailed_data = self._fetch_occupation_details(occ_code)
-                    self.detailed_occupations[occ_code] = DetailedOccupation(
-                        code=occ_code,
-                        title=occ_title,
-                        description=detailed_data.get('description', ''),
-                        alternative_titles=detailed_data.get('alternative_titles', []),
-                        minor_group_code=minor_code,
-                        skills=detailed_data.get('skills', []),
-                        tasks=detailed_data.get('tasks', [])
+        for line in sql_content.split('\n'):
+            if line.startswith('INSERT INTO'):
+                # Extract values between parentheses
+                values_str = line[line.find('(') + 1:line.rfind(')')]
+                values = [v.strip("'") for v in values_str.split(',')]
+
+                if len(values) >= 2:  # Ensure we have at least code and title
+                    onet_code = values[0].strip()
+                    title = values[1].strip()
+
+                    # Convert O*NET code to SOC code (remove .00 suffix)
+                    soc_code = onet_code.split('.')[0]
+
+                    # Derive minor group code (first 4 characters of SOC code)
+                    minor_group_code = soc_code[:4]
+
+                    self.occupations[onet_code] = DetailedOccupation(
+                        code=soc_code,
+                        title=title,
+                        description="",  # Will be populated later if available
+                        alternative_titles=[],  # Will be populated from alternate titles file
+                        minor_group_code=minor_group_code,
+                        tasks=[]
                     )
 
-    def _fetch_group_description(self, code: str) -> str:
-        """Fetch description for a SOC group."""
-        try:
-            response = self.session.get(f"{self.BASE_URL}/find/family?f={code}")
-            soup = BeautifulSoup(response.text, 'lxml')
-            description = soup.find('div', class_='report-description')
-            return description.text.strip() if description else ''
-        except Exception as e:
-            logger.error(f"Error fetching description for {code}: {e}")
-            return ''
+    def _parse_alternate_titles(self, sql_content: str):
+        """Parse alternate titles SQL file."""
+        logger.info("Parsing alternate titles...")
 
-    def _fetch_occupation_details(self, code: str) -> Dict:
-        """Fetch detailed information for a specific occupation."""
-        try:
-            response = self.session.get(f"{self.BASE_URL}/occupation/{code}")
-            soup = BeautifulSoup(response.text, 'lxml')
+        for line in sql_content.split('\n'):
+            if line.startswith('INSERT INTO'):
+                # Extract values between parentheses
+                values_str = line[line.find('(') + 1:line.rfind(')')]
+                values = [v.strip("'") for v in values_str.split(',')]
 
-            details = {
-                'description': '',
-                'alternative_titles': [],
-                'skills': [],
-                'tasks': []
-            }
+                if len(values) >= 2:  # Ensure we have at least code and title
+                    onet_code = values[0].strip()
+                    alt_title = values[1].strip()
 
-            # Get description
-            desc = soup.find('div', class_='report-description')
-            if desc:
-                details['description'] = desc.text.strip()
-
-            # Get alternative titles
-            alt_titles = soup.find('div', id='AlternativeTitles')
-            if alt_titles:
-                details['alternative_titles'] = [
-                    title.text.strip() 
-                    for title in alt_titles.find_all('span', class_='title')
-                ]
-
-            # Get tasks
-            tasks = soup.find('div', id='Tasks')
-            if tasks:
-                details['tasks'] = [
-                    task.text.strip() 
-                    for task in tasks.find_all('span', class_='task')
-                ]
-
-            # Get skills
-            skills = soup.find('div', id='Skills')
-            if skills:
-                details['skills'] = [
-                    {
-                        'name': skill.find('span', class_='name').text.strip(),
-                        'description': skill.find('span', class_='description').text.strip()
-                    }
-                    for skill in skills.find_all('div', class_='skill')
-                ]
-
-            return details
-        except Exception as e:
-            logger.error(f"Error fetching details for {code}: {e}")
-            return {}
+                    if onet_code in self.occupations:
+                        self.occupations[onet_code].alternative_titles.append(alt_title)
 
     def save_to_json(self, output_dir: str = 'data'):
         """Save fetched data to JSON files."""
+        logger.info("Saving data to JSON...")
         Path(output_dir).mkdir(exist_ok=True)
 
-        with open(f'{output_dir}/major_groups.json', 'w') as f:
-            json.dump([asdict(g) for g in self.major_groups.values()], f, indent=2)
-
-        with open(f'{output_dir}/minor_groups.json', 'w') as f:
-            json.dump([asdict(g) for g in self.minor_groups.values()], f, indent=2)
+        # Convert occupations to list and sort by code
+        occupations_list = sorted(
+            self.occupations.values(),
+            key=lambda x: x.code
+        )
 
         with open(f'{output_dir}/detailed_occupations.json', 'w') as f:
-            json.dump([asdict(o) for o in self.detailed_occupations.values()], f, indent=2)
+            json.dump([asdict(o) for o in occupations_list], f, indent=2)
 
 def import_full_onet_data():
     """Main function to import O*NET data."""
     logger.info("Starting O*NET data import...")
 
     fetcher = OnetDataFetcher()
-    fetcher.fetch_soc_structure()
-    fetcher.save_to_json()
+    fetcher.fetch_onet_data()
 
     logger.info("O*NET data import completed successfully.")
 
