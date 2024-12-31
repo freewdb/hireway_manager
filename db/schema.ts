@@ -4,16 +4,9 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 export const industries = pgTable("industries", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  naicsCode: text("naics_code").notNull(),
+  naicsCode: text("naics_code").notNull().unique(),
   description: text("description"),
-});
-
-export const companies = pgTable("companies", {
-  id: serial("id").primaryKey(),
-  size: text("size").notNull(), // small, medium, large
-  stage: text("stage").notNull(), // startup, scaling, established
-  location: text("location"),
-  industryId: integer("industry_id").references(() => industries.id),
+  displayName: text("display_name").notNull(), // User-friendly name for display
 });
 
 // SOC Classification tables
@@ -55,6 +48,14 @@ export const roles = pgTable("roles", {
     .references(() => socDetailedOccupations.code),
   description: text("description"),
   customSkills: jsonb("custom_skills"), // Additional skills specific to this role
+});
+
+export const companies = pgTable("companies", {
+  id: serial("id").primaryKey(),
+  size: text("size").notNull(), // small, medium, large
+  stage: text("stage").notNull(), // startup, scaling, established
+  location: text("location"),
+  industryId: integer("industry_id").references(() => industries.id),
 });
 
 export const trialPlans = pgTable("trial_plans", {

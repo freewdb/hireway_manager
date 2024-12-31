@@ -8,6 +8,8 @@ interface Industry {
   id: number;
   name: string;
   naicsCode: string;
+  description: string;
+  displayName: string;
 }
 
 const IndustryStep = () => {
@@ -47,7 +49,7 @@ const IndustryStep = () => {
           <SelectContent>
             {industries?.map((industry) => (
               <SelectItem key={industry.id} value={industry.naicsCode}>
-                {industry.name}
+                {industry.displayName}
               </SelectItem>
             ))}
           </SelectContent>
