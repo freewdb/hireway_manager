@@ -1,0 +1,98 @@
+Below is a step-by-step list of instructions you can give your Replit AI agent to enhance your SOC (Standard Occupational Classification) convergence and make it more sophisticated, accurate, and collectively exhaustive. Each step can be delivered as a separate prompt to ensure your agent proceeds methodically.
+
+1. Import the Complete SOC/O*NET Dataset
+
+Prompt:
+	1.	Create (or update) a script called fetch_onet_data.py (or a similarly named file).
+	2.	Inside it, write a function import_full_onet_data() that downloads or reads the complete O*NET SOC dataset (including major groups, minor groups, detailed occupations, and alternative titles).
+	3.	Store this data in a structured format—e.g., a JSON file or a local database table.
+	4.	Ensure the data schema includes:
+	•	code (e.g., “15-1256.00”)
+	•	title (e.g., “Software Developer”)
+	•	description
+	•	alternativeTitles (array of synonyms)
+	•	majorGroupCode
+	•	minorGroupCode
+	•	any other relevant ONET fields* (e.g., typical tasks, knowledge areas, etc.)
+
+Goal: Have a complete, up-to-date dataset that your UI can query.
+
+2. Set Up a Database or Local JSON Storage
+
+Prompt:
+	1.	Decide whether to store the dataset in a local database (e.g., SQLite, Postgres) or in a local JSON file.
+	2.	If using a database, create a small schema/tables for MajorGroups, MinorGroups, and Occupations.
+	3.	Write a script (e.g., seed_database.py) that reads your O*NET JSON and populates the DB tables.
+	4.	Confirm you can query the data end-to-end (from UI → API → DB).
+
+Goal: Ensure your data can be retrieved and updated easily, making subsequent steps simpler.
+
+3. Update the API Endpoint to Serve Complete Data
+
+Prompt:
+	1.	Modify your existing /api/soc-hierarchy endpoint (or create a new endpoint, e.g., /api/occupations) to return all major groups, minor groups, and detailed occupations in JSON.
+	2.	Include alternative titles, synonyms, and full text descriptions.
+	3.	Optionally, add query parameters to handle pagination or filtering if the list is large.
+
+Goal: Provide the complete classification hierarchy to the front end (or to the search logic).
+
+4. Implement Fuzzy Search / Weighted Matching
+
+Prompt:
+	1.	Install a fuzzy search library (e.g., Fuse.js) or set up a server-side search (e.g., Postgres full-text or Elasticsearch).
+	2.	Create a function searchOccupations(term) that:
+	•	Performs fuzzy matching on title, alternativeTitles, and description.
+	•	Ranks results based on relevance.
+	3.	Return a sorted list of matches, with the best match first.
+	4.	Update your UI (in RoleStep) to call this new search function instead of doing a simple .includes() match.
+
+Goal: Make the search robust so partial or inexact inputs still yield correct roles.
+
+5. Enhance the Front-End with Predictive Autocomplete
+
+Prompt:
+	1.	In your RoleStep (or similar UI component), implement a dynamic autocomplete that hits your fuzzy-search endpoint as the user types.
+	2.	Show the top 5–10 matching roles in a dropdown.
+	3.	If the user clicks on a suggestion, populate the role field with that SOC code/title.
+	4.	Continue to display the hierarchical information (major/minor group) in the selection UI for clarity.
+
+Goal: Provide a user-friendly experience that helps users quickly find their role.
+
+6. Allow Full Hierarchy Browsing as a Fallback
+
+Prompt:
+	1.	Retain your accordion-based approach for browsing the entire SOC hierarchy.
+	2.	Ensure the new data structure (with all major/minor groups) is properly displayed.
+	3.	If the user doesn’t want to search or can’t find their role using search, they can manually open major → minor → detailed occupations and select the correct one.
+
+Goal: Guarantee collective exhaustiveness even if search is incomplete or the user prefers manual browsing.
+
+7. Add a “Custom Role” or “Other” Option
+
+Prompt:
+	1.	Provide a button or link labeled “I can’t find my role.”
+	2.	Let the user enter a free-text title or description.
+	3.	Store these free-text inputs separately (e.g., in a custom_roles table), so you can track which roles are frequently missing.
+	4.	Optionally, attempt a background match or AI-based suggestion to see if a known SOC code is close enough.
+
+Goal: Capture new or emerging roles and keep track of coverage gaps in your dataset.
+
+8. (Optional) Create an Audit & Sync Tool
+
+Prompt:
+	1.	Write a script audit_onet_data.py that checks if your local DB/JSON has the same number of major/minor/detailed occupations as the official O*NET release.
+	2.	Log or list missing or extra records.
+	3.	Provide a simple mechanism to sync or update your local data from the official O*NET source.
+
+Goal: Ensure your classification system is always up to date and fully aligned with official standards.
+
+Bringing It All Together
+
+By issuing these prompts in separate, logical steps to your Replit agent, you’ll guide it through:
+	1.	Getting a complete data set (O*NET).
+	2.	Storing and serving that data via an API.
+	3.	Implementing robust search with fuzzy/weighted logic.
+	4.	Presenting results with predictive autocomplete and hierarchical browsing.
+	5.	Handling edge cases (“custom roles”) and ongoing maintenance (audit tool).
+
+Following these instructions will substantially improve your SOC convergence so it’s sophisticated, accurate, and collectively exhaustive—ensuring that users can always find (or define) the role they need.
