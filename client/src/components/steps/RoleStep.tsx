@@ -25,15 +25,19 @@ interface JobTitle {
 const RoleStep = () => {
   const { updateData, data } = useWizard();
   const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearch = useDebounce(searchTerm, 300); // Debounce search input by 300ms
+  const debouncedSearch = useDebounce(searchTerm, 500); // Increased debounce time to 500ms
+
   const [selectedTitle, setSelectedTitle] = useState<JobTitle | null>(
-    data.role ? { title: data.roleTitle || "", code: data.role, isAlternative: false } : null
+    data.role ? { title: data.role, code: data.role, isAlternative: false } : null
   );
 
   // Fetch job titles with debounced search
-  const { data: titles, isLoading } = useQuery<JobTitle[]>({
+  const { data: titles, isLoading, error } = useQuery<JobTitle[]>({
     queryKey: ["/api/job-titles", { search: debouncedSearch }],
-    enabled: debouncedSearch.length >= 2 // Only search when 2 or more characters are entered
+    enabled: true, // Always keep the query enabled
+    staleTime: 30000, // Cache results for 30 seconds
+    cacheTime: 5 * 60 * 1000, // Keep cache for 5 minutes
+    retry: 2 // Retry failed requests twice
   });
 
   const handleSearch = (term: string) => {
@@ -41,7 +45,6 @@ const RoleStep = () => {
     if (!term) {
       setSelectedTitle(null);
       updateData("role", "");
-      updateData("roleTitle", "");
     }
   };
 
@@ -49,7 +52,6 @@ const RoleStep = () => {
     setSelectedTitle(jobTitle);
     setSearchTerm(jobTitle.title);
     updateData("role", jobTitle.code);
-    updateData("roleTitle", jobTitle.title);
   };
 
   return (
@@ -87,7 +89,7 @@ const RoleStep = () => {
             </Accordion>
           </div>
         ) : (
-          searchTerm && searchTerm.length >= 2 && (
+          searchTerm && (
             <>
               {isLoading ? (
                 <div className="space-y-2">
@@ -95,8 +97,12 @@ const RoleStep = () => {
                   <Skeleton className="h-12 w-full" />
                   <Skeleton className="h-12 w-full" />
                 </div>
+              ) : error ? (
+                <div className="text-sm text-destructive p-4 border border-destructive/50 rounded-md">
+                  Error loading results. Please try again.
+                </div>
               ) : (
-                titles && titles.length > 0 && (
+                titles && titles.length > 0 ? (
                   <ScrollArea className="h-[300px] border rounded-md">
                     <div className="p-2 space-y-2">
                       {titles.map((jobTitle) => (
@@ -117,6 +123,10 @@ const RoleStep = () => {
                       ))}
                     </div>
                   </ScrollArea>
+                ) : searchTerm.length >= 2 && (
+                  <div className="text-sm text-muted-foreground p-4 border rounded-md">
+                    No matching roles found. Try different search terms.
+                  </div>
                 )
               )}
             </>
