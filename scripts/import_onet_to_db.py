@@ -32,11 +32,38 @@ def import_data_to_db():
     cur = conn.cursor()
 
     try:
+        # Import detailed occupations first since we have that data
+        logger.info("Importing detailed occupations...")
+        with open(data_dir / 'detailed_occupations.json') as f:
+            occupations = json.load(f)
+
+        # Extract unique major and minor group codes from occupations
+        major_groups = {}
+        minor_groups = {}
+
+        for occ in occupations:
+            minor_code = occ['minor_group_code']
+            major_code = minor_code[:2]  # First two digits represent major group
+
+            # Add to major groups if not exists
+            if major_code not in major_groups:
+                major_groups[major_code] = {
+                    'code': major_code,
+                    'title': f'Major Group {major_code}',  # Placeholder title
+                    'description': None
+                }
+
+            # Add to minor groups if not exists
+            if minor_code not in minor_groups:
+                minor_groups[minor_code] = {
+                    'code': minor_code,
+                    'title': f'Minor Group {minor_code}',  # Placeholder title
+                    'description': None,
+                    'major_group_code': major_code
+                }
+
         # Import major groups
         logger.info("Importing major groups...")
-        with open(data_dir / 'major_groups.json') as f:
-            major_groups = json.load(f)
-
         execute_values(
             cur,
             """
@@ -46,14 +73,11 @@ def import_data_to_db():
                 title = EXCLUDED.title,
                 description = EXCLUDED.description
             """,
-            [(g['code'], g['title'], g['description']) for g in major_groups]
+            [(g['code'], g['title'], g['description']) for g in major_groups.values()]
         )
 
         # Import minor groups
         logger.info("Importing minor groups...")
-        with open(data_dir / 'minor_groups.json') as f:
-            minor_groups = json.load(f)
-
         execute_values(
             cur,
             """
@@ -65,14 +89,11 @@ def import_data_to_db():
                 major_group_code = EXCLUDED.major_group_code
             """,
             [(g['code'], g['title'], g['description'], g['major_group_code']) 
-             for g in minor_groups]
+             for g in minor_groups.values()]
         )
 
         # Import detailed occupations
-        logger.info("Importing detailed occupations...")
-        with open(data_dir / 'detailed_occupations.json') as f:
-            occupations = json.load(f)
-
+        logger.info(f"Importing {len(occupations)} detailed occupations...")
         execute_values(
             cur,
             """
@@ -90,11 +111,11 @@ def import_data_to_db():
             [(
                 o['code'],
                 o['title'],
-                o['description'],
+                o.get('description', ''),
                 o['minor_group_code'],
-                json.dumps(o['alternative_titles']),
-                json.dumps(o['skills']),
-                json.dumps(o['tasks'])
+                json.dumps(o.get('alternative_titles', [])),
+                json.dumps(o.get('skills', [])),
+                json.dumps(o.get('tasks', []))
             ) for o in occupations]
         )
 
