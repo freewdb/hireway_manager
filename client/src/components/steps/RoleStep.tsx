@@ -13,19 +13,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useDebounce } from "@/hooks/use-debounce";
-
-interface DetailedOccupation {
-  code: string;
-  title: string;
-  description: string;
-  alternativeTitles: string[];
-  minorGroupCode: string;
-}
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface JobTitle {
   title: string;
   code: string;
   isAlternative: boolean;
+  rank?: number;
 }
 
 const RoleStep = () => {
@@ -37,8 +31,8 @@ const RoleStep = () => {
   );
 
   // Fetch job titles with debounced search
-  const { data: titles } = useQuery<JobTitle[]>({
-    queryKey: ["/api/job-titles", debouncedSearch],
+  const { data: titles, isLoading } = useQuery<JobTitle[]>({
+    queryKey: ["/api/job-titles", { search: debouncedSearch }],
     enabled: debouncedSearch.length >= 2 // Only search when 2 or more characters are entered
   });
 
@@ -93,27 +87,39 @@ const RoleStep = () => {
             </Accordion>
           </div>
         ) : (
-          searchTerm && titles && titles.length > 0 && (
-            <ScrollArea className="h-[300px] border rounded-md">
-              <div className="p-2 space-y-2">
-                {titles.map((jobTitle) => (
-                  <Button
-                    key={`${jobTitle.code}-${jobTitle.title}`}
-                    variant="ghost"
-                    className="w-full justify-start font-normal text-left"
-                    onClick={() => handleSelect(jobTitle)}
-                  >
-                    <div>
-                      <div className="font-medium">{jobTitle.title}</div>
-                      <div className="text-sm text-muted-foreground">
-                        SOC Code: {jobTitle.code}
-                        {jobTitle.isAlternative && " (Alternative Title)"}
-                      </div>
+          searchTerm && searchTerm.length >= 2 && (
+            <>
+              {isLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : (
+                titles && titles.length > 0 && (
+                  <ScrollArea className="h-[300px] border rounded-md">
+                    <div className="p-2 space-y-2">
+                      {titles.map((jobTitle) => (
+                        <Button
+                          key={`${jobTitle.code}-${jobTitle.title}`}
+                          variant="ghost"
+                          className="w-full justify-start font-normal text-left"
+                          onClick={() => handleSelect(jobTitle)}
+                        >
+                          <div>
+                            <div className="font-medium">{jobTitle.title}</div>
+                            <div className="text-sm text-muted-foreground">
+                              SOC Code: {jobTitle.code}
+                              {jobTitle.isAlternative && " (Alternative Title)"}
+                            </div>
+                          </div>
+                        </Button>
+                      ))}
                     </div>
-                  </Button>
-                ))}
-              </div>
-            </ScrollArea>
+                  </ScrollArea>
+                )
+              )}
+            </>
           )
         )}
       </div>
