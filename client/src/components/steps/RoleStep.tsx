@@ -21,130 +21,91 @@ interface DetailedOccupation {
   minorGroupCode: string;
 }
 
-interface MinorGroup {
-  code: string;
+interface JobTitle {
   title: string;
-  description: string;
-  majorGroupCode: string;
-  occupations: DetailedOccupation[];
-}
-
-interface MajorGroup {
   code: string;
-  title: string;
-  description: string;
-  minorGroups: MinorGroup[];
+  isAlternative: boolean;
 }
 
 const RoleStep = () => {
   const { updateData, data } = useWizard();
-  const [searchTerm, setSearchTerm] = useState(data.role || "");
-  const [selectedPath, setSelectedPath] = useState<{
-    major?: MajorGroup;
-    minor?: MinorGroup;
-    occupation?: DetailedOccupation;
-  }>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTitle, setSelectedTitle] = useState<JobTitle | null>(
+    data.role ? { title: data.roleTitle || "", code: data.role, isAlternative: false } : null
+  );
 
-  // Fetch SOC hierarchy
-  const { data: socData, isLoading } = useQuery<{
-    majorGroups: MajorGroup[];
-  }>({
-    queryKey: ["/api/soc-hierarchy"],
+  // Fetch job titles
+  const { data: titles } = useQuery<JobTitle[]>({
+    queryKey: ["/api/job-titles", searchTerm],
+    enabled: searchTerm.length > 0
   });
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    // Reset selection if search is cleared
     if (!term) {
-      setSelectedPath({});
+      setSelectedTitle(null);
       updateData("role", "");
+      updateData("roleTitle", "");
     }
   };
 
-  const handleSelect = (occupation: DetailedOccupation, minorGroup: MinorGroup, majorGroup: MajorGroup) => {
-    setSelectedPath({
-      major: majorGroup,
-      minor: minorGroup,
-      occupation: occupation,
-    });
-    setSearchTerm(occupation.title);
-    updateData("role", occupation.code); // Store SOC code as the role value
-  };
-
-  // Filter and search across all levels
-  const filterResults = () => {
-    if (!socData?.majorGroups || !searchTerm) return [];
-
-    const results: Array<{
-      majorGroup: MajorGroup;
-      minorGroup: MinorGroup;
-      occupation: DetailedOccupation;
-    }> = [];
-
-    socData.majorGroups.forEach(major => {
-      major.minorGroups.forEach(minor => {
-        minor.occupations.forEach(occupation => {
-          const searchableText = `
-            ${occupation.title.toLowerCase()}
-            ${occupation.alternativeTitles.join(" ").toLowerCase()}
-            ${occupation.description.toLowerCase()}
-          `;
-
-          if (searchableText.includes(searchTerm.toLowerCase())) {
-            results.push({ majorGroup: major, minorGroup: minor, occupation });
-          }
-        });
-      });
-    });
-
-    return results;
+  const handleSelect = (jobTitle: JobTitle) => {
+    setSelectedTitle(jobTitle);
+    setSearchTerm(jobTitle.title);
+    updateData("role", jobTitle.code);
+    updateData("roleTitle", jobTitle.title);
   };
 
   return (
     <WizardStep title="Select Role" stepNumber={2}>
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Search Job Title or Role</Label>
+          <Label htmlFor="role-search">Search Job Title or Role</Label>
           <Input
+            id="role-search"
             placeholder="Type to search roles (e.g., Software Developer, IT Manager)"
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
           />
         </div>
 
-        {selectedPath.occupation ? (
+        {selectedTitle ? (
           <div className="space-y-2 p-4 border rounded-md bg-muted/50">
-            <div className="text-sm text-muted-foreground">Selected Classification:</div>
+            <div className="text-sm text-muted-foreground">Selected Role:</div>
             <Accordion type="single" collapsible>
-              <AccordionItem value="path">
+              <AccordionItem value="role">
                 <AccordionTrigger className="text-primary">
-                  {selectedPath.occupation.title}
+                  {selectedTitle.title}
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-2 pl-4">
-                    <div>Major Group: {selectedPath.major?.title}</div>
-                    <div>Minor Group: {selectedPath.minor?.title}</div>
-                    <div>SOC Code: {selectedPath.occupation.code}</div>
+                    <div>SOC Code: {selectedTitle.code}</div>
+                    {selectedTitle.isAlternative && (
+                      <div className="text-sm text-muted-foreground">
+                        Alternative title for standard occupation
+                      </div>
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
           </div>
         ) : (
-          searchTerm && (
+          searchTerm && titles && titles.length > 0 && (
             <ScrollArea className="h-[300px] border rounded-md">
               <div className="p-2 space-y-2">
-                {filterResults().map(({ majorGroup, minorGroup, occupation }) => (
+                {titles.map((jobTitle) => (
                   <Button
-                    key={occupation.code}
+                    key={`${jobTitle.code}-${jobTitle.title}`}
                     variant="ghost"
                     className="w-full justify-start font-normal text-left"
-                    onClick={() => handleSelect(occupation, minorGroup, majorGroup)}
+                    onClick={() => handleSelect(jobTitle)}
                   >
                     <div>
-                      <div className="font-medium">{occupation.title}</div>
+                      <div className="font-medium">{jobTitle.title}</div>
                       <div className="text-sm text-muted-foreground">
-                        {minorGroup.title} | {majorGroup.title}
+                        SOC Code: {jobTitle.code}
+                        {jobTitle.isAlternative && " (Alternative Title)"}
                       </div>
                     </div>
                   </Button>

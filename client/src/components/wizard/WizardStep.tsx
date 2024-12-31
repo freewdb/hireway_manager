@@ -19,7 +19,8 @@ const WizardStep = ({ children, title, stepNumber }: WizardStepProps) => {
       case 1:
         return !!data.companySize && !!data.companyStage;
       case 2:
-        return !!data.role;
+        // Check for both role code and title
+        return !!data.role && !!data.roleTitle;
       case 3:
         return !!data.scenario;
       default:
