@@ -12,6 +12,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface DetailedOccupation {
   code: string;
@@ -30,14 +31,15 @@ interface JobTitle {
 const RoleStep = () => {
   const { updateData, data } = useWizard();
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 300); // Debounce search input by 300ms
   const [selectedTitle, setSelectedTitle] = useState<JobTitle | null>(
     data.role ? { title: data.roleTitle || "", code: data.role, isAlternative: false } : null
   );
 
-  // Fetch job titles
+  // Fetch job titles with debounced search
   const { data: titles } = useQuery<JobTitle[]>({
-    queryKey: ["/api/job-titles", searchTerm],
-    enabled: searchTerm.length > 0
+    queryKey: ["/api/job-titles", debouncedSearch],
+    enabled: debouncedSearch.length >= 2 // Only search when 2 or more characters are entered
   });
 
   const handleSearch = (term: string) => {
