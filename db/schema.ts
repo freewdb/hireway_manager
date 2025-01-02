@@ -1,5 +1,6 @@
-import { pgTable, text, serial, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, varchar, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { sql } from "drizzle-orm";
 
 // SOC Classification tables
 export const socMajorGroups = pgTable("soc_major_groups", {
@@ -28,10 +29,30 @@ export const socDetailedOccupations = pgTable("soc_detailed_occupations", {
     .notNull()
     .references(() => socMinorGroups.code),
   alternativeTitles: text("alternative_titles").array(), // Array of alternative titles
-  searchVector: text("search_vector", { mode: "tsvector" }),
+  searchableText: text("searchable_text").notNull(),
+  searchVector: sql<string>`to_tsvector('english', coalesce(title, '') || ' ' || 
+                 coalesce(description, '') || ' ' || 
+                 coalesce(array_to_string(alternative_titles, ' '), '') || ' ' || 
+                 coalesce(searchable_text, ''))`.type("tsvector"),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Create schemas for validation
+export const insertSocMajorGroupSchema = createInsertSchema(socMajorGroups);
+export const selectSocMajorGroupSchema = createSelectSchema(socMajorGroups);
+
+export const insertSocMinorGroupSchema = createInsertSchema(socMinorGroups);
+export const selectSocMinorGroupSchema = createSelectSchema(socMinorGroups);
+
+export const insertSocDetailedOccupationSchema = createInsertSchema(socDetailedOccupations);
+export const selectSocDetailedOccupationSchema = createSelectSchema(socDetailedOccupations);
 
 // Type definitions
 export type SocMajorGroup = typeof socMajorGroups.$inferSelect;
+export type InsertSocMajorGroup = typeof socMajorGroups.$inferInsert;
+
 export type SocMinorGroup = typeof socMinorGroups.$inferSelect;
+export type InsertSocMinorGroup = typeof socMinorGroups.$inferInsert;
+
 export type SocDetailedOccupation = typeof socDetailedOccupations.$inferSelect;
+export type InsertSocDetailedOccupation = typeof socDetailedOccupations.$inferInsert;
