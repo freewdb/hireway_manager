@@ -31,13 +31,10 @@ def run_script(script_name):
 
 def main():
     logger.info("Starting O*NET data import process")
-    
-    # First fetch the data
-    run_script("fetch_onet_data.py")
-    
-    # Then import it to the database
+
+    # Import the data directly to the database
     run_script("import_onet_to_db.py")
-    
+
     logger.info("Data import process completed")
 
 if __name__ == "__main__":

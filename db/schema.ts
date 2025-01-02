@@ -1,14 +1,6 @@
 import { pgTable, text, serial, integer, jsonb, varchar, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
-export const industries = pgTable("industries", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  naicsCode: text("naics_code").notNull().unique(),
-  description: text("description"),
-  displayName: text("display_name").notNull(), // User-friendly name for display
-});
-
 // SOC Classification tables
 export const socMajorGroups = pgTable("soc_major_groups", {
   id: serial("id").primaryKey(),
@@ -27,17 +19,27 @@ export const socMinorGroups = pgTable("soc_minor_groups", {
   description: text("description"),
 });
 
+// Updated socDetailedOccupations table with consolidated structure
 export const socDetailedOccupations = pgTable("soc_detailed_occupations", {
   id: serial("id").primaryKey(),
   code: varchar("code", { length: 7 }).notNull().unique(), // e.g., "11-3021"
+  title: text("title").notNull(), // Primary/canonical title
+  description: text("description"),
   minorGroupCode: varchar("minor_group_code", { length: 4 })
     .notNull()
     .references(() => socMinorGroups.code),
-  title: text("title").notNull(), // e.g., "Computer and Information Systems Managers"
+  alternativeTitles: jsonb("alternative_titles").default('[]').notNull(), // Array of alternative titles
+  skills: jsonb("skills").default('[]').notNull(), // Required skills
+  tasks: jsonb("tasks").default('[]').notNull(), // Common tasks
+  metadata: jsonb("metadata").default('{}').notNull(), // Additional occupation metadata
+});
+
+export const industries = pgTable("industries", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  naicsCode: text("naics_code").notNull().unique(),
   description: text("description"),
-  alternativeTitles: jsonb("alternative_titles"), // Array of common alternative titles
-  skills: jsonb("skills"), // Required skills for this occupation
-  tasks: jsonb("tasks"), // Common tasks performed in this role
+  displayName: text("display_name").notNull(), // User-friendly name for display
 });
 
 export const roles = pgTable("roles", {
@@ -47,7 +49,7 @@ export const roles = pgTable("roles", {
     .notNull()
     .references(() => socDetailedOccupations.code),
   description: text("description"),
-  customSkills: jsonb("custom_skills"), // Additional skills specific to this role
+  customSkills: jsonb("custom_skills").default('[]'), // Additional skills specific to this role
 });
 
 export const companies = pgTable("companies", {

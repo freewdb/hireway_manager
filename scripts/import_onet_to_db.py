@@ -25,15 +25,62 @@ def get_db_connection():
         port=os.environ['PGPORT']
     )
 
+def consolidate_occupation_data(occupations_df: pd.DataFrame, alternative_titles_df: pd.DataFrame) -> List[Dict]:
+    """Consolidate occupation data with alternative titles."""
+    logger.info("Consolidating occupation data...")
+
+    # Log the columns available in each DataFrame
+    logger.info(f"Occupation data columns: {occupations_df.columns.tolist()}")
+    logger.info(f"Alternative titles columns: {alternative_titles_df.columns.tolist()}")
+
+    # Group alternative titles by O*NET-SOC code
+    alt_titles_by_code = {}
+    for code, group in alternative_titles_df.groupby('onetsoc_code'):
+        alt_titles_by_code[code] = group['alternate_title'].tolist()
+
+    consolidated_data = []
+    for _, row in occupations_df.iterrows():
+        soc_code = row['onetsoc_code'].split('.')[0]  # Remove decimal part if present
+
+        # Get alternative titles for this occupation
+        alt_titles = alt_titles_by_code.get(row['onetsoc_code'], [])
+
+        occupation = {
+            'code': soc_code,
+            'title': row['title'],
+            'description': row.get('description', ''),
+            'minor_group_code': soc_code[:4],
+            'alternative_titles': alt_titles,
+            'skills': [],  # Will be populated if skills data is available
+            'tasks': [],   # Will be populated if tasks data is available
+            'metadata': {
+                'onet_code': row['onetsoc_code'],
+                'original_title': row['title']
+            }
+        }
+        consolidated_data.append(occupation)
+
+    logger.info(f"Consolidated {len(consolidated_data)} occupations with their alternative titles")
+    return consolidated_data
+
 def import_data_to_db():
     """Import the CSV data into PostgreSQL database."""
     logger.info("Starting database import...")
 
     try:
-        # Read occupation data CSV
-        logger.info("Reading occupation data file...")
+        # Read CSV files from attached_assets
+        logger.info("Reading data files...")
         occupations_df = pd.read_csv('attached_assets/occupation_data.csv')
+        alternative_titles_df = pd.read_csv('attached_assets/alternate_titles.csv')
+
         logger.info(f"Found {len(occupations_df)} occupations")
+        logger.info(f"Found {len(alternative_titles_df)} alternative titles")
+
+        # Consolidate data
+        consolidated_occupations = consolidate_occupation_data(
+            occupations_df,
+            alternative_titles_df
+        )
 
         conn = get_db_connection()
         cur = conn.cursor()
@@ -42,10 +89,8 @@ def import_data_to_db():
             # Extract and import major groups
             logger.info("Importing major groups...")
             major_groups = []
-            for code in occupations_df['onetsoc_code'].str[:2].unique():
-                # Get the first occupation in this major group
+            for code in sorted(occupations_df['onetsoc_code'].str[:2].unique()):
                 sample_occ = occupations_df[occupations_df['onetsoc_code'].str.startswith(code)].iloc[0]
-                # Create a descriptive title
                 title = f"{sample_occ['title'].split(',')[0]} Occupations"
                 major_groups.append({
                     'code': code,
@@ -69,10 +114,8 @@ def import_data_to_db():
             # Extract and import minor groups
             logger.info("Importing minor groups...")
             minor_groups = []
-            for code in occupations_df['onetsoc_code'].str[:4].unique():
-                # Get the first occupation in this minor group
+            for code in sorted(occupations_df['onetsoc_code'].str[:4].unique()):
                 sample_occ = occupations_df[occupations_df['onetsoc_code'].str.startswith(code)].iloc[0]
-                # Create a descriptive title
                 title = f"{sample_occ['title'].split(',')[0]} Specialists"
                 minor_groups.append({
                     'code': code,
@@ -96,28 +139,13 @@ def import_data_to_db():
             )
             logger.info(f"Imported {len(minor_groups)} minor groups")
 
-            # Process and import detailed occupations
-            logger.info("Processing detailed occupations...")
-            detailed_occupations = []
-
-            for _, row in occupations_df.iterrows():
-                soc_code = row['onetsoc_code'].split('.')[0]  # Remove decimal part
-                detailed_occupations.append({
-                    'code': soc_code,
-                    'title': row['title'],
-                    'description': row['description'],
-                    'minor_group_code': soc_code[:4],
-                    'alternative_titles': [],  # Empty list since we don't have alternate titles
-                    'skills': [],  # Empty list since we don't have skills data
-                    'tasks': []    # Empty list since we don't have tasks data
-                })
-
-            logger.info(f"Importing {len(detailed_occupations)} detailed occupations...")
+            # Import consolidated detailed occupations
+            logger.info(f"Importing {len(consolidated_occupations)} detailed occupations...")
             execute_values(
                 cur,
                 """
                 INSERT INTO soc_detailed_occupations 
-                (code, title, description, minor_group_code, alternative_titles, skills, tasks)
+                (code, title, description, minor_group_code, alternative_titles, skills, tasks, metadata)
                 VALUES %s
                 ON CONFLICT (code) DO UPDATE SET
                     title = EXCLUDED.title,
@@ -125,7 +153,8 @@ def import_data_to_db():
                     minor_group_code = EXCLUDED.minor_group_code,
                     alternative_titles = EXCLUDED.alternative_titles,
                     skills = EXCLUDED.skills,
-                    tasks = EXCLUDED.tasks
+                    tasks = EXCLUDED.tasks,
+                    metadata = EXCLUDED.metadata
                 """,
                 [(
                     o['code'],
@@ -134,10 +163,11 @@ def import_data_to_db():
                     o['minor_group_code'],
                     json.dumps(o['alternative_titles']),
                     json.dumps(o['skills']),
-                    json.dumps(o['tasks'])
-                ) for o in detailed_occupations]
+                    json.dumps(o['tasks']),
+                    json.dumps(o['metadata'])
+                ) for o in consolidated_occupations]
             )
-            logger.info(f"Imported {len(detailed_occupations)} detailed occupations")
+            logger.info(f"Successfully imported {len(consolidated_occupations)} detailed occupations")
 
             conn.commit()
             logger.info("Database import completed successfully")

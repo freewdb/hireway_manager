@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { industries, roles, companies, trialPlans, socMajorGroups, socMinorGroups, socDetailedOccupations } from "@db/schema";
+import { socMajorGroups, socMinorGroups, socDetailedOccupations } from "@db/schema";
 import { eq, ilike, sql, and, or } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
