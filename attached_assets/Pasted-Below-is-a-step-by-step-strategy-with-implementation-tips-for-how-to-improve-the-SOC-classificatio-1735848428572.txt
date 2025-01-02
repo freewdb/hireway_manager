@@ -1,0 +1,181 @@
+Below is a step-by-step strategy (with implementation tips) for how to improve the SOC classification step so that:
+	1.	You can handle all 1,000+ occupations (from O*NET or SOC).
+	2.	You can display alternate titles (a.k.a. synonyms).
+	3.	You can converge to a single canonical SOC code regardless of which title the user searches or selects.
+
+1. Consolidate Canonical & Alternative Titles on the Backend
+
+Right now, you’re returning a JobTitle[] array that includes both canonical and alternative titles. To keep this scalable and consistent:
+	1.	Create (or update) a database or structured JSON that includes:
+	•	Canonical Occupation: The “primary” title and SOC code.
+	•	Alternative Titles: A list of synonyms or alternate names for the same SOC code.
+	2.	Example Data Structure (pseudo-schema):
+
+interface Occupation {
+  code: string;               // e.g., "15-1256.00"
+  primaryTitle: string;       // e.g., "Software Developer"
+  alternativeTitles: string[]; // e.g., ["Software Engineer", "Coder", "Web Developer"]
+  description: string;        // Short or long description
+  majorGroupCode?: string;    // optional: "15-0000"
+  minorGroupCode?: string;    // optional
+}
+
+You might store this in:
+	•	A Postgres table with a JSON or array column for alternative titles.
+	•	A NoSQL DB like MongoDB.
+	•	A JSON file if you’re in early prototyping mode (though DB is recommended for scale).
+
+	3.	Server Endpoint: Have a single endpoint (e.g., /api/occupations) that, given a search query, returns a list of possible matches (both canonical and alt titles) with the same shape:
+
+[
+  {
+    "code": "15-1256.00",
+    "title": "Software Developer",
+    "isAlternative": false
+  },
+  {
+    "code": "15-1256.00",
+    "title": "Software Engineer",
+    "isAlternative": true
+  },
+  ...
+]
+
+Notice that both lines share the same code, but different title and a flag isAlternative.
+
+Why?
+Centralizing the data ensures you always map any user-searched title back to one canonical code.
+
+2. Implement Fuzzy/Weighted Search on the Backend
+
+To handle partial matches (“sftwr devlpr”), synonyms, and so forth:
+	1.	Choose a Search Method:
+	•	Fuzzy Library (e.g., Fuse.js, lunr.js) – can run either on the server or client.
+	•	Database Full-Text Search – e.g., Postgres to_tsvector columns or Elasticsearch for advanced scenarios.
+	2.	Store a single “searchable” string for each occupation row, e.g.:
+
+"Software Developer Software Engineer Coder Web Developer"
+
+Then index this for faster fuzzy matching.
+
+	3.	Perform the Fuzzy Match:
+	•	If you’re using a Node/Express backend, you could do:
+
+const Fuse = require('fuse.js');
+const fuse = new Fuse(allOccupations, {
+  keys: ['primaryTitle', 'alternativeTitles'],
+  threshold: 0.3, // adjust for strict vs. lenient matching
+});
+// Then call fuse.search(searchTerm) to get your matches
+
+
+	•	Return matches as an array of { code, title, isAlternative }.
+
+	4.	Rank results so the best match surfaces first (e.g., “Software Developer” outranks “Software Engineer” if that’s your canonical name).
+
+Why?
+Fuzzy/weighted search ensures that different phrasing or minor typos can still map users to the same SOC code.
+
+3. Return Results in a Uniform Structure
+
+Right now, your JobTitle interface has isAlternative, rank, etc. That’s good. To unify both canonical and alternative titles, do something like:
+
+interface JobTitle {
+  code: string;
+  title: string;           // e.g. "Software Engineer" or "Software Developer"
+  isAlternative: boolean;  // indicates if it's the canonical or an alternative
+  rank?: number;           // how relevant the match is
+}
+
+	•	Backend: For a single occupation with many alternative titles (like “Software Engineer,” “Coder,” “Backend Developer”), you might split them out into multiple objects, all sharing the same code but with different title and isAlternative: true.
+	•	Frontend: This ensures your current UI can display them exactly as you do now.
+
+4. Merge Canonical and Alt Titles on Selection
+
+When the user clicks on an alternative title (“Coder”) or the canonical title (“Software Developer”), your handleSelect logic sets:
+
+const handleSelect = (jobTitle: JobTitle) => {
+  setSelectedTitle(jobTitle);
+  setSearchTerm(jobTitle.title);
+  updateData("role", jobTitle.code);
+};
+
+Important: Make sure you store the canonical code (jobTitle.code) in WizardContext. That way, all alternative titles converge to the same final SOC code.
+
+You might also want to store the title or selectedTitle in your state, for clarity:
+
+updateData("roleTitle", jobTitle.title);
+
+But the official classification is still keyed by jobTitle.code.
+
+5. Refine the UI Flow
+
+5.1 Predictive Autocomplete
+	•	As the user types in RoleStep, you call /api/occupations?search=term.
+	•	Display the top ~10 results in the scroll area.
+	•	If the user picks an alternative title, highlight that it’s an alternative (like you do with isAlternative).
+
+5.2 Clear Distinction of Selections
+
+If a user picks an alternative title, show a small subtext like “Maps to SOC code 15-1256.00 (Software Developer).” This confirms they’re on the correct canonical code.
+
+5.3 Additional Info
+
+If you want, you can display more details when an occupation is selected:
+	•	Description from O*NET
+	•	Major/Minor group
+	•	This helps the user confirm they picked the right code.
+
+6. Handle Edge Cases
+	1.	No Results Found:
+Show the user a “No matching roles found. Try different terms or synonyms.” message (which you already do).
+	2.	Custom/Unlisted Roles:
+Some very new or unusual roles might not appear in O*NET. Consider an “I can’t find my role” link that logs an unlisted title and still moves the user forward.
+	3.	Casing / Typos:
+Fuzzy search typically handles this, but keep an eye on feedback from real users—some might type partial words or acronyms.
+
+7. Keep Your O*NET Data Up to Date
+
+O*NET updates its data regularly, so you’ll want to:
+	•	Periodically Sync: e.g. a script sync_onet_data.js that fetches the latest O*NET, merges synonyms, and updates your DB or JSON.
+	•	Add or Remove any new or deprecated occupations.
+	•	Extend synonyms if you see recurring “search fails” in your logs.
+
+8. Example Implementation Flow
+
+Below is a mini blueprint for your improved approach:
+	1.	Data Prep (server-side or build-time):
+	•	Fetch the official O*NET list of ~1,016 occupations.
+	•	For each occupation:
+	•	Create a record with code, primaryTitle, description.
+	•	Load up alternative titles from O*NET or your own synonyms.
+	•	Flatten into multiple JobTitle entries (one canonical, plus one for each alt title).
+	2.	Fuzzy/Full-Text Index:
+	•	Combine canonical + alt titles in your search index.
+	•	Each match references the same code but might have a different title.
+	3.	API (e.g., /api/occupations?search=term):
+	•	Parse term, run it through your fuzzy search or DB query.
+	•	Return up to 25 matches as { code, title, isAlternative, rank }.
+	4.	Frontend (RoleStep.tsx):
+	•	Debounce the user input (which you do with useDebounce).
+	•	Call the endpoint each time debouncedSearch changes (like you’re doing with React Query).
+	•	Show the results in a scrollable list.
+	•	On select, store code in WizardContext. If isAlternative = true, maybe show a small note: “This is an alternative title for [primaryTitle].”
+	5.	Persist to data.role or data.roleCode in your wizard, ensuring the canonical code is used in subsequent steps.
+
+Putting It All Together
+	1.	Backend:
+	•	Create or update a single, consolidated dataset with each canonical occupation, alternative titles, and the SOC code.
+	•	Set up a fuzzy search or full-text search solution.
+	•	Return a unified list of possible titles, all pointing to the same code.
+	2.	Frontend:
+	•	Replace your "/api/job-titles" with your improved endpoint.
+	•	Display a small note on alternative titles (which you already do with jobTitle.isAlternative).
+	•	Make sure you always store the canonical code in the wizard context.
+	3.	User Flow:
+	•	The user types “Software Eng,” sees “Software Engineer (alt), Software Developer (main).”
+	•	They click “Software Engineer,” which is code = "15-1256.00".
+	•	The system then stores data.role = "15-1256.00" internally.
+	•	If needed, you also track data.roleTitle = "Software Engineer" so you can display it nicely.
+
+With this approach, any job title or synonym that maps to the same SOC code converges in your system, ensuring accurate classification every time.

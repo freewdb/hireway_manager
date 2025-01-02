@@ -1,0 +1,104 @@
+Below are practical ways to enhance the user experience and guide users to make the most accurate choice when selecting a final SOC classification. Each item focuses on usability, clarity, and confidence-building, so users feel reassured they’ve chosen the right occupation code.
+
+1. Provide a Short, Clear Occupation Summary
+
+What to Do:
+	•	Alongside each search result (whether it’s a primary or alternative title), show a brief description of the occupation, pulled from O*NET or a similar data source.
+	•	This can include:
+	•	A one-line summary of typical tasks or responsibilities.
+	•	Example industries or companies that commonly use that title.
+	•	Key skills (e.g., “requires strong problem-solving and coding in JavaScript”).
+
+Why it Helps:
+	•	Users can quickly scan the summary and see if it feels right before choosing.
+
+2. Highlight Major & Minor Group Context
+
+What to Do:
+	•	For each result, display the Major Group and Minor Group from O*NET (e.g., “15–0000: Computer and Mathematical Occupations” → “15–1250: Software and Web Developers”).
+	•	Show a short label like “(under ‘Software and Web Developers’)” so the user understands where the role sits in the SOC hierarchy.
+
+Why it Helps:
+	•	Sometimes seeing the grouping or “job family” can clarify if this is the correct realm (e.g., “Oh, I’m not in ‘Computer and Mathematical Occupations’—this must be wrong”).
+
+3. Incorporate “Did You Mean…” Suggestions
+
+What to Do:
+	•	When the user types a title that nearly matches multiple options, show a small list of close suggestions (“Did you mean X or Y?”).
+	•	Provide a prompt like, “We found 3 close matches. Please pick one or refine your search.”
+
+Why it Helps:
+	•	Gives users a second chance to see the best matches if they spelled it differently or used synonyms.
+
+4. Add a Preview or Quick-View Modal
+
+What to Do:
+	•	Let users click a small “Info” or “Details” button next to each search result.
+	•	This opens a modal or popover with extra details:
+	•	Longer O*NET description
+	•	Typical tasks list
+	•	Common job titles (synonyms)
+	•	Any disclaimers or relevant skills
+	•	Users can close this to return to the search results.
+
+Why it Helps:
+	•	Encourages informed decision-making without cluttering the main list.
+
+5. Display Synonyms Clearly
+
+What to Do:
+	•	If “Software Developer” is the primary title, but “Software Engineer” and “Coder” are alternatives, show them beneath or grouped with the canonical label.
+	•	Use a line like: “Synonyms: Software Engineer, Coder, Web Developer” so users see all the related titles.
+
+Why it Helps:
+	•	Reinforces that multiple titles roll up to the same SOC code, reducing confusion about which code is correct.
+
+6. Offer a Secondary “Confirmation” Step
+
+What to Do:
+	•	After a user selects a title, prompt a short confirmation step:
+	•	“You selected Software Developer (SOC 15-1256.00). Does this sound right for the role you’re hiring?”
+	•	Provide “Yes, that’s correct” or “No, let me pick again.”
+	•	Optionally, allow them to check a box: “Show me more details about this occupation” if still unsure.
+
+Why it Helps:
+	•	Gives users a chance to revisit their choice if they realize it’s not correct.
+
+7. Present an “I’m Not Sure / Custom Role” Option
+
+What to Do:
+	•	Always include a fallback option: “I can’t find or confirm my role—let me specify it manually.”
+	•	If chosen, let them enter a free-text description or pick a “closest fit” to move forward.
+
+Why it Helps:
+	•	Prevents frustration for users with truly niche or emerging roles that don’t fit neatly into existing SOC codes.
+
+8. Show Real-Time Feedback or Warnings
+
+What to Do:
+	•	If the user picks something that’s drastically off from typical industry patterns (e.g., “Registered Nurse” in a tech company), consider a mild warning or a tip: “This role is usually in the Healthcare industry. Confirm this is correct or refine your search.”
+
+Why it Helps:
+	•	Catch obvious mismatches based on industry vs. role context, letting the user reconsider before finalizing.
+
+9. Provide Simple, Human-Friendly Language
+
+What to Do:
+	•	Avoid heavily technical or jargon-laden text.
+	•	Use short, plain-language disclaimers: “This is a standard classification used by the U.S. Department of Labor to group similar jobs together.”
+
+Why it Helps:
+	•	Lowers the barrier for less experienced users or those unfamiliar with SOC details.
+
+10. Track User Behavior and Feedback
+
+What to Do:
+	•	Log how often users switch their selection, how long they spend on the selection screen, or how often they choose “I’m Not Sure.”
+	•	If possible, allow users to leave quick feedback: “What was confusing about this classification?”
+
+Why it Helps:
+	•	Over time, you’ll see where your UI is working vs. where it confuses people. This helps drive iterative improvements (adding more synonyms, clarifying descriptions, etc.).
+
+Putting It All Together
+
+By adding short descriptive text, hierarchy labels, previews, and confirmation steps, you give users the confidence they need to pick the correct SOC code—especially if they’re new to these classifications or using non-standard job titles. These refinements reduce misclassification and create a more trustworthy, user-friendly experience.

@@ -1,0 +1,48 @@
+Below is an example of how you might summarize the improvements in concise, developer-friendly language. The idea is to provide clear, actionable steps without overwhelming detail—just enough for them to know what to do and why it matters.
+
+SOC Classification Enhancements: Developer Action Summary
+	1.	Consolidate Data
+	•	Create a single source of truth that merges canonical occupations with alternative titles.
+	•	Store each occupation’s SOC code, primary title, and all synonyms or alternate titles in one table or JSON structure.
+	•	Example:
+
+interface Occupation {
+  code: string;             // "15-1256.00"
+  primaryTitle: string;     // "Software Developer"
+  alternativeTitles: string[]; // ["Software Engineer", "Coder", etc.]
+  // ... other optional fields, e.g. description
+}
+
+
+	2.	Fuzzy/Weighted Search
+	•	Implement fuzzy search (e.g., using Fuse.js server-side or a DB’s full-text search) over both the primary title and all alternative titles.
+	•	This ensures partial matches or typos still map to the correct SOC code.
+	•	Return a sorted list of results, so the best matches come first.
+	3.	Unified API Response
+	•	When a user searches, return both the primary and alternative titles under the same SOC code.
+	•	Indicate which are alternatives (e.g., isAlternative: true).
+	•	This lets the UI display multiple titles that all map back to the same code.
+	4.	Front-End Integration
+	•	Always store the SOC code in the wizard’s data. That code represents the official classification.
+	•	Let the user see any title (canonical or alt), but make sure all flow back to the same code in the database.
+	•	Example structure in the response:
+
+[
+  { "code": "15-1256.00", "title": "Software Developer", "isAlternative": false },
+  { "code": "15-1256.00", "title": "Software Engineer", "isAlternative": true }
+]
+
+
+	5.	Clarify Selection in UI
+	•	When a user picks an alternative title, display a note: “Maps to SOC code 15-1256.00 (Software Developer).”
+	•	This reaffirms why multiple titles converge to the same code.
+	6.	Maintenance & Updates
+	•	Keep the O*NET dataset up to date (periodically sync from official sources).
+	•	Continue capturing missing or custom roles in a separate “unlisted roles” table so we can handle new or niche titles over time.
+
+Why These Steps Matter
+	•	Accuracy: Employers’ different titles for the same role all map to a single SOC code, ensuring consistent classification.
+	•	User Experience: Fuzzy search reduces frustration from typos or non-standard role names.
+	•	Scalability: A consolidated data model simplifies updates whenever O*NET changes or new synonyms emerge.
+
+With these clear points, developers can immediately see the tasks, understand the rationale, and implement the enhancements step by step without wading through excessive background detail.
