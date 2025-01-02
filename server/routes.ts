@@ -1,7 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { socMajorGroups, socMinorGroups, socDetailedOccupations } from "@db/schema";
+import { 
+  socMajorGroups, 
+  socMinorGroups, 
+  socDetailedOccupations,
+  industries,
+  roles,
+  trialPlans
+} from "@db/schema";
 import { eq, ilike, sql, and, or } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
@@ -53,7 +60,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Enhanced job titles search endpoint
+  // Enhanced job titles search endpoint with full-text search and fuzzy matching
   app.get("/api/job-titles", async (req, res) => {
     try {
       const searchTerm = req.query.search as string | undefined;
@@ -63,76 +70,88 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Convert search term to tsquery format
-      const searchQuery = searchTerm.trim().split(/\s+/).join(' & ');
+      const searchQuery = searchTerm
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .join(' & ');
 
-      // Perform full-text search with weighted ranking
-      const results = await db
-        .select({
-          code: socDetailedOccupations.code,
-          title: socDetailedOccupations.title,
-          alternativeTitles: socDetailedOccupations.alternativeTitles,
-          rank: sql<number>`
+      // Perform combined full-text and trigram search with weighted ranking
+      const results = await db.execute<{
+        code: string;
+        title: string;
+        description: string;
+        alternativeTitles: string[];
+        rank: number;
+      }>(sql`
+        WITH search_results AS (
+          SELECT
+            code,
+            title,
+            description,
+            alternative_titles as "alternativeTitles",
             (
-              ts_rank(
-                to_tsvector('english', 
-                  coalesce(${socDetailedOccupations.title}, '') || ' ' || 
-                  coalesce(${socDetailedOccupations.description}, '') || ' ' || 
-                  coalesce(
-                    array_to_string(${socDetailedOccupations.alternativeTitles}::text[], ' '),
-                    ''
-                  )
+              ts_rank(search_vector, to_tsquery('english', ${searchQuery})) * 3.0 +
+              similarity(title, ${searchTerm}) * 2.0 +
+              GREATEST(
+                COALESCE(
+                  (
+                    SELECT MAX(similarity(alt_title, ${searchTerm}))
+                    FROM jsonb_array_elements_text(alternative_titles) alt_title
+                  ),
+                  0
                 ),
-                to_tsquery('english', ${searchQuery})
-              ) * 2 +
-              similarity(${socDetailedOccupations.title}, ${searchTerm})
+                0
+              )
+            ) as rank
+          FROM soc_detailed_occupations
+          WHERE
+            search_vector @@ to_tsquery('english', ${searchQuery})
+            OR similarity(title, ${searchTerm}) > 0.3
+            OR EXISTS (
+              SELECT 1
+              FROM jsonb_array_elements_text(alternative_titles) alt_title
+              WHERE similarity(alt_title, ${searchTerm}) > 0.3
             )
-          `.as('rank')
-        })
-        .from(socDetailedOccupations)
-        .where(
-          or(
-            sql`
-              to_tsvector('english', 
-                coalesce(${socDetailedOccupations.title}, '') || ' ' || 
-                coalesce(${socDetailedOccupations.description}, '') || ' ' || 
-                coalesce(
-                  array_to_string(${socDetailedOccupations.alternativeTitles}::text[], ' '),
-                  ''
-                )
-              ) @@ to_tsquery('english', ${searchQuery})
-            `,
-            sql`similarity(${socDetailedOccupations.title}, ${searchTerm}) > 0.3`
-          )
         )
-        .orderBy(sql`rank DESC`)
-        .limit(20);
+        SELECT *
+        FROM search_results
+        WHERE rank > 0
+        ORDER BY rank DESC
+        LIMIT 20
+      `);
 
-      // Flatten the results to include both primary and alternative titles
-      const flattenedTitles = results.flatMap(occupation => {
-        const titles = [{ 
-          title: occupation.title, 
-          code: occupation.code,
+      // Format results for the frontend
+      const formattedResults = results.map(row => {
+        const alternativeTitles = Array.isArray(row.alternativeTitles) 
+          ? row.alternativeTitles 
+          : [];
+
+        // Return primary title
+        const results = [{
+          title: row.title,
+          code: row.code,
           isAlternative: false,
-          rank: occupation.rank
+          rank: row.rank
         }];
 
-        if (occupation.alternativeTitles) {
-          const altTitles = (occupation.alternativeTitles as string[])
-            .filter(alt => alt && alt.toLowerCase().includes(searchTerm.toLowerCase()))
-            .map(alt => ({
+        // Add matching alternative titles
+        alternativeTitles
+          .filter(alt => alt && alt.toLowerCase().includes(searchTerm.toLowerCase()))
+          .forEach(alt => {
+            results.push({
               title: alt,
-              code: occupation.code,
+              code: row.code,
               isAlternative: true,
-              rank: occupation.rank * 0.8 // Slightly lower rank for alternative titles
-            }));
-          titles.push(...altTitles);
-        }
+              rank: row.rank * 0.8 // Slightly lower rank for alternative titles
+            });
+          });
 
-        return titles;
-      });
+        return results;
+      }).flat();
 
       // Sort by rank and return
-      res.json(flattenedTitles.sort((a, b) => b.rank - a.rank));
+      res.json(formattedResults.sort((a, b) => b.rank - a.rank));
     } catch (error) {
       console.error('Error in job titles search:', error);
       res.status(500).json({ error: "Failed to search job titles" });
