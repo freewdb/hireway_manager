@@ -40,11 +40,16 @@ export const RoleStep = () => {
   const { data: titles = [], isLoading, error } = useQuery<JobTitle[]>({
     queryKey: ["/api/job-titles", { search: debouncedSearch }],
     enabled: debouncedSearch.length >= 2,
+    // Prevent refetching on window focus to avoid UI flashing
+    refetchOnWindowFocus: false,
+    // Keep previous data until new data arrives
+    keepPreviousData: true
   });
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    if (!term) {
+    // Only clear selection if search field is empty
+    if (!term.trim()) {
       setSelectedTitle(null);
       updateData("role", "");
     }
@@ -55,6 +60,8 @@ export const RoleStep = () => {
     setSearchTerm(jobTitle.title);
     updateData("role", jobTitle.code);
   };
+
+  const showSearchResults = searchTerm && !selectedTitle && debouncedSearch.length >= 2;
 
   return (
     <div className="container mx-auto p-4">
@@ -101,11 +108,22 @@ export const RoleStep = () => {
                         Major Group: {selectedTitle.majorGroup.title}
                       </p>
                     )}
+                    <Button 
+                      variant="ghost" 
+                      className="w-full mt-2"
+                      onClick={() => {
+                        setSelectedTitle(null);
+                        setSearchTerm("");
+                        updateData("role", "");
+                      }}
+                    >
+                      Clear Selection
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ) : (
-              searchTerm && (
+              showSearchResults && (
                 <>
                   {isLoading ? (
                     <div className="space-y-2">
@@ -119,8 +137,8 @@ export const RoleStep = () => {
                     </div>
                   ) : (
                     titles.length > 0 ? (
-                      <ScrollArea className="h-[300px]">
-                        <div className="space-y-2">
+                      <ScrollArea className="h-[300px] border rounded-md">
+                        <div className="space-y-2 p-2">
                           {titles.map((jobTitle) => (
                             <Button
                               key={`${jobTitle.code}-${jobTitle.title}`}
