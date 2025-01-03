@@ -46,7 +46,7 @@ export const selectSocMinorGroupSchema = createSelectSchema(socMinorGroups);
 export const insertSocDetailedOccupationSchema = createInsertSchema(socDetailedOccupations);
 export const selectSocDetailedOccupationSchema = createSelectSchema(socDetailedOccupations);
 
-// Type definitions
+// Type definitions for TypeScript
 export type SocMajorGroup = typeof socMajorGroups.$inferSelect;
 export type InsertSocMajorGroup = typeof socMajorGroups.$inferInsert;
 
@@ -55,6 +55,23 @@ export type InsertSocMinorGroup = typeof socMinorGroups.$inferInsert;
 
 export type SocDetailedOccupation = typeof socDetailedOccupations.$inferSelect;
 export type InsertSocDetailedOccupation = typeof socDetailedOccupations.$inferInsert;
+
+// Export additional interface for the API response
+export interface JobTitleSearchResult {
+  code: string;
+  title: string;
+  isAlternative: boolean;
+  rank?: number;
+  description?: string;
+  majorGroup?: {
+    code: string;
+    title: string;
+  };
+  minorGroup?: {
+    code: string;
+    title: string;
+  };
+}
 
 // Create indexes after tables are created
 sql`

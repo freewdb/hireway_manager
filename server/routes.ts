@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { socDetailedOccupations, socMajorGroups, socMinorGroups } from "@db/schema";
-import { sql, ilike, eq, and } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import Fuse from 'fuse.js';
 
 interface JobTitleSearchResult {
@@ -16,53 +16,6 @@ interface JobTitleSearchResult {
 }
 
 export function registerRoutes(app: Express): Server {
-  // Get SOC hierarchy with search capability
-  app.get("/api/soc-hierarchy", async (req, res) => {
-    try {
-      const searchTerm = req.query.search as string | undefined;
-
-      // Get base data
-      const majorGroups = await db.select().from(socMajorGroups);
-      const minorGroups = await db.select().from(socMinorGroups);
-
-      // If searching, filter occupations based on search vector
-      let occupations;
-      if (searchTerm) {
-        const searchQuery = searchTerm
-          .trim()
-          .split(/\s+/)
-          .filter(Boolean)
-          .map(term => `${term}:*`)
-          .join(' & ');
-
-        occupations = await db.select()
-          .from(socDetailedOccupations)
-          .where(
-            sql`search_vector @@ to_tsquery('english', ${searchQuery})`
-          );
-      } else {
-        occupations = await db.select().from(socDetailedOccupations);
-      }
-
-      // Build the hierarchy
-      const hierarchy = majorGroups.map(major => ({
-        ...major,
-        minorGroups: minorGroups
-          .filter(minor => minor.majorGroupCode === major.code)
-          .map(minor => ({
-            ...minor,
-            occupations: occupations.filter(occ => occ.minorGroupCode === minor.code)
-          }))
-      }));
-
-      res.json({ majorGroups: hierarchy });
-    } catch (error) {
-      console.error('Error in SOC hierarchy:', error);
-      res.status(500).json({ error: "Failed to fetch SOC hierarchy" });
-    }
-  });
-
-  // Enhanced job titles search endpoint with fuzzy matching
   app.get("/api/job-titles", async (req, res) => {
     try {
       const searchTerm = req.query.search as string | undefined;
@@ -71,7 +24,7 @@ export function registerRoutes(app: Express): Server {
         return res.json([]);
       }
 
-      // Step 1: Get initial matches using PostgreSQL full-text search
+      // Step 1: Initial PostgreSQL search using ts_vector
       const searchQuery = searchTerm
         .trim()
         .split(/\s+/)
@@ -92,20 +45,20 @@ export function registerRoutes(app: Express): Server {
       .orderBy(sql`ts_rank_cd(search_vector, to_tsquery('english', ${searchQuery})) DESC`)
       .limit(50);
 
-      // Step 2: Get related group information
+      // Step 2: Get group information for context
       const minorGroupCodes = Array.from(new Set(dbResults.map(r => r.minorGroupCode)));
-      const relatedMinorGroups = await db.select()
+      const relatedMinorGroups = minorGroupCodes.length > 0 ? await db.select()
         .from(socMinorGroups)
-        .where(sql`code = ANY(${minorGroupCodes})`);
+        .where(sql`code = ANY(${minorGroupCodes})`) : [];
 
       const majorGroupCodes = Array.from(new Set(relatedMinorGroups.map(r => r.majorGroupCode)));
-      const relatedMajorGroups = await db.select()
+      const relatedMajorGroups = majorGroupCodes.length > 0 ? await db.select()
         .from(socMajorGroups)
-        .where(sql`code = ANY(${majorGroupCodes})`);
+        .where(sql`code = ANY(${majorGroupCodes})`) : [];
 
-      // Step 3: Apply Fuse.js for better fuzzy matching on the results
+      // Step 3: Create searchable items including alternative titles
       const searchItems = dbResults.flatMap(result => {
-        // Create array with main title
+        // Create base item with primary title
         const items: JobTitleSearchResult[] = [{
           code: result.code,
           title: result.title,
@@ -121,7 +74,7 @@ export function registerRoutes(app: Express): Server {
         }];
 
         // Add alternative titles if they exist
-        if (result.alternativeTitles) {
+        if (result.alternativeTitles && result.alternativeTitles.length > 0) {
           items.push(...result.alternativeTitles.map(altTitle => ({
             code: result.code,
             title: altTitle,
@@ -136,7 +89,7 @@ export function registerRoutes(app: Express): Server {
         return items;
       });
 
-      // Configure Fuse.js for fuzzy searching
+      // Step 4: Apply fuzzy search for better matching
       const fuse = new Fuse(searchItems, {
         keys: ['title'],
         includeScore: true,
