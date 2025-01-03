@@ -21,7 +21,7 @@ const scenarios = [
   },
 ];
 
-const ScenarioStep = () => {
+export const ScenarioStep = () => {
   const { updateData, data } = useWizard();
 
   return (

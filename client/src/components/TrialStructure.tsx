@@ -4,7 +4,7 @@ import { generateTrialStructure } from "@/lib/trialGenerator";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, CheckSquare, Users } from "lucide-react";
 
-const TrialStructure = () => {
+export const TrialStructure = () => {
   const { data } = useWizard();
   const trialStructure = generateTrialStructure(data);
 
