@@ -29,40 +29,19 @@ def get_db_connection():
         raise
 
 def preprocess_soc_code(code: str) -> str:
-    """Standardize SOC code format."""
+    """Standardize SOC code format to XX-XXXX format."""
     try:
-        # Remove any decimal points and ensure proper formatting
-        base_code = str(code).replace('.', '')
-        if len(base_code) < 7:
-            base_code = base_code.ljust(7, '0')
-        return base_code
+        # Remove any non-numeric characters
+        clean_code = ''.join(filter(str.isdigit, str(code)))
+
+        # Ensure we have at least 6 digits
+        if len(clean_code) < 6:
+            clean_code = clean_code.ljust(6, '0')
+
+        # Format as XX-XXXX
+        return f"{clean_code[:2]}-{clean_code[2:6]}"
     except Exception as e:
         logger.error(f"Error preprocessing SOC code {code}: {e}")
-        raise
-
-def clean_text_for_search(text: str) -> str:
-    """Clean text for search vector."""
-    if not text:
-        return ""
-    return str(text).replace("'", "''")
-
-def setup_database_indexes(cur):
-    """Create necessary database indexes."""
-    try:
-        # Create GIN indexes for full-text search
-        cur.execute("""
-            CREATE INDEX IF NOT EXISTS soc_major_groups_search_idx 
-            ON soc_major_groups USING gin(search_vector);
-
-            CREATE INDEX IF NOT EXISTS soc_minor_groups_search_idx 
-            ON soc_minor_groups USING gin(search_vector);
-
-            CREATE INDEX IF NOT EXISTS soc_detailed_occupations_search_idx 
-            ON soc_detailed_occupations USING gin(search_vector);
-        """)
-        logger.info("Successfully created database indexes")
-    except Exception as e:
-        logger.error(f"Failed to create indexes: {e}")
         raise
 
 def import_data():
@@ -70,101 +49,101 @@ def import_data():
     logger.info("Starting data import process...")
 
     try:
-        # Read and validate CSV files
+        # Read CSV files
         logger.info("Reading CSV files...")
-        try:
-            occ_data = pd.read_csv('attached_assets/occupation_data.csv')
-            alt_titles = pd.read_csv('attached_assets/alternate_titles.csv')
-            logger.info(f"Successfully read {len(occ_data)} occupations and {len(alt_titles)} alternative titles")
-        except Exception as e:
-            logger.error(f"Failed to read CSV files: {e}")
-            raise
+        occ_data = pd.read_csv('attached_assets/occupation_data.csv')
+        alt_titles = pd.read_csv('attached_assets/alternate_titles.csv')
+        logger.info(f"Successfully read {len(occ_data)} occupations and {len(alt_titles)} alternative titles")
 
-        # Create the database connection
+        # Create database connection
         conn = get_db_connection()
         cur = conn.cursor()
 
         try:
-            # Process major groups
+            # Process major groups first (XX-0000)
             logger.info("Processing major groups...")
             major_groups = []
-            for code in sorted(set([str(code)[:2] for code in occ_data['onetsoc_code'] if pd.notna(code)])):
-                major_code = code.ljust(7, '0')
+            major_codes = sorted(set([str(code)[:2] for code in occ_data['onetsoc_code'] if pd.notna(code)]))
+
+            for code in major_codes:
+                major_code = f"{code}-0000"
                 title = f"Major Group {code}"
                 description = f"SOC Major Group {code}"
                 major_groups.append((
                     major_code,
                     title,
-                    description,
-                    f"{clean_text_for_search(title)} {clean_text_for_search(description)}"
+                    description
                 ))
 
             # Insert major groups
             execute_values(
                 cur,
                 """
-                INSERT INTO soc_major_groups (code, title, description, search_vector)
+                INSERT INTO soc_major_groups (code, title, description)
                 VALUES %s
                 ON CONFLICT (code) DO UPDATE SET
                     title = EXCLUDED.title,
-                    description = EXCLUDED.description,
-                    search_vector = to_tsvector('english', EXCLUDED.title || ' ' || COALESCE(EXCLUDED.description, ''))
+                    description = EXCLUDED.description
                 """,
                 major_groups
             )
             logger.info(f"Inserted {len(major_groups)} major groups")
 
-            # Process minor groups
+            # Process minor groups (XX-XX00)
             logger.info("Processing minor groups...")
             minor_groups = []
-            for code in sorted(set([str(code)[:4] for code in occ_data['onetsoc_code'] if pd.notna(code)])):
-                minor_code = code.ljust(7, '0')
-                major_code = code[:2].ljust(7, '0')
+            minor_codes = sorted(set([f"{str(code)[:2]}-{str(code)[2:4]}00" 
+                               for code in occ_data['onetsoc_code'] if pd.notna(code)]))
+
+            for code in minor_codes:
+                major_code = f"{code[:2]}-0000"
                 title = f"Minor Group {code}"
                 description = f"SOC Minor Group {code}"
                 minor_groups.append((
-                    minor_code,
+                    code,
                     major_code,
                     title,
-                    description,
-                    f"{clean_text_for_search(title)} {clean_text_for_search(description)}"
+                    description
                 ))
 
             # Insert minor groups
             execute_values(
                 cur,
                 """
-                INSERT INTO soc_minor_groups (code, major_group_code, title, description, search_vector)
+                INSERT INTO soc_minor_groups (code, major_group_code, title, description)
                 VALUES %s
                 ON CONFLICT (code) DO UPDATE SET
                     major_group_code = EXCLUDED.major_group_code,
                     title = EXCLUDED.title,
-                    description = EXCLUDED.description,
-                    search_vector = to_tsvector('english', EXCLUDED.title || ' ' || COALESCE(EXCLUDED.description, ''))
+                    description = EXCLUDED.description
                 """,
                 minor_groups
             )
             logger.info(f"Inserted {len(minor_groups)} minor groups")
 
+            # Group alternative titles by code
+            logger.info("Processing alternative titles...")
+            alt_titles_dict = {}
+            for _, row in alt_titles.iterrows():
+                code = str(row['onetsoc_code'])
+                if code not in alt_titles_dict:
+                    alt_titles_dict[code] = []
+                alt_titles_dict[code].append(str(row['alternate_title']))
+
             # Process detailed occupations
             logger.info("Processing detailed occupations...")
-
-            # Group alternative titles by code
-            alt_titles_dict = alt_titles.groupby('onetsoc_code')['alternate_title'].apply(list).to_dict()
-
-            # Process each occupation
             occupations = []
             for _, row in occ_data.iterrows():
                 try:
-                    code = preprocess_soc_code(str(row['onetsoc_code']))
-                    minor_code = str(code)[:4].ljust(7, '0')
+                    raw_code = str(row['onetsoc_code'])
+                    code = preprocess_soc_code(raw_code)
+                    minor_code = f"{code[:2]}-{code[3:5]}00"
+
                     title = str(row['title'])
                     description = str(row.get('description', ''))
+                    alt_titles_list = alt_titles_dict.get(raw_code, [])
 
-                    # Get alternative titles
-                    alt_titles_list = alt_titles_dict.get(row['onetsoc_code'], [])
-
-                    # Create searchable text combining all relevant fields
+                    # Create searchable text
                     searchable_text = f"{title} {' '.join(alt_titles_list)} {description}"
 
                     occupations.append((
@@ -173,11 +152,10 @@ def import_data():
                         description,
                         minor_code,
                         alt_titles_list,
-                        searchable_text,
-                        clean_text_for_search(searchable_text)
+                        searchable_text
                     ))
                 except Exception as e:
-                    logger.error(f"Error processing occupation {row.get('onetsoc_code', 'Unknown')}: {e}")
+                    logger.error(f"Error processing occupation {raw_code}: {e}")
                     continue
 
             # Insert detailed occupations
@@ -185,22 +163,18 @@ def import_data():
                 cur,
                 """
                 INSERT INTO soc_detailed_occupations 
-                (code, title, description, minor_group_code, alternative_titles, searchable_text, search_vector)
+                (code, title, description, minor_group_code, alternative_titles, searchable_text)
                 VALUES %s
                 ON CONFLICT (code) DO UPDATE SET
                     title = EXCLUDED.title,
                     description = EXCLUDED.description,
                     minor_group_code = EXCLUDED.minor_group_code,
                     alternative_titles = EXCLUDED.alternative_titles,
-                    searchable_text = EXCLUDED.searchable_text,
-                    search_vector = to_tsvector('english', EXCLUDED.searchable_text)
+                    searchable_text = EXCLUDED.searchable_text
                 """,
                 occupations
             )
             logger.info(f"Inserted {len(occupations)} detailed occupations")
-
-            # Create indexes
-            setup_database_indexes(cur)
 
             conn.commit()
             logger.info("Successfully imported all data")
