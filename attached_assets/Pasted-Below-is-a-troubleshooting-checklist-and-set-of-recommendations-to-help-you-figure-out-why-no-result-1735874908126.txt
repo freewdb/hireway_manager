@@ -1,0 +1,131 @@
+Below is a troubleshooting checklist and set of recommendations to help you figure out why no results are returning, even though you have data in the database. Most likely, it’s an indexing or matching issue in your search logic. The following steps should guide you to the root cause and a solution.
+
+1. Verify That “searchable_text” Is Populated
+	•	Check the actual data in your database to confirm that the searchable_text column contains the strings you expect.
+	•	Run a direct SQL query (e.g., in psql or another DB client):
+
+SELECT code, title, searchable_text
+FROM soc_detailed_occupations
+WHERE code = '15-1256';
+
+or a quick “like” query:
+
+SELECT *
+FROM soc_detailed_occupations
+WHERE searchable_text ILIKE '%developer%';
+
+If you don’t see any rows, it means either:
+	•	The text you’re searching for isn’t actually in searchable_text.
+	•	The column was never updated after your data load.
+
+How to Fix
+	•	Make sure you ran the UPDATE statements (or inserted data after the triggers were created) so the triggers populate searchable_text and search_vector.
+	•	If needed, run:
+
+UPDATE soc_detailed_occupations
+SET searchable_text = 
+  title || ' ' ||
+  coalesce(description, '') || ' ' ||
+  coalesce(array_to_string(alternative_titles, ' '), '');
+
+to ensure every record has the correct values.
+
+	•	Then confirm the triggers for search_vector are firing on inserts/updates.
+
+2. Check Your String Matching Logic
+
+2.1 Direct ILIKE "%searchTerm%" Clause
+
+You’re doing:
+
+.where(sql`${socDetailedOccupations.searchableText} ILIKE ${`%${searchTerm}%`}`)
+
+Potential Pitfalls:
+	•	If the user typed “Dev” but the text is “developer,” normally %dev% should still match “developer.” This part should work if the substring actually appears.
+	•	If you used a multi-word search (splitting on spaces), that might not match “Developer” as you expect unless each piece is found somewhere in the text.
+
+2.2 Fuzzy Search with Fuse
+	•	After you get dbResults, you pass them to Fuse.js for an additional ranking step.
+	•	If dbResults is empty from the first step, then there’s nothing to rank, so Fuse returns nothing.
+	•	If dbResults are found but you still get zero final results, check the Fuse threshold or the keys you’ve configured.
+
+How to Fix
+	1.	Lower your Fuse threshold (e.g., threshold: 0.8) or remove it temporarily to see if results show up:
+
+const fuse = new Fuse(searchItems, {
+  keys: ['title'],
+  includeScore: true,
+  threshold: 0.8, // or even 1.0 for debugging
+  minMatchCharLength: 2
+});
+
+
+	2.	Log out the data going into Fuse:
+
+console.log("searchItems for Fuse:", searchItems);
+
+
+	3.	Check if searchItems is non-empty and actually contains the text you’re searching for.
+
+3. Confirm You’re Connected to the Right Database
+	•	It’s surprisingly common to have the wrong DB connection or environment variable.
+	•	Confirm that the data you see in psql is coming from the same DB your code is connecting to.
+	•	Add a log or debug statement printing process.env.DATABASE_URL or your DB config.
+
+4. Double-Check the Insert/Update Workflow
+	•	If you inserted the data before creating the triggers, your searchable_text and search_vector columns might still be empty for older records.
+	•	If your code loads data in a way that bypasses the triggers (e.g., bulk copy, direct CSV import), you might have to run an explicit update.
+
+How to Fix
+	•	Re-run an UPDATE for all rows to build searchable_text and search_vector.
+	•	For new inserts, ensure you do a normal INSERT so the triggers can populate those columns automatically.
+
+5. Debug Step by Step
+	1.	Log the incoming searchTerm (which you are doing: console.log('Search request:', { searchTerm })).
+	2.	Log the rows you get back from the first db.select():
+
+console.log('dbResults:', dbResults);
+
+
+	3.	If dbResults is empty, try a direct query in your DB client:
+
+SELECT *
+FROM soc_detailed_occupations
+WHERE searchable_text ILIKE '%<the searchTerm>%' LIMIT 10;
+
+	•	If that also returns empty, your data likely doesn’t contain that text.
+	•	If that returns rows, then you may have an issue with drizzle-orm or how the parameter is being passed in.
+
+	4.	Check the logic that merges dbResults with relatedMinorGroups and relatedMajorGroups. Could there be a scenario that modifies your final array incorrectly?
+
+6. Try a Simpler Approach for Testing
+	•	Temporarily remove the multi-word logic and Fuse ranking, and just return dbResults to see if they appear on the front end:
+
+if (!dbResults.length) {
+  return res.json([]);
+}
+res.json(dbResults);
+return;
+
+
+	•	If you suddenly see data in the UI, the culprit is in the subsequent steps.
+
+7. Adjust the Front-End
+	•	Right now, the front-end only queries if debouncedSearch.length >= 2.
+	•	Confirm you’re typing at least 2 characters.
+	•	If you’re testing with a single character (e.g. “D”), it’ll never run the query.
+
+8. Summary of Likely Causes
+	1.	searchable_text column not actually containing the string you’re searching for.
+	2.	Triggers or the UPDATE scripts never ran on pre-existing data.
+	3.	Searching for a substring that doesn’t exist (maybe you typed “Dev” but the DB only has “engineering”).
+	4.	Data is in a different database than you think.
+	5.	The Fuse threshold or multi-word approach is discarding partial matches.
+
+9. Recommendations
+	1.	Direct DB Check: Make sure SELECT * FROM soc_detailed_occupations WHERE searchable_text ILIKE '%developer%' returns rows.
+	2.	Force Re-Index: After data load, run an UPDATE on all existing rows so triggers build the search_vector and searchable_text.
+	3.	Lower or Remove Fuse Threshold: to see if you get matches.
+	4.	Log Everything: Print dbResults, searchItems, and final fuseResults to confirm where the data goes missing.
+
+By walking through these steps, you’ll pinpoint exactly why your search is returning empty sets and get it up and running so partial or fuzzy matches come back as expected.
