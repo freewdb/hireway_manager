@@ -28,21 +28,18 @@ def get_db_connection():
         logger.error(f"Failed to connect to database: {e}")
         raise
 
-def preprocess_soc_code(code: str) -> str:
-    """Standardize SOC code format to XX-XXXX format."""
-    try:
-        # Remove any non-numeric characters
-        clean_code = ''.join(filter(str.isdigit, str(code)))
+def extract_soc_components(code: str) -> tuple:
+    """Extract major, minor, and detailed components from SOC code."""
+    # Remove decimal and non-numeric characters
+    clean_code = ''.join(c for c in code if c.isdigit())
+    if len(clean_code) < 6:
+        clean_code = clean_code.ljust(6, '0')
 
-        # Ensure we have at least 6 digits
-        if len(clean_code) < 6:
-            clean_code = clean_code.ljust(6, '0')
+    major_code = f"{clean_code[:2]}-0000"
+    minor_code = f"{clean_code[:2]}-{clean_code[2:4]}00"
+    detailed_code = f"{clean_code[:2]}-{clean_code[2:6]}"
 
-        # Format as XX-XXXX
-        return f"{clean_code[:2]}-{clean_code[2:6]}"
-    except Exception as e:
-        logger.error(f"Error preprocessing SOC code {code}: {e}")
-        raise
+    return major_code, minor_code, detailed_code
 
 def import_data():
     """Import the O*NET data into PostgreSQL database."""
@@ -60,19 +57,15 @@ def import_data():
         cur = conn.cursor()
 
         try:
-            # Process major groups first (XX-0000)
+            # Process major groups
             logger.info("Processing major groups...")
-            major_groups = []
-            major_codes = sorted(set([str(code)[:2] for code in occ_data['onetsoc_code'] if pd.notna(code)]))
-
-            for code in major_codes:
-                major_code = f"{code}-0000"
-                title = f"Major Group {code}"
-                description = f"SOC Major Group {code}"
-                major_groups.append((
+            major_groups = set()
+            for code in occ_data['onetsoc_code']:
+                major_code, _, _ = extract_soc_components(code)
+                major_groups.add((
                     major_code,
-                    title,
-                    description
+                    f"Major Group {major_code[:2]}",
+                    f"SOC Major Group {major_code[:2]}"
                 ))
 
             # Insert major groups
@@ -85,25 +78,20 @@ def import_data():
                     title = EXCLUDED.title,
                     description = EXCLUDED.description
                 """,
-                major_groups
+                list(major_groups)
             )
             logger.info(f"Inserted {len(major_groups)} major groups")
 
-            # Process minor groups (XX-XX00)
+            # Process minor groups
             logger.info("Processing minor groups...")
-            minor_groups = []
-            minor_codes = sorted(set([f"{str(code)[:2]}-{str(code)[2:4]}00" 
-                               for code in occ_data['onetsoc_code'] if pd.notna(code)]))
-
-            for code in minor_codes:
-                major_code = f"{code[:2]}-0000"
-                title = f"Minor Group {code}"
-                description = f"SOC Minor Group {code}"
-                minor_groups.append((
-                    code,
+            minor_groups = set()
+            for code in occ_data['onetsoc_code']:
+                major_code, minor_code, _ = extract_soc_components(code)
+                minor_groups.add((
+                    minor_code,
                     major_code,
-                    title,
-                    description
+                    f"Minor Group {minor_code[:2]}-{minor_code[3:5]}",
+                    f"SOC Minor Group {minor_code[:2]}-{minor_code[3:5]}"
                 ))
 
             # Insert minor groups
@@ -117,7 +105,7 @@ def import_data():
                     title = EXCLUDED.title,
                     description = EXCLUDED.description
                 """,
-                minor_groups
+                list(minor_groups)
             )
             logger.info(f"Inserted {len(minor_groups)} minor groups")
 
@@ -135,19 +123,18 @@ def import_data():
             occupations = []
             for _, row in occ_data.iterrows():
                 try:
-                    raw_code = str(row['onetsoc_code'])
-                    code = preprocess_soc_code(raw_code)
-                    minor_code = f"{code[:2]}-{code[3:5]}00"
+                    code = str(row['onetsoc_code'])
+                    _, minor_code, detailed_code = extract_soc_components(code)
 
                     title = str(row['title'])
-                    description = str(row.get('description', ''))
-                    alt_titles_list = alt_titles_dict.get(raw_code, [])
+                    description = str(row['description'])
+                    alt_titles_list = alt_titles_dict.get(code, [])
 
                     # Create searchable text
                     searchable_text = f"{title} {' '.join(alt_titles_list)} {description}"
 
                     occupations.append((
-                        code,
+                        detailed_code,
                         title,
                         description,
                         minor_code,
@@ -155,7 +142,7 @@ def import_data():
                         searchable_text
                     ))
                 except Exception as e:
-                    logger.error(f"Error processing occupation {raw_code}: {e}")
+                    logger.error(f"Error processing occupation {code}: {e}")
                     continue
 
             # Insert detailed occupations
