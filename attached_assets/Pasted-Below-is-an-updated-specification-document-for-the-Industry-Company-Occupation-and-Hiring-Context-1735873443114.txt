@@ -1,0 +1,170 @@
+Below is an updated specification document for the Industry, Company, Occupation, and Hiring Context classification flows, reflecting the latest best practices and database schema you’ve built out using O*NET data. This spec focuses on UI/UX design, backend data integration, and fuzzy search requirements to guide the user through all four steps of classification.
+
+Hireway Classification System: UI/UX Specification
+
+1. Overview & Goals
+	1.	Objective: Provide a clear, streamlined interface that guides employers through:
+	•	Industry selection
+	•	Company details (size, stage, location)
+	•	Occupation (SOC code, leveraging O*NET-based data)
+	•	Hiring Scenario/Context (new role, replacement, expansion)
+	2.	Why It Matters:
+	•	Ensures consistent data collection across industries and roles
+	•	Facilitates data-driven trial recommendations
+	•	Reduces user confusion by offering helpful search, context, and fallback options
+	3.	Target Users: Internal teams configuring new hires, recruiters, and HR managers.
+
+2. Data Model & Backend Integration
+
+Hireway now references a Postgres schema aligned with O*NET data:
+	•	soc_major_groups → Top-level classification (e.g., “15-0000: Computer and Mathematical Occupations”)
+	•	soc_minor_groups → Sub-classifications under each major group (e.g., “15-1200: Computer Occupations”)
+	•	soc_detailed_occupations → ~1,016 detailed occupations (e.g., “15-1256.00: Software Developer”) with:
+	•	alternative_titles: text[] array for synonyms
+	•	search_vector: Used for fast full-text or fuzzy search
+	•	description: Additional context from O*NET
+
+Key Points:
+	•	All data is kept up to date with official O*NET releases.
+	•	The “fuzzy search” or full-text index is powered by the search_vector columns, updated via triggers (e.g., update_detailed_occupation_search_vector()).
+
+3. Classification Step 1: Industry
+
+3.1 UI Flow
+	1.	Industry Selection Screen
+	•	Present a short list or search-based picker of major NAICS categories (or broad categories like “Technology,” “Healthcare,” “Manufacturing,” etc.).
+	•	Provide an autocomplete or dropdown so the user can quickly find their industry.
+	•	If industry data is stored in your own DB or from a standard classification, unify the approach (like a table industries with code, displayName, etc.).
+	2.	Edge Cases
+	•	If a user cannot find their exact industry, allow a fallback or “Other” selection with free-text entry.
+	•	Confirmation: “Selected Industry: Healthcare. Is this correct?”
+
+3.2 Data Handling
+	•	Store industry in WizardContext as data.industry.
+	•	Possibly combine or cross-reference with the SOC data if your logic weighs industry-occupation synergy (though they’re separate classification systems).
+
+4. Classification Step 2: Company
+
+4.1 UI Flow
+
+Fields:
+	1.	Company Size (e.g., small, medium, large)
+	2.	Company Stage (startup, scaling, established)
+	3.	Location (optional text input)
+
+	•	Provide short dropdowns for size and stage, plus a free-text field for location.
+	•	This step is minimal—users typically know these attributes offhand.
+
+4.2 Data Handling
+	•	Store in WizardContext as:
+	•	data.companySize
+	•	data.companyStage
+	•	data.location
+
+5. Classification Step 3: Occupation
+
+This is the most complex and critical step, leveraging your soc_major_groups, soc_minor_groups, and soc_detailed_occupations tables.
+
+5.1 UI Flow: Searching & Selecting an Occupation
+	1.	Search Bar (Debounced)
+	•	The user types a job title or partial phrase (e.g., “Software Eng…”).
+	•	A fuzzy search or full-text query runs against search_vector in soc_detailed_occupations.
+	•	The API returns a ranked list of potential matches:
+
+[
+  { 
+    "code": "15-1256.00",
+    "title": "Software Developer",
+    "isAlternative": false
+  },
+  { 
+    "code": "15-1256.00",
+    "title": "Software Engineer",
+    "isAlternative": true
+  }
+]
+
+
+	2.	Results Display
+	•	Show each match in a scrollable list, highlighting:
+	•	Title (whether canonical or alternative)
+	•	SOC Code
+	•	Possibly Major/Minor group context (e.g., “Computer and Mathematical Occupations”).
+	3.	Select & Confirm
+	•	On click, the system sets data.roleCode = "15-1256.00" and data.roleTitle = “Software Engineer”.
+	•	If isAlternative is true, display a note: “This is an alternative title that maps to the same SOC code.”
+	4.	Optional: View Details
+	•	A small “Details” button or expandable accordion can show the full O*NET description or tasks.
+	•	This helps the user confirm they picked the right occupation.
+
+5.2 Additional UX Features
+	1.	Major/Minor Group Browsing
+	•	Provide an accordion to manually browse “15-0000 → 15-1200 → 15-1256.00” if search doesn’t suffice.
+	2.	Alternate Title Highlight
+	•	Emphasize synonyms so users see that multiple job names converge to a single code.
+	3.	No Results / Custom Role
+	•	If the user can’t find anything, let them pick “Custom” and enter a free-text role to store in a separate table or field.
+
+6. Classification Step 4: Hiring Context
+
+6.1 UI Flow
+
+Options (radio or dropdown):
+	•	New Role (first time for this company)
+	•	Replacement (filling an existing position)
+	•	Expansion (adding capacity to an existing team)
+
+6.2 Data Handling
+	•	Store in WizardContext as data.scenario, e.g. new, replacement, or expansion.
+	•	Confirmation step at the end to ensure user has the correct scenario.
+
+7. Putting It All Together in the Wizard
+
+Wizard Flow:
+	1.	Step 1: Industry
+	2.	Step 2: Company (size, stage, location)
+	3.	Step 3: Occupation
+	4.	Step 4: Scenario (hiring context)
+	5.	Generate Trial Plan or Next Step
+
+UI:
+	•	Each step is a WizardStep component with minimal fields.
+	•	Use “Next” and “Previous” buttons.
+	•	Guard against incomplete steps by disabling “Next” until required fields are filled.
+
+8. Technical Implementation Details
+	1.	API Endpoints
+	•	GET /api/soc-detailed-occupations?search={query}
+	•	Implement fuzzy / full-text search on the search_vector column.
+	•	Return JSON with a max limit (e.g., 20) sorted by relevance.
+	•	GET /api/soc-hierarchy
+	•	Optionally return the entire major/minor/detailed structure for manual browsing.
+	2.	Database
+	•	soc_detailed_occupations has triggers to keep search_vector in sync with searchable_text and alternative_titles.
+	•	Ensure that when you insert or update a row, the search_vector is updated so fuzzy searching picks up all synonyms.
+	3.	UI Components
+	•	Debounced Input for occupation search (e.g., 300–500ms delay).
+	•	Autocomplete List with clickable results.
+	•	Confirmation: “Selected Role: Software Engineer (15-1256.00). Is this correct?”
+	4.	Fallback & Logging
+	•	Log user queries that returned zero results to refine synonyms.
+	•	Provide a “Custom Role” path for unusual or emerging titles.
+
+9. Future Enhancements
+	1.	Predictive Autocomplete
+	•	As the user types, show immediate top 5–10 matches in a dropdown.
+	2.	Industry-Occupation Synergy
+	•	Filter or reorder results if the user’s selected industry rarely employs a certain SOC code (optional heuristic).
+	3.	User Feedback Loop
+	•	Collect data on user satisfaction, how often they change roles mid-wizard, etc.
+	•	Adjust synonyms or weighting in the search algorithm accordingly.
+
+10. Summary
+
+This specification integrates the four classification steps (Industry, Company, Occupation, Hiring Context) into a simple wizard while leveraging your O*NET-based Postgres schema for robust occupation searches. Key improvements include:
+	•	Fuzzy / Full-text search across canonical + alternative titles
+	•	Concise, clear step-by-step UI with fallback options
+	•	Accurate data mapping to a single SOC code
+	•	Confirmation prompts ensuring the user is selecting the correct classification
+
+Following these guidelines will yield a seamless user experience that unifies any industry, company detail, occupation, or hiring scenario into a consistent final structure—paving the way for precise, data-driven trial recommendations.
