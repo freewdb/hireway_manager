@@ -37,7 +37,7 @@ def extract_soc_components(code: str) -> tuple:
 
     major_code = f"{clean_code[:2]}-0000"
     minor_code = f"{clean_code[:2]}-{clean_code[2:4]}00"
-    detailed_code = f"{clean_code[:2]}-{clean_code[2:6]}"
+    detailed_code = f"{clean_code[:2]}-{clean_code[2:4]}{clean_code[4:6]}"
 
     return major_code, minor_code, detailed_code
 
@@ -57,7 +57,7 @@ def import_data():
         cur = conn.cursor()
 
         try:
-            # Process major groups
+            # Process major groups first
             logger.info("Processing major groups...")
             major_groups = set()
             for code in occ_data['onetsoc_code']:
@@ -109,7 +109,7 @@ def import_data():
             )
             logger.info(f"Inserted {len(minor_groups)} minor groups")
 
-            # Group alternative titles by code
+            # Process alternative titles
             logger.info("Processing alternative titles...")
             alt_titles_dict = {}
             for _, row in alt_titles.iterrows():
@@ -118,41 +118,42 @@ def import_data():
                     alt_titles_dict[code] = []
                 alt_titles_dict[code].append(str(row['alternate_title']))
 
-            # Process detailed occupations
+            # Process detailed occupations with alternative titles
             logger.info("Processing detailed occupations...")
-            occupations_dict = {}  # Use dict to ensure unique SOC codes
+            occupations = []
+            seen_codes = set()  # Track unique detailed codes
 
+            # First, process main occupations
             for _, row in occ_data.iterrows():
                 try:
                     code = str(row['onetsoc_code'])
                     _, minor_code, detailed_code = extract_soc_components(code)
 
-                    # Only process if we haven't seen this code before
-                    if detailed_code not in occupations_dict:
-                        title = str(row['title'])
-                        description = str(row['description'])
-                        alt_titles_list = alt_titles_dict.get(code, [])
+                    # Skip if we've already processed this detailed code
+                    if detailed_code in seen_codes:
+                        logger.warning(f"Skipping duplicate detailed code: {detailed_code}")
+                        continue
 
-                        # Create searchable text
-                        searchable_text = f"{title} {' '.join(alt_titles_list)} {description}"
+                    seen_codes.add(detailed_code)
+                    title = str(row['title'])
+                    description = str(row['description'])
+                    alt_titles_list = alt_titles_dict.get(code, [])
 
-                        occupations_dict[detailed_code] = (
-                            detailed_code,
-                            title,
-                            description,
-                            minor_code,
-                            alt_titles_list,
-                            searchable_text
-                        )
-                    else:
-                        logger.warning(f"Duplicate SOC code found: {detailed_code}, skipping...")
+                    # Create searchable text
+                    searchable_text = f"{title} {' '.join(alt_titles_list)} {description}"
+
+                    occupations.append((
+                        detailed_code,
+                        title,
+                        description,
+                        minor_code,
+                        alt_titles_list,
+                        searchable_text
+                    ))
 
                 except Exception as e:
                     logger.error(f"Error processing occupation {code}: {e}")
                     continue
-
-            # Convert dictionary values to list for insert
-            occupations = list(occupations_dict.values())
 
             # Insert detailed occupations
             execute_values(

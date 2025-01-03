@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const CompanyStep = () => {
+export const CompanyStep = () => {
   const { updateData, data } = useWizard();
 
   return (

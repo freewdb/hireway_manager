@@ -31,7 +31,7 @@ interface JobTitle {
   };
 }
 
-const RoleStep = () => {
+export const RoleStep = () => {
   const { updateData, data } = useWizard();
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 300);

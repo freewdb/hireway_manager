@@ -12,7 +12,7 @@ interface Industry {
   displayName: string;
 }
 
-const IndustryStep = () => {
+export const IndustryStep = () => {
   const { updateData, data } = useWizard();
 
   const { data: industries, isLoading } = useQuery<Industry[]>({
