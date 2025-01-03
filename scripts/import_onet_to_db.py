@@ -88,7 +88,7 @@ def import_data():
             # Process major groups
             logger.info("Processing major groups...")
             major_groups = []
-            for code in sorted(set([str(code)[:2] for code in occ_data['code'] if pd.notna(code)])):
+            for code in sorted(set([str(code)[:2] for code in occ_data['onetsoc_code'] if pd.notna(code)])):
                 major_code = code.ljust(7, '0')
                 title = f"Major Group {code}"
                 description = f"SOC Major Group {code}"
@@ -117,7 +117,7 @@ def import_data():
             # Process minor groups
             logger.info("Processing minor groups...")
             minor_groups = []
-            for code in sorted(set([str(code)[:4] for code in occ_data['code'] if pd.notna(code)])):
+            for code in sorted(set([str(code)[:4] for code in occ_data['onetsoc_code'] if pd.notna(code)])):
                 minor_code = code.ljust(7, '0')
                 major_code = code[:2].ljust(7, '0')
                 title = f"Minor Group {code}"
@@ -150,19 +150,19 @@ def import_data():
             logger.info("Processing detailed occupations...")
 
             # Group alternative titles by code
-            alt_titles_dict = alt_titles.groupby('code')['title'].apply(list).to_dict()
+            alt_titles_dict = alt_titles.groupby('onetsoc_code')['alternate_title'].apply(list).to_dict()
 
             # Process each occupation
             occupations = []
             for _, row in occ_data.iterrows():
                 try:
-                    code = preprocess_soc_code(str(row['code']))
+                    code = preprocess_soc_code(str(row['onetsoc_code']))
                     minor_code = str(code)[:4].ljust(7, '0')
                     title = str(row['title'])
                     description = str(row.get('description', ''))
 
                     # Get alternative titles
-                    alt_titles_list = alt_titles_dict.get(row['code'], [])
+                    alt_titles_list = alt_titles_dict.get(row['onetsoc_code'], [])
 
                     # Create searchable text combining all relevant fields
                     searchable_text = f"{title} {' '.join(alt_titles_list)} {description}"
@@ -177,7 +177,7 @@ def import_data():
                         clean_text_for_search(searchable_text)
                     ))
                 except Exception as e:
-                    logger.error(f"Error processing occupation {row.get('code', 'Unknown')}: {e}")
+                    logger.error(f"Error processing occupation {row.get('onetsoc_code', 'Unknown')}: {e}")
                     continue
 
             # Insert detailed occupations
