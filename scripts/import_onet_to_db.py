@@ -1,7 +1,5 @@
-import json
 import pandas as pd
 import logging
-from pathlib import Path
 import os
 from typing import Dict, List
 import psycopg2
@@ -10,8 +8,7 @@ from psycopg2.extras import execute_values
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
@@ -25,159 +22,151 @@ def get_db_connection():
         port=os.environ['PGPORT']
     )
 
-def consolidate_occupation_data(occupations_df: pd.DataFrame, alternative_titles_df: pd.DataFrame) -> List[Dict]:
-    """Consolidate occupation data with alternative titles."""
-    logger.info("Consolidating occupation data...")
+def preprocess_soc_code(code: str) -> str:
+    """Standardize SOC code format."""
+    # Remove any decimal points and ensure proper formatting
+    base_code = code.split('.')[0]
+    if len(base_code) < 7:
+        base_code = base_code.ljust(7, '0')
+    return base_code
 
-    # Log the columns available in each DataFrame
-    logger.info(f"Occupation data columns: {occupations_df.columns.tolist()}")
-    logger.info(f"Alternative titles columns: {alternative_titles_df.columns.tolist()}")
-
-    # Group alternative titles by O*NET-SOC code
-    alt_titles_by_code = {}
-    for code, group in alternative_titles_df.groupby('onetsoc_code'):
-        alt_titles_by_code[code] = group['alternate_title'].tolist()
-
-    # Process each unique SOC code only once
-    consolidated_data = []
-    processed_soc_codes = set()
-
-    for _, row in occupations_df.iterrows():
-        soc_code = row['onetsoc_code'].split('.')[0]  # Remove decimal part if present
-
-        # Skip if we've already processed this SOC code
-        if soc_code in processed_soc_codes:
-            continue
-
-        processed_soc_codes.add(soc_code)
-
-        # Get alternative titles for this occupation
-        alt_titles = alt_titles_by_code.get(row['onetsoc_code'], [])
-
-        occupation = {
-            'code': soc_code,
-            'title': row['title'],
-            'description': row.get('description', ''),
-            'minor_group_code': soc_code[:4],
-            'alternative_titles': alt_titles
-        }
-        consolidated_data.append(occupation)
-
-    logger.info(f"Consolidated {len(consolidated_data)} occupations with their alternative titles")
-    return consolidated_data
-
-def import_data_to_db():
-    """Import the CSV data into PostgreSQL database."""
-    logger.info("Starting database import...")
+def import_data():
+    """Import the O*NET data into PostgreSQL database."""
+    logger.info("Starting data import process...")
 
     try:
-        # Read CSV files from attached_assets
-        logger.info("Reading data files...")
-        occupations_df = pd.read_csv('attached_assets/occupation_data.csv')
-        alternative_titles_df = pd.read_csv('attached_assets/alternate_titles.csv')
+        # Read the CSV files
+        occ_data = pd.read_csv('attached_assets/occupation_data.csv')
+        alt_titles = pd.read_csv('attached_assets/alternate_titles.csv')
 
-        logger.info(f"Found {len(occupations_df)} occupations")
-        logger.info(f"Found {len(alternative_titles_df)} alternative titles")
-
-        # Consolidate data
-        consolidated_occupations = consolidate_occupation_data(
-            occupations_df,
-            alternative_titles_df
-        )
+        logger.info(f"Read {len(occ_data)} occupations and {len(alt_titles)} alternative titles")
 
         conn = get_db_connection()
         cur = conn.cursor()
 
         try:
-            # Extract and import major groups
-            logger.info("Importing major groups...")
+            # Create major groups
+            logger.info("Processing major groups...")
             major_groups = []
-            for code in sorted(set(occupations_df['onetsoc_code'].str[:2])):
-                sample_occ = occupations_df[occupations_df['onetsoc_code'].str.startswith(code)].iloc[0]
-                title = f"{sample_occ['title'].split(',')[0]} Occupations"
+            for code in sorted(set(occ_data['onetsoc_code'].str[:2])):
+                major_code = code.ljust(7, '0')
                 major_groups.append({
-                    'code': code,
-                    'title': title,
-                    'description': f"Major group for {title.lower()}"
+                    'code': major_code,
+                    'title': f"{code} - Major Group",
+                    'description': f"Major occupational group {code}",
                 })
 
             execute_values(
                 cur,
                 """
-                INSERT INTO soc_major_groups (code, title, description)
-                VALUES %s
-                ON CONFLICT (code) DO UPDATE SET
-                    title = EXCLUDED.title,
-                    description = EXCLUDED.description
-                """,
-                [(g['code'], g['title'], g['description']) for g in major_groups]
-            )
-            logger.info(f"Imported {len(major_groups)} major groups")
-
-            # Extract and import minor groups
-            logger.info("Importing minor groups...")
-            minor_groups = []
-            for code in sorted(set(occupations_df['onetsoc_code'].str[:4])):
-                sample_occ = occupations_df[occupations_df['onetsoc_code'].str.startswith(code)].iloc[0]
-                title = f"{sample_occ['title'].split(',')[0]} Specialists"
-                minor_groups.append({
-                    'code': code,
-                    'title': title,
-                    'description': f"Specialized group for {title.lower()}",
-                    'major_group_code': code[:2]
-                })
-
-            execute_values(
-                cur,
-                """
-                INSERT INTO soc_minor_groups (code, title, description, major_group_code)
+                INSERT INTO soc_major_groups (code, title, description, search_vector)
                 VALUES %s
                 ON CONFLICT (code) DO UPDATE SET
                     title = EXCLUDED.title,
                     description = EXCLUDED.description,
-                    major_group_code = EXCLUDED.major_group_code
+                    search_vector = to_tsvector('english', EXCLUDED.title || ' ' || COALESCE(EXCLUDED.description, ''))
                 """,
-                [(g['code'], g['title'], g['description'], g['major_group_code']) 
-                 for g in minor_groups]
+                [(
+                    g['code'],
+                    g['title'],
+                    g['description'],
+                    f"to_tsvector('english', {g['title']} {g['description']})"
+                ) for g in major_groups]
             )
-            logger.info(f"Imported {len(minor_groups)} minor groups")
 
-            # Import detailed occupations first without search vector
-            logger.info(f"Importing {len(consolidated_occupations)} detailed occupations...")
+            # Create minor groups
+            logger.info("Processing minor groups...")
+            minor_groups = []
+            for code in sorted(set(occ_data['onetsoc_code'].str[:4])):
+                minor_code = code.ljust(7, '0')
+                major_code = code[:2].ljust(7, '0')
+                minor_groups.append({
+                    'code': minor_code,
+                    'major_group_code': major_code,
+                    'title': f"{code} - Minor Group",
+                    'description': f"Minor occupational group {code}",
+                })
+
+            execute_values(
+                cur,
+                """
+                INSERT INTO soc_minor_groups (code, major_group_code, title, description, search_vector)
+                VALUES %s
+                ON CONFLICT (code) DO UPDATE SET
+                    major_group_code = EXCLUDED.major_group_code,
+                    title = EXCLUDED.title,
+                    description = EXCLUDED.description,
+                    search_vector = to_tsvector('english', EXCLUDED.title || ' ' || COALESCE(EXCLUDED.description, ''))
+                """,
+                [(
+                    g['code'],
+                    g['major_group_code'],
+                    g['title'],
+                    g['description'],
+                    f"to_tsvector('english', {g['title']} {g['description']})"
+                ) for g in minor_groups]
+            )
+
+            # Process detailed occupations
+            logger.info("Processing detailed occupations...")
+
+            # Group alternative titles by O*NET-SOC code
+            alt_titles_dict = alt_titles.groupby('onetsoc_code')['alternate_title'].apply(list).to_dict()
+
+            # Process each occupation
+            occupations = []
+            for _, row in occ_data.iterrows():
+                code = preprocess_soc_code(row['onetsoc_code'])
+                minor_code = code[:4].ljust(7, '0')
+
+                # Get alternative titles
+                alt_titles_list = alt_titles_dict.get(row['onetsoc_code'], [])
+
+                # Create searchable text combining all relevant fields
+                searchable_text = f"{row['title']} {' '.join(alt_titles_list)}"
+                if 'description' in row:
+                    searchable_text += f" {row['description']}"
+
+                occupations.append({
+                    'code': code,
+                    'title': row['title'],
+                    'description': row.get('description', ''),
+                    'minor_group_code': minor_code,
+                    'alternative_titles': alt_titles_list,
+                    'searchable_text': searchable_text
+                })
+
+            # Insert detailed occupations
             execute_values(
                 cur,
                 """
                 INSERT INTO soc_detailed_occupations 
-                (code, title, description, minor_group_code, alternative_titles)
+                (code, title, description, minor_group_code, alternative_titles, searchable_text, search_vector)
                 VALUES %s
                 ON CONFLICT (code) DO UPDATE SET
                     title = EXCLUDED.title,
                     description = EXCLUDED.description,
                     minor_group_code = EXCLUDED.minor_group_code,
-                    alternative_titles = EXCLUDED.alternative_titles
+                    alternative_titles = EXCLUDED.alternative_titles,
+                    searchable_text = EXCLUDED.searchable_text,
+                    search_vector = to_tsvector('english', 
+                        EXCLUDED.title || ' ' || 
+                        COALESCE(EXCLUDED.description, '') || ' ' || 
+                        COALESCE(array_to_string(EXCLUDED.alternative_titles, ' '), '')
+                    )
                 """,
                 [(
                     o['code'],
                     o['title'],
                     o['description'],
                     o['minor_group_code'],
-                    o['alternative_titles']
-                ) for o in consolidated_occupations]
+                    o['alternative_titles'],
+                    o['searchable_text']
+                ) for o in occupations]
             )
 
-            # Update search vectors separately
-            cur.execute("""
-                UPDATE soc_detailed_occupations
-                SET search_vector = to_tsvector('english',
-                    title || ' ' ||
-                    COALESCE(description, '') || ' ' ||
-                    COALESCE(array_to_string(alternative_titles, ' '), '')
-                );
-            """)
-
-            logger.info(f"Successfully imported {len(consolidated_occupations)} detailed occupations")
             conn.commit()
-            logger.info("Database import completed successfully")
+            logger.info("Successfully imported all data")
 
         except Exception as e:
             conn.rollback()
@@ -192,4 +181,4 @@ def import_data_to_db():
         raise
 
 if __name__ == "__main__":
-    import_data_to_db()
+    import_data()

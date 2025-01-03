@@ -5,19 +5,21 @@ import { sql } from "drizzle-orm";
 // SOC Classification tables
 export const socMajorGroups = pgTable('soc_major_groups', {
   id: serial('id').primaryKey(),
-  code: varchar('code', { length: 2 }).notNull().unique(),
+  code: varchar('code', { length: 7 }).notNull().unique(),
   title: text('title').notNull(),
   description: text('description'),
+  searchVector: text('search_vector')
 });
 
 export const socMinorGroups = pgTable('soc_minor_groups', {
   id: serial('id').primaryKey(),
-  code: varchar('code', { length: 4 }).notNull().unique(),
-  majorGroupCode: varchar('major_group_code', { length: 2 })
+  code: varchar('code', { length: 7 }).notNull().unique(),
+  majorGroupCode: varchar('major_group_code', { length: 7 })
     .notNull()
     .references(() => socMajorGroups.code),
   title: text('title').notNull(),
   description: text('description'),
+  searchVector: text('search_vector')
 });
 
 export const socDetailedOccupations = pgTable('soc_detailed_occupations', {
@@ -25,13 +27,13 @@ export const socDetailedOccupations = pgTable('soc_detailed_occupations', {
   code: varchar('code', { length: 7 }).notNull().unique(),
   title: text('title').notNull(),
   description: text('description'),
-  minorGroupCode: varchar('minor_group_code', { length: 4 })
+  minorGroupCode: varchar('minor_group_code', { length: 7 })
     .notNull()
     .references(() => socMinorGroups.code),
   alternativeTitles: text('alternative_titles').array(),
-  searchableText: text('searchable_text').notNull().default(''),
-  searchVector: text('search_vector').notNull(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  searchableText: text('searchable_text'),
+  searchVector: text('search_vector'),
+  updatedAt: timestamp('updated_at').defaultNow()
 });
 
 // Create schemas for validation
@@ -53,3 +55,10 @@ export type InsertSocMinorGroup = typeof socMinorGroups.$inferInsert;
 
 export type SocDetailedOccupation = typeof socDetailedOccupations.$inferSelect;
 export type InsertSocDetailedOccupation = typeof socDetailedOccupations.$inferInsert;
+
+// Create indexes after tables are created
+sql`
+  CREATE INDEX IF NOT EXISTS soc_major_groups_search_idx ON soc_major_groups USING gin(search_vector);
+  CREATE INDEX IF NOT EXISTS soc_minor_groups_search_idx ON soc_minor_groups USING gin(search_vector);
+  CREATE INDEX IF NOT EXISTS soc_detailed_occupations_search_idx ON soc_detailed_occupations USING gin(search_vector);
+`.execute;
