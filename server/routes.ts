@@ -9,14 +9,19 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/job-titles", async (req, res) => {
     try {
       const searchTerm = req.query.search as string | undefined;
-      console.log('Search request:', { searchTerm }); // Debug log
+      console.log('Search request received:', { 
+        searchTerm,
+        queryParams: req.query,
+        path: req.path
+      });
 
       if (!searchTerm || searchTerm.length < 2) {
         console.log('Search term too short or undefined');
         return res.json([]);
       }
 
-      // Simple text search first
+      // First try an exact match with ILIKE
+      console.log('Attempting exact match search for:', searchTerm);
       const dbResults = await db.select({
         code: socDetailedOccupations.code,
         title: socDetailedOccupations.title,
@@ -26,23 +31,22 @@ export function registerRoutes(app: Express): Server {
         searchableText: socDetailedOccupations.searchableText,
       })
       .from(socDetailedOccupations)
-      .where(sql`${socDetailedOccupations.searchableText} ILIKE ${`%${searchTerm}%`}`)
-      .limit(100);
+      .where(sql`${socDetailedOccupations.searchableText} ILIKE ${`%${searchTerm}%`}`);
 
       console.log('Initial database query results:', { 
         count: dbResults.length,
         searchTerm,
-        firstResult: dbResults[0] ? { 
+        firstResult: dbResults[0] ? {
           code: dbResults[0].code,
           title: dbResults[0].title,
-          searchableText: dbResults[0].searchableText?.substring(0, 100) + '...' 
+          searchableText: dbResults[0].searchableText?.substring(0, 100)
         } : null
       });
 
-      // If no results, try searching individual words
+      // If no results, try word-by-word search
       if (!dbResults.length) {
         const words = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
-        console.log('Trying word-by-word search with:', { words });
+        console.log('No exact matches, trying word-by-word search with:', words);
 
         const conditions = words.map(word => 
           sql`${socDetailedOccupations.searchableText} ILIKE ${`%${word}%`}`
@@ -57,23 +61,23 @@ export function registerRoutes(app: Express): Server {
           searchableText: socDetailedOccupations.searchableText,
         })
         .from(socDetailedOccupations)
-        .where(sql`(${sql.join(conditions, sql` OR `)})`)
-        .limit(100);
+        .where(sql`(${sql.join(conditions, sql` OR `)})`);
 
-        dbResults.push(...results);
-        console.log('After word-by-word search:', { 
-          count: dbResults.length,
+        console.log('Word-by-word search results:', {
+          count: results.length,
           words,
           firstResult: results[0] ? {
             code: results[0].code,
             title: results[0].title,
-            searchableText: results[0].searchableText?.substring(0, 100) + '...'
+            searchableText: results[0].searchableText?.substring(0, 100)
           } : null
         });
+
+        dbResults.push(...results);
       }
 
       if (!dbResults.length) {
-        console.log('No results found after all database queries');
+        console.log('No results found in database');
         return res.json([]);
       }
 
@@ -121,41 +125,39 @@ export function registerRoutes(app: Express): Server {
         return items;
       });
 
-      console.log('Before fuzzy search:', { 
-        count: searchItems.length,
-        sampleTitles: searchItems.slice(0, 3).map(item => item.title)
-      });
-
-      // Apply fuzzy search with a more lenient threshold
+      // Use very lenient fuzzy search settings
       const fuse = new Fuse(searchItems, {
-        keys: ['title'],
+        keys: ['title', 'description'],
         includeScore: true,
-        threshold: 0.8, // More lenient threshold
+        threshold: 0.9, // Very lenient matching
         minMatchCharLength: 2,
-        distance: 100 // Increase distance for better matching
+        distance: 200, // Increased distance for better matching
+        useExtendedSearch: true
       });
 
       const fuseResults = fuse.search(searchTerm);
-      console.log('After fuzzy search:', { 
-        count: fuseResults.length,
+
+      console.log('Fuzzy search results:', {
+        searchItemsCount: searchItems.length,
+        fuseResultsCount: fuseResults.length,
         topResults: fuseResults.slice(0, 3).map(r => ({
           title: r.item.title,
           score: r.score
         }))
       });
 
-      // Sort by relevance and limit results
+      // Return all results if we have very few, otherwise limit to top 20
       const finalResults = fuseResults
         .map(result => ({
           ...result.item,
           rank: result.item.rank * (1 - (result.score || 0))
         }))
         .sort((a, b) => b.rank - a.rank)
-        .slice(0, 20);
+        .slice(0, Math.min(fuseResults.length, 20));
 
-      console.log('Final results:', {
+      console.log('Returning results:', {
         count: finalResults.length,
-        topTitles: finalResults.slice(0, 3).map(r => r.title)
+        firstResult: finalResults[0]
       });
 
       res.json(finalResults);
