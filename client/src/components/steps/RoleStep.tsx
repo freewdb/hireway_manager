@@ -14,36 +14,20 @@ import {
 } from "@/components/ui/card";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface JobTitle {
-  code: string;
-  title: string;
-  isAlternative: boolean;
-  rank?: number;
-  description?: string;
-  majorGroup?: {
-    code: string;
-    title: string;
-  };
-  minorGroup?: {
-    code: string;
-    title: string;
-  };
-}
+import type { JobTitleSearchResult } from "@db/schema";
 
 export const RoleStep = () => {
   const { updateData, data } = useWizard();
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 300);
-  const [selectedTitle, setSelectedTitle] = useState<JobTitle | null>(null);
+  const [selectedTitle, setSelectedTitle] = useState<JobTitleSearchResult | null>(null);
 
-  const { data: titles = [], isLoading, error } = useQuery<JobTitle[]>({
+  const { data: titles, isLoading, error } = useQuery<JobTitleSearchResult[]>({
     queryKey: ["/api/job-titles", { search: debouncedSearch }],
     enabled: debouncedSearch.length >= 2,
-    // Prevent refetching on window focus to avoid UI flashing
     refetchOnWindowFocus: false,
-    // Keep previous data until new data arrives
-    keepPreviousData: true
+    placeholderData: [],
+    select: (data) => data || []
   });
 
   const handleSearch = (term: string) => {
@@ -55,7 +39,7 @@ export const RoleStep = () => {
     }
   };
 
-  const handleSelect = (jobTitle: JobTitle) => {
+  const handleSelect = (jobTitle: JobTitleSearchResult) => {
     setSelectedTitle(jobTitle);
     setSearchTerm(jobTitle.title);
     updateData("role", jobTitle.code);
