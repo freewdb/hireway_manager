@@ -13,8 +13,7 @@ const initialData = {
 export default function OccupationSearch() {
   return (
     <WizardProvider initialData={initialData} onComplete={() => {}}>
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-6">Occupation Search</h1>
+      <div>
         <RoleStep />
       </div>
     </WizardProvider>
