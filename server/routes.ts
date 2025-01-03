@@ -9,6 +9,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/job-titles", async (req, res) => {
     try {
       const searchTerm = req.query.search as string | undefined;
+      console.log('Search term:', searchTerm); // Debug log
 
       if (!searchTerm || searchTerm.length < 2) {
         return res.json([]);
@@ -19,8 +20,10 @@ export function registerRoutes(app: Express): Server {
         .trim()
         .split(/\s+/)
         .filter(Boolean)
-        .map(term => term.replace(/[^\w\s]/g, '')) // Remove special characters
-        .join(' | '); // Use OR operator for broader matches
+        .map(term => term.replace(/[^\w\s]/g, ''))
+        .join(' | ');
+
+      console.log('Processed search terms:', searchTerms); // Debug log
 
       const dbResults = await db.select({
         code: socDetailedOccupations.code,
@@ -28,12 +31,15 @@ export function registerRoutes(app: Express): Server {
         description: socDetailedOccupations.description,
         alternativeTitles: socDetailedOccupations.alternativeTitles,
         minorGroupCode: socDetailedOccupations.minorGroupCode,
-        rank: sql<number>`ts_rank_cd(search_vector, to_tsquery('english', ${searchTerms}))`
+        searchVector: socDetailedOccupations.searchVector,
+        rank: sql<number>`ts_rank_cd(search_vector, plainto_tsquery('english', ${searchTerms}))`
       })
       .from(socDetailedOccupations)
-      .where(sql`search_vector @@ to_tsquery('english', ${searchTerms})`)
-      .orderBy(sql`ts_rank_cd(search_vector, to_tsquery('english', ${searchTerms})) DESC`)
+      .where(sql`search_vector @@ plainto_tsquery('english', ${searchTerms})`)
+      .orderBy(sql`ts_rank_cd(search_vector, plainto_tsquery('english', ${searchTerms})) DESC`)
       .limit(100);
+
+      console.log('Initial DB results count:', dbResults.length); // Debug log
 
       if (!dbResults.length) {
         return res.json([]);
@@ -81,16 +87,20 @@ export function registerRoutes(app: Express): Server {
         return items;
       });
 
+      console.log('Total searchable items:', searchItems.length); // Debug log
+
       // Step 4: Apply fuzzy search
       const fuse = new Fuse(searchItems, {
         keys: ['title'],
         includeScore: true,
-        threshold: 0.6, // More permissive matching
+        threshold: 0.6,
         distance: 200,
         minMatchCharLength: 2
       });
 
       const fuseResults = fuse.search(searchTerm);
+      console.log('Fuzzy search results count:', fuseResults.length); // Debug log
+
       const finalResults = fuseResults
         .map(result => ({
           ...result.item,
@@ -98,6 +108,8 @@ export function registerRoutes(app: Express): Server {
         }))
         .sort((a, b) => b.rank - a.rank)
         .slice(0, 20);
+
+      console.log('Final results count:', finalResults.length); // Debug log
 
       res.json(finalResults);
     } catch (error) {
