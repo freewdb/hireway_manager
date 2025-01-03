@@ -120,30 +120,39 @@ def import_data():
 
             # Process detailed occupations
             logger.info("Processing detailed occupations...")
-            occupations = []
+            occupations_dict = {}  # Use dict to ensure unique SOC codes
+
             for _, row in occ_data.iterrows():
                 try:
                     code = str(row['onetsoc_code'])
                     _, minor_code, detailed_code = extract_soc_components(code)
 
-                    title = str(row['title'])
-                    description = str(row['description'])
-                    alt_titles_list = alt_titles_dict.get(code, [])
+                    # Only process if we haven't seen this code before
+                    if detailed_code not in occupations_dict:
+                        title = str(row['title'])
+                        description = str(row['description'])
+                        alt_titles_list = alt_titles_dict.get(code, [])
 
-                    # Create searchable text
-                    searchable_text = f"{title} {' '.join(alt_titles_list)} {description}"
+                        # Create searchable text
+                        searchable_text = f"{title} {' '.join(alt_titles_list)} {description}"
 
-                    occupations.append((
-                        detailed_code,
-                        title,
-                        description,
-                        minor_code,
-                        alt_titles_list,
-                        searchable_text
-                    ))
+                        occupations_dict[detailed_code] = (
+                            detailed_code,
+                            title,
+                            description,
+                            minor_code,
+                            alt_titles_list,
+                            searchable_text
+                        )
+                    else:
+                        logger.warning(f"Duplicate SOC code found: {detailed_code}, skipping...")
+
                 except Exception as e:
                     logger.error(f"Error processing occupation {code}: {e}")
                     continue
+
+            # Convert dictionary values to list for insert
+            occupations = list(occupations_dict.values())
 
             # Insert detailed occupations
             execute_values(
