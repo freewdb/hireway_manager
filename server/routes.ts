@@ -9,20 +9,13 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/job-titles", async (req, res) => {
     try {
       const searchTerm = req.query.search as string | undefined;
+      console.log('Search request:', { searchTerm }); // Debug log
 
       if (!searchTerm || searchTerm.length < 2) {
         return res.json([]);
       }
 
-      // Step 1: Initial PostgreSQL search using ts_vector
-      const processedSearch = searchTerm
-        .toLowerCase()
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .map(term => term + ':*') // Add prefix matching
-        .join(' & ');  // Use AND operator for multiple terms
-
+      // Simple text search first
       const dbResults = await db.select({
         code: socDetailedOccupations.code,
         title: socDetailedOccupations.title,
@@ -30,36 +23,41 @@ export function registerRoutes(app: Express): Server {
         alternativeTitles: socDetailedOccupations.alternativeTitles,
         minorGroupCode: socDetailedOccupations.minorGroupCode,
         searchableText: socDetailedOccupations.searchableText,
-        rank: sql<number>`ts_rank_cd(${socDetailedOccupations.searchVector}, to_tsquery('english', ${processedSearch}))`
       })
       .from(socDetailedOccupations)
-      .where(sql`${socDetailedOccupations.searchVector} @@ to_tsquery('english', ${processedSearch})`)
-      .orderBy(sql`ts_rank_cd(${socDetailedOccupations.searchVector}, to_tsquery('english', ${processedSearch})) DESC`)
+      .where(sql`${socDetailedOccupations.searchableText} ILIKE ${`%${searchTerm}%`}`)
       .limit(100);
 
+      console.log('Initial results:', { count: dbResults.length }); // Debug log
+
+      // If no results, try searching individual words
       if (!dbResults.length) {
-        // Fallback to more lenient search if no exact matches
-        const fallbackResults = await db.select({
+        const words = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+        const conditions = words.map(word => 
+          sql`${socDetailedOccupations.searchableText} ILIKE ${`%${word}%`}`
+        );
+
+        const results = await db.select({
           code: socDetailedOccupations.code,
           title: socDetailedOccupations.title,
           description: socDetailedOccupations.description,
           alternativeTitles: socDetailedOccupations.alternativeTitles,
           minorGroupCode: socDetailedOccupations.minorGroupCode,
           searchableText: socDetailedOccupations.searchableText,
-          rank: sql<number>`1`
         })
         .from(socDetailedOccupations)
-        .where(sql`${socDetailedOccupations.searchableText} ILIKE ${`%${searchTerm}%`}`)
+        .where(sql`(${sql.join(conditions, sql` OR `)})`)
         .limit(100);
 
-        dbResults.push(...fallbackResults);
+        dbResults.push(...results);
+        console.log('After word search:', { count: dbResults.length }); // Debug log
       }
 
       if (!dbResults.length) {
         return res.json([]);
       }
 
-      // Step 2: Get related group information
+      // Get related group information
       const minorGroupCodes = Array.from(new Set(dbResults.map(r => r.minorGroupCode)));
       const relatedMinorGroups = await db.select()
         .from(socMinorGroups)
@@ -70,13 +68,14 @@ export function registerRoutes(app: Express): Server {
         .from(socMajorGroups)
         .where(sql`${socMajorGroups.code} = ANY(${majorGroupCodes})`);
 
-      // Step 3: Create searchable items including alternative titles
+      // Create searchable items including alternative titles
       const searchItems = dbResults.flatMap(result => {
+        // Main title
         const items = [{
           code: result.code,
           title: result.title,
           isAlternative: false,
-          rank: result.rank,
+          rank: 1,
           description: result.description || undefined,
           majorGroup: relatedMajorGroups.find(mg => 
             relatedMinorGroups.some(rg => 
@@ -86,13 +85,13 @@ export function registerRoutes(app: Express): Server {
           minorGroup: relatedMinorGroups.find(mg => mg.code === result.minorGroupCode)
         }];
 
-        // Add alternative titles as separate results with slightly lower rank
+        // Alternative titles
         if (result.alternativeTitles?.length) {
           items.push(...result.alternativeTitles.map(altTitle => ({
             code: result.code,
             title: altTitle,
             isAlternative: true,
-            rank: result.rank * 0.9, // Slightly lower rank for alternative titles
+            rank: 0.9,
             description: result.description || undefined,
             majorGroup: items[0].majorGroup,
             minorGroup: items[0].minorGroup
@@ -102,7 +101,9 @@ export function registerRoutes(app: Express): Server {
         return items;
       });
 
-      // Step 4: Apply fuzzy search for final ranking
+      console.log('Before fuzzy search:', { count: searchItems.length }); // Debug log
+
+      // Apply fuzzy search for final ranking
       const fuse = new Fuse(searchItems, {
         keys: ['title'],
         includeScore: true,
@@ -111,8 +112,9 @@ export function registerRoutes(app: Express): Server {
       });
 
       const fuseResults = fuse.search(searchTerm);
+      console.log('After fuzzy search:', { count: fuseResults.length }); // Debug log
 
-      // Combine database ranking with fuzzy search score
+      // Sort by relevance and limit results
       const finalResults = fuseResults
         .map(result => ({
           ...result.item,
