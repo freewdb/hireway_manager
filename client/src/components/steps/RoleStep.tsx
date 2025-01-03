@@ -16,28 +16,36 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface JobTitle {
-  title: string;
   code: string;
+  title: string;
   isAlternative: boolean;
   rank?: number;
+  description?: string;
+  majorGroup?: {
+    code: string;
+    title: string;
+  };
+  minorGroup?: {
+    code: string;
+    title: string;
+  };
 }
 
 const RoleStep = () => {
   const { updateData, data } = useWizard();
   const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearch = useDebounce(searchTerm, 500); // Increased debounce time to 500ms
+  const debouncedSearch = useDebounce(searchTerm, 500);
 
   const [selectedTitle, setSelectedTitle] = useState<JobTitle | null>(
     data.role ? { title: data.role, code: data.role, isAlternative: false } : null
   );
 
-  // Fetch job titles with debounced search
-  const { data: titles, isLoading, error } = useQuery<JobTitle[]>({
+  const { data: titles = [], isLoading, error } = useQuery<JobTitle[]>({
     queryKey: ["/api/job-titles", { search: debouncedSearch }],
-    enabled: true, // Always keep the query enabled
-    staleTime: 30000, // Cache results for 30 seconds
-    cacheTime: 5 * 60 * 1000, // Keep cache for 5 minutes
-    retry: 2 // Retry failed requests twice
+    enabled: debouncedSearch.length >= 2,
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
+    retry: 2
   });
 
   const handleSearch = (term: string) => {
@@ -83,6 +91,14 @@ const RoleStep = () => {
                         Alternative title for standard occupation
                       </div>
                     )}
+                    {selectedTitle.description && (
+                      <div className="text-sm mt-2">{selectedTitle.description}</div>
+                    )}
+                    {selectedTitle.majorGroup && (
+                      <div className="text-sm text-muted-foreground">
+                        Major Group: {selectedTitle.majorGroup.title}
+                      </div>
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -102,7 +118,7 @@ const RoleStep = () => {
                   Error loading results. Please try again.
                 </div>
               ) : (
-                titles && titles.length > 0 ? (
+                titles.length > 0 ? (
                   <ScrollArea className="h-[300px] border rounded-md">
                     <div className="p-2 space-y-2">
                       {titles.map((jobTitle) => (

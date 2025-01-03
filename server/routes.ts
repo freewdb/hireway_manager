@@ -93,12 +93,12 @@ export function registerRoutes(app: Express): Server {
       .limit(50);
 
       // Step 2: Get related group information
-      const minorGroupCodes = [...new Set(dbResults.map(r => r.minorGroupCode))];
+      const minorGroupCodes = Array.from(new Set(dbResults.map(r => r.minorGroupCode)));
       const relatedMinorGroups = await db.select()
         .from(socMinorGroups)
         .where(sql`code = ANY(${minorGroupCodes})`);
 
-      const majorGroupCodes = [...new Set(relatedMinorGroups.map(r => r.majorGroupCode))];
+      const majorGroupCodes = Array.from(new Set(relatedMinorGroups.map(r => r.majorGroupCode)));
       const relatedMajorGroups = await db.select()
         .from(socMajorGroups)
         .where(sql`code = ANY(${majorGroupCodes})`);
