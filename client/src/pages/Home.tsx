@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { WizardProvider } from "@/components/wizard/WizardContext";
-import IndustryStep from "@/components/steps/IndustryStep";
-import CompanyStep from "@/components/steps/CompanyStep";
-import RoleStep from "@/components/steps/RoleStep";
-import ScenarioStep from "@/components/steps/ScenarioStep";
-import TrialStructure from "@/components/TrialStructure";
+
+import { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { WizardProvider } from '@/components/wizard/WizardContext';
+import { IndustryStep } from '@/components/steps/IndustryStep';
+import { CompanyStep } from '@/components/steps/CompanyStep';
+import { RoleStep } from '@/components/steps/RoleStep';
+import { ScenarioStep } from '@/components/steps/ScenarioStep';
+import { TrialStructure } from '@/components/TrialStructure';
 
 const Home = () => {
   const [showResults, setShowResults] = useState(false);
@@ -24,18 +25,16 @@ const Home = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <WizardProvider onComplete={() => setShowResults(true)}>
-              {!showResults ? (
-                <>
-                  <IndustryStep />
-                  <CompanyStep />
-                  <RoleStep />
-                  <ScenarioStep />
-                </>
-              ) : (
-                <TrialStructure />
-              )}
-            </WizardProvider>
+            {!showResults ? (
+              <WizardProvider onComplete={() => setShowResults(true)}>
+                <IndustryStep />
+                <CompanyStep />
+                <RoleStep />
+                <ScenarioStep />
+              </WizardProvider>
+            ) : (
+              <TrialStructure />
+            )}
           </CardContent>
         </Card>
       </div>
