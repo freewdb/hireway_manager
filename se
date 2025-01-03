@@ -1,0 +1,9 @@
+ id |                     name                      | naics_code |                                        description                                         |          display_name           
+----+-----------------------------------------------+------------+--------------------------------------------------------------------------------------------+---------------------------------
+  1 | Agriculture, Forestry, Fishing and Hunting    | 11         | Companies involved in farming, ranching, forestry, fishing, and related support activities | Agriculture & Natural Resources
+  2 | Mining, Quarrying, and Oil and Gas Extraction | 21         | Companies that extract naturally occurring minerals and resources                          | Mining & Energy Extraction
+  3 | Utilities                                     | 22         | Companies providing electric power, natural gas, steam, water, and sewage removal          | Utilities & Energy
+  4 | Construction                                  | 23         | Companies involved in building construction, engineering projects, and specialty trades    | Construction
+  5 | Manufacturing                                 | 31-33      | Companies that transform materials into new products                                       | Manufacturing
+(5 rows)
+
