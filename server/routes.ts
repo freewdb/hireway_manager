@@ -12,6 +12,7 @@ export function registerRoutes(app: Express): Server {
       console.log('Search request:', { searchTerm }); // Debug log
 
       if (!searchTerm || searchTerm.length < 2) {
+        console.log('Search term too short or undefined');
         return res.json([]);
       }
 
@@ -28,11 +29,21 @@ export function registerRoutes(app: Express): Server {
       .where(sql`${socDetailedOccupations.searchableText} ILIKE ${`%${searchTerm}%`}`)
       .limit(100);
 
-      console.log('Initial results:', { count: dbResults.length }); // Debug log
+      console.log('Initial database query results:', { 
+        count: dbResults.length,
+        searchTerm,
+        firstResult: dbResults[0] ? { 
+          code: dbResults[0].code,
+          title: dbResults[0].title,
+          searchableText: dbResults[0].searchableText?.substring(0, 100) + '...' 
+        } : null
+      });
 
       // If no results, try searching individual words
       if (!dbResults.length) {
         const words = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+        console.log('Trying word-by-word search with:', { words });
+
         const conditions = words.map(word => 
           sql`${socDetailedOccupations.searchableText} ILIKE ${`%${word}%`}`
         );
@@ -50,10 +61,19 @@ export function registerRoutes(app: Express): Server {
         .limit(100);
 
         dbResults.push(...results);
-        console.log('After word search:', { count: dbResults.length }); // Debug log
+        console.log('After word-by-word search:', { 
+          count: dbResults.length,
+          words,
+          firstResult: results[0] ? {
+            code: results[0].code,
+            title: results[0].title,
+            searchableText: results[0].searchableText?.substring(0, 100) + '...'
+          } : null
+        });
       }
 
       if (!dbResults.length) {
+        console.log('No results found after all database queries');
         return res.json([]);
       }
 
@@ -101,18 +121,28 @@ export function registerRoutes(app: Express): Server {
         return items;
       });
 
-      console.log('Before fuzzy search:', { count: searchItems.length }); // Debug log
+      console.log('Before fuzzy search:', { 
+        count: searchItems.length,
+        sampleTitles: searchItems.slice(0, 3).map(item => item.title)
+      });
 
-      // Apply fuzzy search for final ranking
+      // Apply fuzzy search with a more lenient threshold
       const fuse = new Fuse(searchItems, {
         keys: ['title'],
         includeScore: true,
-        threshold: 0.6,
-        minMatchCharLength: 2
+        threshold: 0.8, // More lenient threshold
+        minMatchCharLength: 2,
+        distance: 100 // Increase distance for better matching
       });
 
       const fuseResults = fuse.search(searchTerm);
-      console.log('After fuzzy search:', { count: fuseResults.length }); // Debug log
+      console.log('After fuzzy search:', { 
+        count: fuseResults.length,
+        topResults: fuseResults.slice(0, 3).map(r => ({
+          title: r.item.title,
+          score: r.score
+        }))
+      });
 
       // Sort by relevance and limit results
       const finalResults = fuseResults
@@ -122,6 +152,11 @@ export function registerRoutes(app: Express): Server {
         }))
         .sort((a, b) => b.rank - a.rank)
         .slice(0, 20);
+
+      console.log('Final results:', {
+        count: finalResults.length,
+        topTitles: finalResults.slice(0, 3).map(r => r.title)
+      });
 
       res.json(finalResults);
     } catch (error) {
