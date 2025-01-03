@@ -14,46 +14,81 @@ logger = logging.getLogger(__name__)
 
 def get_db_connection():
     """Create a database connection using environment variables."""
-    return psycopg2.connect(
-        dbname=os.environ['PGDATABASE'],
-        user=os.environ['PGUSER'],
-        password=os.environ['PGPASSWORD'],
-        host=os.environ['PGHOST'],
-        port=os.environ['PGPORT']
-    )
+    try:
+        conn = psycopg2.connect(
+            dbname=os.environ['PGDATABASE'],
+            user=os.environ['PGUSER'],
+            password=os.environ['PGPASSWORD'],
+            host=os.environ['PGHOST'],
+            port=os.environ['PGPORT']
+        )
+        logger.info("Successfully connected to database")
+        return conn
+    except Exception as e:
+        logger.error(f"Failed to connect to database: {e}")
+        raise
 
 def preprocess_soc_code(code: str) -> str:
     """Standardize SOC code format."""
-    # Remove any decimal points and ensure proper formatting
-    base_code = code.replace('.', '')
-    if len(base_code) < 7:
-        base_code = base_code.ljust(7, '0')
-    return base_code
+    try:
+        # Remove any decimal points and ensure proper formatting
+        base_code = str(code).replace('.', '')
+        if len(base_code) < 7:
+            base_code = base_code.ljust(7, '0')
+        return base_code
+    except Exception as e:
+        logger.error(f"Error preprocessing SOC code {code}: {e}")
+        raise
 
 def clean_text_for_search(text: str) -> str:
     """Clean text for search vector."""
-    return text.replace("'", "''")
+    if not text:
+        return ""
+    return str(text).replace("'", "''")
+
+def setup_database_indexes(cur):
+    """Create necessary database indexes."""
+    try:
+        # Create GIN indexes for full-text search
+        cur.execute("""
+            CREATE INDEX IF NOT EXISTS soc_major_groups_search_idx 
+            ON soc_major_groups USING gin(search_vector);
+
+            CREATE INDEX IF NOT EXISTS soc_minor_groups_search_idx 
+            ON soc_minor_groups USING gin(search_vector);
+
+            CREATE INDEX IF NOT EXISTS soc_detailed_occupations_search_idx 
+            ON soc_detailed_occupations USING gin(search_vector);
+        """)
+        logger.info("Successfully created database indexes")
+    except Exception as e:
+        logger.error(f"Failed to create indexes: {e}")
+        raise
 
 def import_data():
     """Import the O*NET data into PostgreSQL database."""
     logger.info("Starting data import process...")
 
     try:
-        # Read the CSV files from attached_assets directory
-        occ_data = pd.read_csv('attached_assets/occupation_data.csv')
-        alt_titles = pd.read_csv('attached_assets/alternate_titles.csv')
-
-        logger.info(f"Read {len(occ_data)} occupations and {len(alt_titles)} alternative titles")
+        # Read and validate CSV files
+        logger.info("Reading CSV files...")
+        try:
+            occ_data = pd.read_csv('attached_assets/occupation_data.csv')
+            alt_titles = pd.read_csv('attached_assets/alternate_titles.csv')
+            logger.info(f"Successfully read {len(occ_data)} occupations and {len(alt_titles)} alternative titles")
+        except Exception as e:
+            logger.error(f"Failed to read CSV files: {e}")
+            raise
 
         # Create the database connection
         conn = get_db_connection()
         cur = conn.cursor()
 
         try:
-            # Create major groups
+            # Process major groups
             logger.info("Processing major groups...")
             major_groups = []
-            for code in sorted(set([code[:2] for code in occ_data['code'] if isinstance(code, str)])):
+            for code in sorted(set([str(code)[:2] for code in occ_data['code'] if pd.notna(code)])):
                 major_code = code.ljust(7, '0')
                 title = f"Major Group {code}"
                 description = f"SOC Major Group {code}"
@@ -77,11 +112,12 @@ def import_data():
                 """,
                 major_groups
             )
+            logger.info(f"Inserted {len(major_groups)} major groups")
 
-            # Create minor groups
+            # Process minor groups
             logger.info("Processing minor groups...")
             minor_groups = []
-            for code in sorted(set([code[:4] for code in occ_data['code'] if isinstance(code, str)])):
+            for code in sorted(set([str(code)[:4] for code in occ_data['code'] if pd.notna(code)])):
                 minor_code = code.ljust(7, '0')
                 major_code = code[:2].ljust(7, '0')
                 title = f"Minor Group {code}"
@@ -108,6 +144,7 @@ def import_data():
                 """,
                 minor_groups
             )
+            logger.info(f"Inserted {len(minor_groups)} minor groups")
 
             # Process detailed occupations
             logger.info("Processing detailed occupations...")
@@ -118,26 +155,30 @@ def import_data():
             # Process each occupation
             occupations = []
             for _, row in occ_data.iterrows():
-                code = preprocess_soc_code(str(row['code']))
-                minor_code = code[:4].ljust(7, '0')
-                title = row['title']
-                description = row.get('description', '')
+                try:
+                    code = preprocess_soc_code(str(row['code']))
+                    minor_code = str(code)[:4].ljust(7, '0')
+                    title = str(row['title'])
+                    description = str(row.get('description', ''))
 
-                # Get alternative titles
-                alt_titles_list = alt_titles_dict.get(row['code'], [])
+                    # Get alternative titles
+                    alt_titles_list = alt_titles_dict.get(row['code'], [])
 
-                # Create searchable text combining all relevant fields
-                searchable_text = f"{title} {' '.join(alt_titles_list)} {description}"
+                    # Create searchable text combining all relevant fields
+                    searchable_text = f"{title} {' '.join(alt_titles_list)} {description}"
 
-                occupations.append((
-                    code,
-                    title,
-                    description,
-                    minor_code,
-                    alt_titles_list,
-                    searchable_text,
-                    clean_text_for_search(searchable_text)
-                ))
+                    occupations.append((
+                        code,
+                        title,
+                        description,
+                        minor_code,
+                        alt_titles_list,
+                        searchable_text,
+                        clean_text_for_search(searchable_text)
+                    ))
+                except Exception as e:
+                    logger.error(f"Error processing occupation {row.get('code', 'Unknown')}: {e}")
+                    continue
 
             # Insert detailed occupations
             execute_values(
@@ -156,6 +197,10 @@ def import_data():
                 """,
                 occupations
             )
+            logger.info(f"Inserted {len(occupations)} detailed occupations")
+
+            # Create indexes
+            setup_database_indexes(cur)
 
             conn.commit()
             logger.info("Successfully imported all data")
