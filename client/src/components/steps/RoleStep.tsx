@@ -22,12 +22,10 @@ export const RoleStep = () => {
   const debouncedSearch = useDebounce(searchTerm, 300);
   const [selectedTitle, setSelectedTitle] = useState<JobTitleSearchResult | null>(null);
 
-  const { data: titles, isLoading, error } = useQuery<JobTitleSearchResult[]>({
+  const { data: titles = [], isLoading, error } = useQuery<JobTitleSearchResult[]>({
     queryKey: ["/api/job-titles", { search: debouncedSearch }],
     enabled: debouncedSearch.length >= 2,
     refetchOnWindowFocus: false,
-    placeholderData: [],
-    select: (data) => data || []
   });
 
   const handleSearch = (term: string) => {
@@ -119,33 +117,36 @@ export const RoleStep = () => {
                     <div className="text-sm text-destructive p-4 border border-destructive/50 rounded-md">
                       Error loading results. Please try again.
                     </div>
-                  ) : (
-                    titles.length > 0 ? (
-                      <ScrollArea className="h-[300px] border rounded-md">
-                        <div className="space-y-2 p-2">
-                          {titles.map((jobTitle) => (
-                            <Button
-                              key={`${jobTitle.code}-${jobTitle.title}`}
-                              variant="ghost"
-                              className="w-full justify-start font-normal"
-                              onClick={() => handleSelect(jobTitle)}
-                            >
-                              <div>
-                                <div className="font-medium">{jobTitle.title}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  SOC Code: {jobTitle.code}
-                                  {jobTitle.isAlternative && " (Alternative Title)"}
-                                </div>
+                  ) : titles.length > 0 ? (
+                    <ScrollArea className="h-[300px] border rounded-md">
+                      <div className="space-y-2 p-2">
+                        {titles.map((jobTitle) => (
+                          <Button
+                            key={`${jobTitle.code}-${jobTitle.title}`}
+                            variant="ghost"
+                            className="w-full justify-start font-normal"
+                            onClick={() => handleSelect(jobTitle)}
+                          >
+                            <div className="text-left">
+                              <div className="font-medium">{jobTitle.title}</div>
+                              <div className="text-sm text-muted-foreground">
+                                SOC Code: {jobTitle.code}
+                                {jobTitle.isAlternative && " (Alternative Title)"}
                               </div>
-                            </Button>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    ) : (
-                      <div className="text-sm text-muted-foreground p-4 border rounded-md">
-                        No matching roles found. Try different search terms.
+                              {jobTitle.majorGroup && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {jobTitle.majorGroup.title}
+                                </div>
+                              )}
+                            </div>
+                          </Button>
+                        ))}
                       </div>
-                    )
+                    </ScrollArea>
+                  ) : (
+                    <div className="text-sm text-muted-foreground p-4 border rounded-md">
+                      No matching roles found. Try different search terms.
+                    </div>
                   )}
                 </>
               )
