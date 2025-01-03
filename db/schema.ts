@@ -8,7 +8,7 @@ export const socMajorGroups = pgTable('soc_major_groups', {
   code: varchar('code', { length: 7 }).notNull().unique(),
   title: text('title').notNull(),
   description: text('description'),
-  searchVector: text('search_vector')
+  searchVector: text('search_vector').notNull()
 });
 
 export const socMinorGroups = pgTable('soc_minor_groups', {
@@ -19,7 +19,7 @@ export const socMinorGroups = pgTable('soc_minor_groups', {
     .references(() => socMajorGroups.code),
   title: text('title').notNull(),
   description: text('description'),
-  searchVector: text('search_vector')
+  searchVector: text('search_vector').notNull()
 });
 
 export const socDetailedOccupations = pgTable('soc_detailed_occupations', {
@@ -31,8 +31,8 @@ export const socDetailedOccupations = pgTable('soc_detailed_occupations', {
     .notNull()
     .references(() => socMinorGroups.code),
   alternativeTitles: text('alternative_titles').array(),
-  searchableText: text('searchable_text'),
-  searchVector: text('search_vector'),
+  searchableText: text('searchable_text').notNull().default(sql`''`),
+  searchVector: text('search_vector').notNull(),
   updatedAt: timestamp('updated_at').defaultNow()
 });
 
@@ -72,10 +72,3 @@ export interface JobTitleSearchResult {
     title: string;
   };
 }
-
-// Create indexes after tables are created
-sql`
-  CREATE INDEX IF NOT EXISTS soc_major_groups_search_idx ON soc_major_groups USING gin(search_vector);
-  CREATE INDEX IF NOT EXISTS soc_minor_groups_search_idx ON soc_minor_groups USING gin(search_vector);
-  CREATE INDEX IF NOT EXISTS soc_detailed_occupations_search_idx ON soc_detailed_occupations USING gin(search_vector);
-`.execute;

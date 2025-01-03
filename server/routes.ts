@@ -29,8 +29,9 @@ export function registerRoutes(app: Express): Server {
         .trim()
         .split(/\s+/)
         .filter(Boolean)
+        .map(term => term.replace(/[^\w\s]/g, ''))  // Remove special characters
         .map(term => `${term}:*`)
-        .join(' & ');
+        .join(' | ');  // Changed from & to | for broader matches
 
       const dbResults = await db.select({
         code: socDetailedOccupations.code,
@@ -43,18 +44,22 @@ export function registerRoutes(app: Express): Server {
       .from(socDetailedOccupations)
       .where(sql`search_vector @@ to_tsquery('english', ${searchQuery})`)
       .orderBy(sql`ts_rank_cd(search_vector, to_tsquery('english', ${searchQuery})) DESC`)
-      .limit(50);
+      .limit(100);  // Increased limit for better fuzzy search results
+
+      if (dbResults.length === 0) {
+        return res.json([]);
+      }
 
       // Step 2: Get group information for context
       const minorGroupCodes = Array.from(new Set(dbResults.map(r => r.minorGroupCode)));
-      const relatedMinorGroups = minorGroupCodes.length > 0 ? await db.select()
+      const relatedMinorGroups = await db.select()
         .from(socMinorGroups)
-        .where(sql`code = ANY(${minorGroupCodes})`) : [];
+        .where(sql`code = ANY(${minorGroupCodes})`);
 
       const majorGroupCodes = Array.from(new Set(relatedMinorGroups.map(r => r.majorGroupCode)));
-      const relatedMajorGroups = majorGroupCodes.length > 0 ? await db.select()
+      const relatedMajorGroups = await db.select()
         .from(socMajorGroups)
-        .where(sql`code = ANY(${majorGroupCodes})`) : [];
+        .where(sql`code = ANY(${majorGroupCodes})`);
 
       // Step 3: Create searchable items including alternative titles
       const searchItems = dbResults.flatMap(result => {
@@ -93,8 +98,9 @@ export function registerRoutes(app: Express): Server {
       const fuse = new Fuse(searchItems, {
         keys: ['title'],
         includeScore: true,
-        threshold: 0.3,
-        distance: 100
+        threshold: 0.4,  // Increased threshold for more lenient matching
+        distance: 200,   // Increased distance for better partial matches
+        minMatchCharLength: 2
       });
 
       // Get fuzzy search results
