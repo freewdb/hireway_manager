@@ -2,6 +2,7 @@
 import { useWizard } from "../wizard/WizardContext";
 import { SOCSearch } from "../SOCSearch";
 import WizardStep from "../wizard/WizardStep";
+import { RoleInfoCard } from "../RoleInfoCard";
 import type { JobTitleSearchResult } from "@/types/schema";
 
 export const RoleStep = () => {
