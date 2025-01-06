@@ -119,7 +119,6 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const query = url.searchParams.get('search')?.trim() || '';
-    const industry = url.searchParams.get('industry') || '';
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)));
     const offset = (page - 1) * limit;
@@ -167,8 +166,6 @@ export async function GET(req: Request) {
 
     // First try exact match with title and alternative titles
     console.log('Attempting exact match search for:', query);
-    console.log('Searching with query:', query);
-    
     const exactMatches = await db
       .select({
         code: socDetailedOccupations.code,
@@ -187,7 +184,6 @@ export async function GET(req: Request) {
           description: socMinorGroups.description,
         }
       })
-      .distinct()
       .from(socDetailedOccupations)
       .leftJoin(
         socMinorGroups,
@@ -200,16 +196,14 @@ export async function GET(req: Request) {
       .where(
         or(
           ilike(socDetailedOccupations.title, `%${query}%`),
-          sql`EXISTS (SELECT 1 FROM unnest(${socDetailedOccupations.alternativeTitles}) alt WHERE alt ILIKE ${`%${query}%`})`,
-          sql`${socDetailedOccupations.searchableText} ILIKE ${`%${query}%`}`
+          sql`${socDetailedOccupations.alternativeTitles}::text[] && ARRAY[${query}]::text[]`,
+          sql`to_tsvector('english', ${socDetailedOccupations.searchableText}) @@ plainto_tsquery('english', ${query})`
         )
       )
       .limit(100);
 
-    console.log('Raw matches:', exactMatches.length);
     if (exactMatches.length >= 5) {
       const results = consolidateResults(exactMatches, query);
-      console.log('Consolidated results:', results.length);
       
       const response: SearchResponse = {
         items: results.slice(offset, offset + limit),
