@@ -1,0 +1,48 @@
+[vite] connecting...
+[vite] connected.
+RoleInfoCard is not defined
+RoleInfoCard is not defined
+The above error occurred in the <RoleStep> component:
+
+    at RoleStep (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/src/components/steps/RoleStep.tsx:23:26)
+    at WizardProvider (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/src/components/wizard/WizardContext.tsx:21:3)
+    at div
+    at _c9 (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/src/components/ui/card.tsx:106:12)
+    at div
+    at _c (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at Home (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/src/pages/Home.tsx:29:41)
+    at div
+    at HomeWithBypass
+    at Route (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/@fs/home/runner/hirewaymanager/node_modules/.vite/deps/wouter.js?v=4ba18442:265:16)
+    at Switch (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/@fs/home/runner/hirewaymanager/node_modules/.vite/deps/wouter.js?v=4ba18442:321:17)
+    at App
+    at QueryClientProvider (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/@fs/home/runner/hirewaymanager/node_modules/.vite/deps/@tanstack_react-query.js?v=4ba18442:2827:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+at RoleStep (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/src/components/steps/RoleStep.tsx:23:26)
+at WizardProvider (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/src/components/wizard/WizardContext.tsx:21:3)
+at div
+at _c9 (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/src/components/ui/card.tsx:106:12)
+at div
+at _c (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/src/components/ui/card.tsx:20:11)
+at div
+at div
+at Home (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/src/pages/Home.tsx:29:41)
+at div
+at HomeWithBypass
+at Route (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/@fs/home/runner/hirewaymanager/node_modules/.vite/deps/wouter.js?v=4ba18442:265:16)
+at Switch (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/@fs/home/runner/hirewaymanager/node_modules/.vite/deps/wouter.js?v=4ba18442:321:17)
+at App
+at QueryClientProvider (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/@fs/home/runner/hirewaymanager/node_modules/.vite/deps/@tanstack_react-query.js?v=4ba18442:2827:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+at t.value (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://18952969-9ff4-493a-86e8-8ad4c9a86116-00-1t83t88lqju4j.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+RoleInfoCard is not defined
