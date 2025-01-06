@@ -88,19 +88,24 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
                 item,
                 index,
               })}
-              className={`px-4 py-2 cursor-pointer ${
+              className={`px-4 py-3 cursor-pointer ${
                 highlightedIndex === index
                   ? 'bg-blue-100'
                   : 'hover:bg-gray-50'
               }`}
             >
-              <div className="font-medium">{item.title}</div>
-              {item.isAlternative && (
-                <div className="text-sm text-gray-500">Alternative title for: {item.title}</div>
-              )}
-              <div className="text-xs text-gray-400">
-                {item.majorGroup?.title} › {item.minorGroup?.title}
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="font-mono text-sm text-blue-600">{item.code}</span>
+                <span className="font-medium">{item.title}</span>
               </div>
+              <div className="text-sm text-gray-600 line-clamp-2">
+                {item.description || "Description not available"}
+              </div>
+              {item.alternativeTitles?.length > 0 && (
+                <div className="mt-1 text-xs text-gray-500">
+                  Also known as: {item.alternativeTitles.join(', ')}
+                </div>
+              )}
             </li>
           ))
         )}
