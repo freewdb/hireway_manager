@@ -1,6 +1,9 @@
-node_modules
-dist
+node_modules/
+.env
+*.log
+dist/
 .DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
+.cache/
+.local/
+.upm/
+replit_zip_error_log.txt

@@ -1,6 +1,6 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
-import * as schema from "@db/schema";
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import * as schema from "./schema";
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -8,8 +8,8 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const db = drizzle({
-  connection: process.env.DATABASE_URL,
-  schema,
-  ws: ws,
-});
+// Create the PostgreSQL client
+const client = postgres(process.env.DATABASE_URL);
+
+// Create the drizzle database instance
+export const db = drizzle(client, { schema });

@@ -1,21 +1,9 @@
-import RoleStep from "@/components/steps/RoleStep";
-import { WizardProvider } from "@/components/wizard/WizardContext";
-
-const initialData = {
-  companySize: "",
-  companyStage: "",
-  location: "",
-  role: "",
-  industry: "",
-  scenario: ""
-};
+import { SOCSearchTest } from '../components/SOCSearch/test';
 
 export default function OccupationSearch() {
   return (
-    <WizardProvider initialData={initialData} onComplete={() => {}}>
-      <div>
-        <RoleStep />
-      </div>
-    </WizardProvider>
+    <div className="min-h-screen bg-gray-50">
+      <SOCSearchTest />
+    </div>
   );
 }

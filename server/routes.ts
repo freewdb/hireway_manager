@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { socDetailedOccupations, socMajorGroups, socMinorGroups } from "@db/schema";
-import { sql } from "drizzle-orm";
+import { sql, eq, or, and } from "drizzle-orm";
 import Fuse from 'fuse.js';
 
 export function registerRoutes(app: Express): Server {
@@ -85,12 +85,12 @@ export function registerRoutes(app: Express): Server {
       const minorGroupCodes = Array.from(new Set(dbResults.map(r => r.minorGroupCode)));
       const relatedMinorGroups = await db.select()
         .from(socMinorGroups)
-        .where(sql`${socMinorGroups.code} = ANY(${minorGroupCodes})`);
+        .where(or(...minorGroupCodes.map(code => eq(socMinorGroups.code, code))));
 
       const majorGroupCodes = Array.from(new Set(relatedMinorGroups.map(r => r.majorGroupCode)));
       const relatedMajorGroups = await db.select()
         .from(socMajorGroups)
-        .where(sql`${socMajorGroups.code} = ANY(${majorGroupCodes})`);
+        .where(or(...majorGroupCodes.map(code => eq(socMajorGroups.code, code))));
 
       // Create searchable items including alternative titles
       const searchItems = dbResults.flatMap(result => {
