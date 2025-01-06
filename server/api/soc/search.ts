@@ -187,6 +187,7 @@ export async function GET(req: Request) {
           description: socMinorGroups.description,
         }
       })
+      .distinct()
       .from(socDetailedOccupations)
       .leftJoin(
         socMinorGroups,
@@ -205,8 +206,10 @@ export async function GET(req: Request) {
       )
       .limit(100);
 
+    console.log('Raw matches:', exactMatches.length);
     if (exactMatches.length >= 5) {
       const results = consolidateResults(exactMatches, query);
+      console.log('Consolidated results:', results.length);
       
       const response: SearchResponse = {
         items: results.slice(offset, offset + limit),
