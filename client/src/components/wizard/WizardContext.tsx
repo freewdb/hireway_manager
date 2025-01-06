@@ -11,6 +11,7 @@ interface WizardData {
 
 interface WizardContextType {
   currentStep: number;
+  setCurrentStep: (step: number) => void;
   data: WizardData;
   updateData: (field: keyof WizardData, value: string) => void;
   nextStep: () => void;
@@ -57,9 +58,16 @@ export function WizardProvider({
 
   const isComplete = Object.values(data).every(value => value !== "");
 
+  const setCurrentStep = (step: number) => {
+    if (step >= 0 && step <= 3) {
+      setCurrentStep(step);
+    }
+  };
+
   return (
     <WizardContext.Provider value={{
       currentStep,
+      setCurrentStep,
       data,
       updateData,
       nextStep,

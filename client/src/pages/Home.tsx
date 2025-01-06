@@ -28,6 +28,7 @@ const Home = () => {
           <CardContent>
             {!showResults ? (
               <WizardProvider onComplete={() => setShowResults(true)}>
+                <BreadcrumbNav />
                 <IndustryStep />
                 <CompanyStep />
                 <RoleStep />
