@@ -200,8 +200,8 @@ export async function GET(req: Request) {
       .where(
         or(
           ilike(socDetailedOccupations.title, `%${query}%`),
-          sql`${socDetailedOccupations.alternativeTitles}::text[] && ARRAY[${query}]::text[]`,
-          sql`to_tsvector('english', ${socDetailedOccupations.searchableText}) @@ plainto_tsquery('english', ${query})`
+          sql`EXISTS (SELECT 1 FROM unnest(${socDetailedOccupations.alternativeTitles}) alt WHERE alt ILIKE ${`%${query}%`})`,
+          sql`${socDetailedOccupations.searchableText} ILIKE ${`%${query}%`}`
         )
       )
       .limit(100);
