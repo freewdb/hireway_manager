@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { BreadcrumbNav } from "@/components/BreadcrumbNav";
 import { WizardProvider } from "@/components/wizard/WizardContext";
 import { IndustryStep } from "@/components/steps/IndustryStep";
 import { CompanyStep } from "@/components/steps/CompanyStep";
