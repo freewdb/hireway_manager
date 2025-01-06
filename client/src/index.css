@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('https://sf.abarba.me/SF-Pro-Text-Regular.otf');
+}
+
+.font-sf-pro {
+  font-family: 'SF Pro Text', system-ui, -apple-system, sans-serif;
+}
+
 @layer base {
   * {
     @apply border-border;
