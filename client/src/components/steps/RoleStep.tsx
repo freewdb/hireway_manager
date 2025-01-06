@@ -24,7 +24,8 @@ export const RoleStep = () => {
       if (debouncedSearch.length < 2) return { items: [] };
       const response = await fetch(`/api/soc/search?search=${encodeURIComponent(debouncedSearch)}`);
       if (!response.ok) throw new Error('Search failed');
-      return response.json();
+      const data = await response.json();
+      return data;
     },
     enabled: debouncedSearch.length >= 2,
   });
