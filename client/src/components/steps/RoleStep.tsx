@@ -5,7 +5,7 @@ import WizardStep from "../wizard/WizardStep";
 import type { JobTitleSearchResult } from "@/types/schema";
 
 export const RoleStep = () => {
-  const { updateData } = useWizard();
+  const { updateData, data } = useWizard();
 
   const handleSelect = (result: JobTitleSearchResult) => {
     updateData("role", result.code);
@@ -17,6 +17,7 @@ export const RoleStep = () => {
         <SOCSearch 
           onSelect={handleSelect}
           placeholder="Search for a job title (e.g., Software Developer, IT Manager)"
+          industry={data.industry}
         />
       </div>
     </WizardStep>

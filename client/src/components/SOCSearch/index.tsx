@@ -7,6 +7,7 @@ interface SOCSearchProps {
   onSelect: (result: JobTitleSearchResult) => void;
   placeholder?: string;
   className?: string;
+  industry?: string;
 }
 
 export function SOCSearch({ onSelect, placeholder = 'Search for a job title...', className = '' }: SOCSearchProps) {
@@ -23,7 +24,7 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch(`/api/job-titles?search=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/job-titles?search=${encodeURIComponent(query)}${industry ? `&industry=${encodeURIComponent(industry)}` : ''}`);
       if (!response.ok) throw new Error('Failed to fetch results');
       const results: JobTitleSearchResult[] = await response.json();
       setInputItems(results);
