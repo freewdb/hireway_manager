@@ -6,7 +6,7 @@ import { RoleInfoCard } from "../RoleInfoCard";
 import type { JobTitleSearchResult } from "@/types/schema";
 
 export const RoleStep = () => {
-  const { updateData } = useWizard();
+  const { updateData, nextStep } = useWizard();
 
   const handleSelect = (result: JobTitleSearchResult) => {
     updateData("role", result.code);
