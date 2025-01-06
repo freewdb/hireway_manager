@@ -6,6 +6,9 @@ interface WizardData {
   companyStage: string;
   location: string;
   role: string;
+  roleTitle: string;
+  roleDescription: string;
+  alternativeTitles: string[];
   scenario: string;
 }
 

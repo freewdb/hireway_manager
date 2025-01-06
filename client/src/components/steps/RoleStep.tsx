@@ -9,6 +9,13 @@ export const RoleStep = () => {
 
   const handleSelect = (result: JobTitleSearchResult) => {
     updateData("role", result.code);
+    updateData("roleTitle", result.title);
+    updateData("roleDescription", result.description);
+    updateData("alternativeTitles", result.alternativeTitles || []);
+    
+    if (result.code) {
+      nextStep();
+    }
   };
 
   return (
@@ -18,6 +25,7 @@ export const RoleStep = () => {
           onSelect={handleSelect}
           placeholder="Search for a job title (e.g., Software Developer, IT Manager)"
         />
+        <RoleInfoCard />
       </div>
     </WizardStep>
   );

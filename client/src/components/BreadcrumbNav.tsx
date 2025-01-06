@@ -4,70 +4,58 @@ import { useWizard } from "./wizard/WizardContext";
 const stepLabels = {
   industry: {
     name: "Industry",
-    getLabel: (value: string) => industries[value]?.name || "Industry",
+    getLabel: (value: string, data: any) => data.industry || "Industry",
   },
   companySize: {
-    name: "Company",
-    getLabel: (value: string) => {
-      const labels = {
-        small: "Small (1-50)",
-        medium: "Medium (51-500)",
-        large: "Large (500+)",
-      };
-      return labels[value as keyof typeof labels] || "Company";
-    },
+    name: "Company Size",
+    getLabel: (value: string, data: any) => value || "Company Size",
+  },
+  companyStage: {
+    name: "Stage",
+    getLabel: (value: string, data: any) => value || "Stage",
+  },
+  location: {
+    name: "Location",
+    getLabel: (value: string, data: any) => value || "Location",
   },
   role: {
     name: "Role",
-    getLabel: (value: string) => value || "Role",
+    getLabel: (value: string, data: any) => data.roleTitle || "Role",
   },
   scenario: {
     name: "Context",
-    getLabel: (value: string) => {
-      const labels = {
-        new: "New Role",
-        replacement: "Replacement",
-        expansion: "Team Expansion",
-      };
-      return labels[value as keyof typeof labels] || "Context";
-    },
+    getLabel: (value: string) => ({
+      new: "New Role",
+      replacement: "Replacement",
+      expansion: "Team Expansion",
+    }[value] || "Context"),
   },
-};
-
-const industries = {
-  "11": { name: "Agriculture" },
-  "71": { name: "Arts & Recreation" },
-  "23": { name: "Construction" },
-  "52": { name: "Finance" },
-  "62": { name: "Healthcare" },
-  "51": { name: "Information" },
-  "31": { name: "Manufacturing" },
-  "21": { name: "Mining & Gas" },
-  "54": { name: "Professional Services" },
-  "44": { name: "Retail" },
-  "22": { name: "Utilities" },
-  "42": { name: "Wholesale" },
 };
 
 export const BreadcrumbNav = () => {
   const { currentStep, setCurrentStep, data } = useWizard();
-  const steps = ["industry", "companySize", "role", "scenario"] as const;
+  const steps = ["industry", "companySize", "companyStage", "location", "role", "scenario"] as const;
+  
+  const getStepColor = (index: number) => {
+    const colors = ["bg-blue-500", "bg-green-500", "bg-purple-500", "bg-orange-500", "bg-pink-500", "bg-indigo-500"];
+    return data[steps[index]] ? colors[index % colors.length] : "bg-gray-200";
+  };
 
   return (
-    <div className="flex gap-2 mb-6">
+    <div className="flex flex-wrap gap-2 mb-6">
       {steps.map((step, index) => (
         <button
           key={step}
           onClick={() => setCurrentStep(index)}
           className={`px-3 py-1 rounded-full text-sm transition-all ${
             index === currentStep
-              ? "bg-primary text-white"
+              ? `${getStepColor(index)} text-white`
               : data[step]
-              ? "bg-gray-100 hover:bg-gray-200"
+              ? `${getStepColor(index)} text-white hover:opacity-90`
               : "bg-gray-50 text-gray-400"
           }`}
         >
-          {stepLabels[step].getLabel(data[step])}
+          {stepLabels[step].getLabel(data[step], data)}
         </button>
       ))}
     </div>
