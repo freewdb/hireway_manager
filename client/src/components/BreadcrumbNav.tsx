@@ -1,52 +1,74 @@
 
-import { motion } from "framer-motion";
 import { useWizard } from "./wizard/WizardContext";
 
-const stepColors = {
-  0: "bg-blue-500",
-  1: "bg-green-500", 
-  2: "bg-purple-500",
-  3: "bg-orange-500"
+const stepLabels = {
+  industry: {
+    name: "Industry",
+    getLabel: (value: string) => industries[value]?.name || "Industry",
+  },
+  companySize: {
+    name: "Company",
+    getLabel: (value: string) => {
+      const labels = {
+        small: "Small (1-50)",
+        medium: "Medium (51-500)",
+        large: "Large (500+)",
+      };
+      return labels[value as keyof typeof labels] || "Company";
+    },
+  },
+  role: {
+    name: "Role",
+    getLabel: (value: string) => value || "Role",
+  },
+  scenario: {
+    name: "Context",
+    getLabel: (value: string) => {
+      const labels = {
+        new: "New Role",
+        replacement: "Replacement",
+        expansion: "Team Expansion",
+      };
+      return labels[value as keyof typeof labels] || "Context";
+    },
+  },
 };
 
-const stepNames = {
-  0: "Industry",
-  1: "Company",
-  2: "Role",
-  3: "Scenario"
+const industries = {
+  "11": { name: "Agriculture" },
+  "71": { name: "Arts & Recreation" },
+  "23": { name: "Construction" },
+  "52": { name: "Finance" },
+  "62": { name: "Healthcare" },
+  "51": { name: "Information" },
+  "31": { name: "Manufacturing" },
+  "21": { name: "Mining & Gas" },
+  "54": { name: "Professional Services" },
+  "44": { name: "Retail" },
+  "22": { name: "Utilities" },
+  "42": { name: "Wholesale" },
 };
 
 export const BreadcrumbNav = () => {
   const { currentStep, setCurrentStep, data } = useWizard();
-  
-  const isStepComplete = (step: number) => {
-    switch (step) {
-      case 0: return !!data.industry;
-      case 1: return !!data.companySize && !!data.companyStage;
-      case 2: return !!data.role;
-      case 3: return !!data.scenario;
-      default: return false;
-    }
-  };
+  const steps = ["industry", "companySize", "role", "scenario"] as const;
 
   return (
-    <div className="flex gap-2 mb-6 flex-wrap">
-      {[0,1,2,3].map((step) => (
-        <motion.button
+    <div className="flex gap-2 mb-6">
+      {steps.map((step, index) => (
+        <button
           key={step}
-          initial={{ scale: 0 }}
-          animate={{ 
-            scale: isStepComplete(step) ? 1 : 0,
-            opacity: isStepComplete(step) ? 1 : 0
-          }}
-          whileTap={{ scale: 0.95 }}
-          className={`${stepColors[step as keyof typeof stepColors]} 
-            text-white px-3 py-1 rounded-full text-sm font-medium
-            cursor-pointer transition-shadow hover:shadow-lg`}
-          onClick={() => setCurrentStep(step)}
+          onClick={() => setCurrentStep(index)}
+          className={`px-3 py-1 rounded-full text-sm transition-all ${
+            index === currentStep
+              ? "bg-primary text-white"
+              : data[step]
+              ? "bg-gray-100 hover:bg-gray-200"
+              : "bg-gray-50 text-gray-400"
+          }`}
         >
-          {stepNames[step as keyof typeof stepNames]}
-        </motion.button>
+          {stepLabels[step].getLabel(data[step])}
+        </button>
       ))}
     </div>
   );
