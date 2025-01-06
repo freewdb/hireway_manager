@@ -1,12 +1,11 @@
-
-import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { WizardProvider } from '@/components/wizard/WizardContext';
-import { IndustryStep } from '@/components/steps/IndustryStep';
-import { CompanyStep } from '@/components/steps/CompanyStep';
-import { RoleStep } from '@/components/steps/RoleStep';
-import { ScenarioStep } from '@/components/steps/ScenarioStep';
-import { TrialStructure } from '@/components/TrialStructure';
+import { useState } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { WizardProvider } from "@/components/wizard/WizardContext";
+import { IndustryStep } from "@/components/steps/IndustryStep";
+import { CompanyStep } from "@/components/steps/CompanyStep";
+import { RoleStep } from "@/components/steps/RoleStep";
+import { ScenarioStep } from "@/components/steps/ScenarioStep";
+import { TrialStructure } from "@/components/TrialStructure";
 
 const Home = () => {
   const [showResults, setShowResults] = useState(false);
@@ -17,11 +16,13 @@ const Home = () => {
         <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
           Trial Employment Framework Generator
         </h1>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>
-              {!showResults ? "Configure Your Trial Framework" : "Generated Trial Structure"}
+              {!showResults
+                ? "Configure Your Trial Framework"
+                : "Generated Trial Structure"}
             </CardTitle>
           </CardHeader>
           <CardContent>
