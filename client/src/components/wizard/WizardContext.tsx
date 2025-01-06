@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface WizardData {
@@ -57,12 +58,6 @@ export function WizardProvider({
   };
 
   const isComplete = Object.values(data).every(value => value !== "");
-
-  const setCurrentStep = (step: number) => {
-    if (step >= 0 && step <= 3) {
-      setCurrentStep(step);
-    }
-  };
 
   return (
     <WizardContext.Provider value={{
