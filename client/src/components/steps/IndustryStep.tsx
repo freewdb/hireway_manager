@@ -46,7 +46,7 @@ export const IndustryStep = () => {
                     value={industry.code}
                     className="relative flex items-center px-6 py-2 text-sm rounded-sm hover:bg-gray-100 focus:bg-gray-100 outline-none cursor-pointer font-sf-pro"
                   >
-                    <Select.ItemText>{industry.name}</Select.ItemText>
+                    <Select.ItemText>{industry.code} - {industry.name}</Select.ItemText>
                   </Select.Item>
                 ))}
               </Select.Viewport>

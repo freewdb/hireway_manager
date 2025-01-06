@@ -31,11 +31,15 @@ interface SearchResponse {
 }
 
 function consolidateResults(items: any[], query: string): ConsolidatedJobResult[] {
+  // Use a Map to ensure unique SOC codes
   const resultsByCode = new Map<string, ConsolidatedJobResult>();
+  const seenCodes = new Set<string>();
   const queryLower = query.toLowerCase();
   const queryWords = queryLower.split(/\s+/);
 
   items.forEach(item => {
+      if (seenCodes.has(item.code)) return;
+      seenCodes.add(item.code);
     const titleLower = item.title.toLowerCase();
     const alternativeTitles = item.alternativeTitles || [];
     
