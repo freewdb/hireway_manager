@@ -167,6 +167,8 @@ export async function GET(req: Request) {
 
     // First try exact match with title and alternative titles
     console.log('Attempting exact match search for:', query);
+    console.log('Searching with query:', query);
+    
     const exactMatches = await db
       .select({
         code: socDetailedOccupations.code,
