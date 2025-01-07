@@ -42,11 +42,11 @@ function consolidateResults(items: any[], query: string): ConsolidatedJobResult[
       seenCodes.add(item.code);
     const titleLower = item.title.toLowerCase();
     const alternativeTitles = item.alternativeTitles || [];
-    
+
     // Calculate match quality for ranking
     const titleMatchQuality = queryWords.every(word => titleLower.includes(word)) ? 1 :
       queryWords.some(word => titleLower.includes(word)) ? 0.8 : 0;
-    
+
     // Find matching alternative titles
     const matchedAlternatives = alternativeTitles.filter((alt: string) => {
       const altLower = alt.toLowerCase();
@@ -57,7 +57,7 @@ function consolidateResults(items: any[], query: string): ConsolidatedJobResult[
 
     // Determine if this is primarily an alternative title match
     const isAlternative = titleMatchQuality === 0 && matchedAlternatives.length > 0;
-    
+
     // Calculate overall rank
     const rank = isAlternative ? 0.9 : 1;
 
@@ -81,13 +81,13 @@ function consolidateResults(items: any[], query: string): ConsolidatedJobResult[
       });
     } else {
       const existing = resultsByCode.get(item.code)!;
-      
+
       // Update rank if this match is better
       if (rank > existing.rank) {
         existing.rank = rank;
         existing.isAlternative = isAlternative;
       }
-      
+
       // Add any new matched alternatives
       matchedAlternatives.forEach((alt: string) => {
         if (!existing.matchedAlternatives.includes(alt)) {
@@ -109,11 +109,11 @@ function consolidateResults(items: any[], query: string): ConsolidatedJobResult[
       // First sort by rank
       const rankDiff = b.rank - a.rank;
       if (rankDiff !== 0) return rankDiff;
-      
+
       // Then by whether it's a primary title match
       if (!a.isAlternative && b.isAlternative) return -1;
       if (a.isAlternative && !b.isAlternative) return 1;
-      
+
       // Then by number of matched alternatives
       return b.matchedAlternatives.length - a.matchedAlternatives.length;
     });
@@ -208,7 +208,28 @@ export async function GET(req: Request) {
 
     if (exactMatches.length >= 5) {
       const results = consolidateResults(exactMatches, query);
-      
+
+      // Check for duplicates
+      const codeFrequency = results.reduce((acc, curr) => {
+        acc[curr.code] = (acc[curr.code] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const duplicates = Object.entries(codeFrequency)
+        .filter(([_, count]) => count > 1)
+        .map(([code, count]) => ({
+          code,
+          count,
+          titles: results.filter(r => r.code === code).map(r => r.title)
+        }));
+
+      console.log('Results analysis:', {
+        count: results.length,
+        uniqueCodes: Object.keys(codeFrequency).length,
+        duplicates: duplicates.length ? duplicates : 'None',
+        firstResult: results[0]
+      });
+
       const response: SearchResponse = {
         items: results.slice(offset, offset + limit),
         totalCount: results.length,
@@ -231,7 +252,7 @@ export async function GET(req: Request) {
 
     // If not enough exact matches, try fuzzy search
     console.log('Few or no exact matches, trying fuzzy search...');
-    
+
     const potentialMatches = await db
       .select({
         code: socDetailedOccupations.code,
@@ -279,7 +300,28 @@ export async function GET(req: Request) {
 
     const fuseResults = fuse.search(query);
     const results = consolidateResults(fuseResults.map(r => r.item), query);
-    
+
+    // Check for duplicates
+    const codeFrequency = results.reduce((acc, curr) => {
+      acc[curr.code] = (acc[curr.code] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const duplicates = Object.entries(codeFrequency)
+      .filter(([_, count]) => count > 1)
+      .map(([code, count]) => ({
+        code,
+        count,
+        titles: results.filter(r => r.code === code).map(r => r.title)
+      }));
+
+    console.log('Results analysis:', {
+      count: results.length,
+      uniqueCodes: Object.keys(codeFrequency).length,
+      duplicates: duplicates.length ? duplicates : 'None',
+      firstResult: results[0]
+    });
+
     const response: SearchResponse = {
       items: results.slice(offset, offset + limit),
       totalCount: results.length,
@@ -308,4 +350,4 @@ export async function GET(req: Request) {
       headers: { 'Content-Type': 'application/json' }
     });
   }
-} 
+}

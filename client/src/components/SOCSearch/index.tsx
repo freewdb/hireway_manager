@@ -28,7 +28,18 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
       const response = await fetch(`/api/job-titles?search=${encodeURIComponent(query)}`);
       if (!response.ok) throw new Error('Failed to fetch results');
       const results: JobTitleSearchResult[] = await response.json();
-      setInputItems(results);
+      
+      // Deduplicate by code, keeping highest ranked result
+      const uniqueResults = Array.from(
+        results.reduce((map, item) => {
+          if (!map.has(item.code) || (item.rank || 0) > (map.get(item.code)?.rank || 0)) {
+            map.set(item.code, item);
+          }
+          return map;
+        }, new Map<string, JobTitleSearchResult>())
+      ).map(([_, item]) => item);
+
+      setInputItems(uniqueResults);
     } catch (err) {
       setError('Failed to fetch results. Please try again.');
       setInputItems([]);
