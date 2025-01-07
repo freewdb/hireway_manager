@@ -1,0 +1,39 @@
+Actionable Steps for the Dev Team
+	1.	Check for Duplicates at the API Level
+	•	Log the raw JSON response from /api/job-titles?search=... to confirm whether duplicates are already being returned.
+	•	If duplicates are present, implement a deduplication mechanism on the server by grouping results by code (or any unique identifier).
+	•	In SQL, you could use GROUP BY or DISTINCT ON (code).
+	•	In Fuse.js, you can collapse multiple matches for the same code (e.g., alternative titles) into a single entry.
+	2.	Merge or Deduplicate Before Sending to the Frontend
+	•	If the current logic intentionally returns the same code more than once (e.g., because of synonyms/alternative titles), decide whether to unify these matches into a single record (combining their relevant data) or simply pick the highest-ranked match for each unique code.
+	3.	Client-Side Deduplication Fallback
+	•	If server-side changes aren’t possible immediately, deduplicate in the React app right after fetching the results but before storing them in inputItems. For example:
+
+const dedupByCode = (items: JobTitleSearchResult[]) => {
+  const seen = new Set();
+  return items.filter(item => {
+    if (seen.has(item.code)) return false;
+    seen.add(item.code);
+    return true;
+  });
+};
+
+const results: JobTitleSearchResult[] = await response.json();
+setInputItems(dedupByCode(results));
+
+
+	•	This ensures the dropdown only displays unique entries.
+
+	4.	Confirm Unique Rendering
+	•	In the <li> or other rendered elements, use a unique key (e.g., key={item.code}) to ensure React doesn’t get confused by duplicates if they persist.
+	5.	Maintain Clarity Between “Selected” vs. “Displayed”
+	•	Your check in handleSelect prevents adding duplicates to selectedItems, but does not remove duplicates from inputItems.
+	•	Make sure your display logic (i.e., setInputItems(...)) is showing only unique results, not relying on the selectedItems check.
+	6.	Verify Hierarchical Data Handling
+	•	If your schema has major/minor groups, confirm that the same SOC code isn’t returned multiple times due to multiple group memberships or alternative titles.
+	•	If it is, either collapse them into one by code or ensure SQL/Fuse.js logic returns each unique code only once.
+
+Summary
+	•	Most Effective Fix: Implement server-side deduplication by merging multiple matches for the same code.
+	•	Secondary (but quicker) Fix: Deduplicate on the client immediately after fetching the results.
+	•	Result: A single, consolidated list of results (one per unique code) shown in the dropdown, eliminating any visual or data-level duplicates.
