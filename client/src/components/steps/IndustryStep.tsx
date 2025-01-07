@@ -1,8 +1,8 @@
-
 import WizardStep from "../wizard/WizardStep";
 import { useWizard } from "../wizard/WizardContext";
 import * as Select from "@radix-ui/react-select";
 import { ChevronDownIcon } from "lucide-react";
+import { IndustryInfoCard } from "../IndustryInfoCard"; // Added import
 
 const industries = [
   { code: "11", name: "Agriculture, Forestry, Fishing and Hunting" },
@@ -36,7 +36,7 @@ export const IndustryStep = () => {
               <ChevronDownIcon className="h-4 w-4 opacity-50" />
             </Select.Icon>
           </Select.Trigger>
-          
+
           <Select.Portal>
             <Select.Content className="bg-white rounded-md shadow-lg">
               <Select.Viewport className="p-1">
@@ -53,6 +53,7 @@ export const IndustryStep = () => {
             </Select.Content>
           </Select.Portal>
         </Select.Root>
+        <IndustryInfoCard industryCode={data.industry} /> {/* Added IndustryInfoCard */}
       </div>
     </WizardStep>
   );
