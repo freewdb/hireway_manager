@@ -4,7 +4,23 @@ import { useWizard } from "./wizard/WizardContext";
 const stepLabels = {
   industry: {
     name: "Industry",
-    getLabel: (value: string, data: any) => data.industry || "Industry",
+    getLabel: (value: string, data: any) => {
+      const industries = {
+        "11": "Agriculture",
+        "71": "Arts & Entertainment",
+        "23": "Construction",
+        "52": "Finance",
+        "62": "Healthcare",
+        "51": "Information",
+        "31": "Manufacturing",
+        "21": "Mining & Oil",
+        "54": "Professional Services",
+        "44": "Retail",
+        "22": "Utilities",
+        "42": "Wholesale"
+      };
+      return industries[data.industry] || "Industry";
+    },
   },
   companySize: {
     name: "Company Size",

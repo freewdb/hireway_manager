@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useCombobox } from 'downshift';
 import { debounce } from 'lodash';
 import type { JobTitleSearchResult } from '../../types/schema';
@@ -13,13 +13,15 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
   const [inputItems, setInputItems] = useState<JobTitleSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+  const [selectedItem, setSelectedItem] = useState<JobTitleSearchResult | null>(null);
+  const [selectedItems, setSelectedItems] = useState<JobTitleSearchResult[]>([]);
+
   const searchSOC = async (query: string) => {
     if (!query.trim()) {
       setInputItems([]);
       return;
     }
-    
+
     try {
       setIsLoading(true);
       setError(null);
@@ -38,6 +40,21 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
   // Debounce the search to avoid too many API calls
   const debouncedSearch = useCallback(debounce(searchSOC, 300), []);
 
+  const handleSelect = (item: JobTitleSearchResult) => {
+    const uniqueId = `${item.code}-${item.title}`;
+    if (!selectedItems.some(selected => `${selected.code}-${selected.title}` === uniqueId)) {
+      onSelect(item);
+      setSelectedItem(item);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedItem) {
+      setSelectedItems(prev => [...prev, selectedItem]);
+    }
+  }, [selectedItem]);
+
+
   const {
     isOpen,
     getMenuProps,
@@ -52,7 +69,7 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
     itemToString: (item) => item?.title || '',
     onSelectedItemChange: ({ selectedItem }) => {
       if (selectedItem) {
-        onSelect(selectedItem);
+        handleSelect(selectedItem);
       }
     },
   });
@@ -112,4 +129,4 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
       </ul>
     </div>
   );
-} 
+}
