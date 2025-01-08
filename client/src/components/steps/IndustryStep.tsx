@@ -1,8 +1,7 @@
 
 import WizardStep from "../wizard/WizardStep";
 import { useWizard } from "../wizard/WizardContext";
-import * as Select from "@radix-ui/react-select";
-import { ChevronDownIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 
 const industries = [
@@ -61,32 +60,22 @@ export const IndustryStep = () => {
           Choose the industry that best describes your company.
         </p>
 
-        <Select.Root value={data.industry} onValueChange={(value) => updateData("industry", value)}>
-          <Select.Trigger className="w-full flex items-center justify-between px-3 py-2 border rounded-md bg-background">
-            <Select.Value placeholder="Select an industry" />
-            <Select.Icon>
-              <ChevronDownIcon className="h-4 w-4 opacity-50" />
-            </Select.Icon>
-          </Select.Trigger>
-
-          <Select.Portal>
-            <Select.Content className="bg-white rounded-md shadow-lg">
-              <Select.Viewport className="p-1">
-                {industries.map((industry) => (
-                  <Select.Item
-                    key={industry.code}
-                    value={industry.code}
-                    className="relative flex items-center px-6 py-2 text-sm rounded-sm hover:bg-gray-100 focus:bg-gray-100 outline-none cursor-pointer font-sf-pro"
-                  >
-                    <Select.ItemText>
-                      <span className="font-bold">{industry.code}</span> - {industry.name}
-                    </Select.ItemText>
-                  </Select.Item>
-                ))}
-              </Select.Viewport>
-            </Select.Content>
-          </Select.Portal>
-        </Select.Root>
+        <Select value={data.industry} onValueChange={(value) => updateData("industry", value)}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select an industry" />
+          </SelectTrigger>
+          <SelectContent>
+            {industries.map((industry) => (
+              <SelectItem 
+                key={industry.code} 
+                value={industry.code}
+                className="font-sf-pro"
+              >
+                <span className="font-bold">{industry.code}</span> - {industry.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {data.industry && (
           <Card className="mt-4">
