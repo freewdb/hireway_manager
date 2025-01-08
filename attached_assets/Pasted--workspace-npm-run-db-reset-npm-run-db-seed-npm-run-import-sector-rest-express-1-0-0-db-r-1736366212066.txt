@@ -1,0 +1,36 @@
+~/workspace$ npm run db:reset && npm run db:seed && npm run import:sector
+
+> rest-express@1.0.0 db:reset
+> drizzle-kit drop && drizzle-kit push:pg
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/home/runner/workspace/drizzle.config.ts'
+[i] no migration entries found in migrations/meta/_journal.json
+This command is deprecated, please use updated 'push' command (see https://orm.drizzle.team/kit-docs/upgrade-21#how-to-migrate-to-0210)
+
+> rest-express@1.0.0 db:seed
+> tsx scripts/seed-soc.ts
+
+
+node:internal/modules/run_main:128
+    triggerUncaughtException(
+    ^
+Error [TransformError]: Transform failed with 6 errors:
+/home/runner/workspace/db/schema.ts:53:13: ERROR: Multiple exports with the same name "socMajorGroups"
+/home/runner/workspace/db/schema.ts:53:13: ERROR: The symbol "socMajorGroups" has already been declared
+/home/runner/workspace/db/schema.ts:61:13: ERROR: Multiple exports with the same name "socMinorGroups"
+/home/runner/workspace/db/schema.ts:61:13: ERROR: The symbol "socMinorGroups" has already been declared
+/home/runner/workspace/db/schema.ts:70:13: ERROR: Multiple exports with the same name "socDetailedOccupations"
+...
+    at failureErrorWithLog (/home/runner/workspace/node_modules/tsx/node_modules/esbuild/lib/main.js:1476:15)
+    at /home/runner/workspace/node_modules/tsx/node_modules/esbuild/lib/main.js:755:50
+    at responseCallbacks.<computed> (/home/runner/workspace/node_modules/tsx/node_modules/esbuild/lib/main.js:622:9)
+    at handleIncomingPacket (/home/runner/workspace/node_modules/tsx/node_modules/esbuild/lib/main.js:677:12)
+    at Socket.readFromStdout (/home/runner/workspace/node_modules/tsx/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+
+Node.js v20.18.1
