@@ -1,3 +1,4 @@
+
 CREATE TABLE IF NOT EXISTS soc_major_groups (
     id SERIAL PRIMARY KEY,
     code VARCHAR(10) NOT NULL UNIQUE,
