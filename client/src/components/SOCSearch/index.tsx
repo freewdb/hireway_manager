@@ -7,9 +7,10 @@ interface SOCSearchProps {
   onSelect: (result: JobTitleSearchResult) => void;
   placeholder?: string;
   className?: string;
+  sector?: string; // Added sector prop
 }
 
-export function SOCSearch({ onSelect, placeholder = 'Search for a job title...', className = '' }: SOCSearchProps) {
+export function SOCSearch({ onSelect, placeholder = 'Search for a job title...', className = '', sector }: SOCSearchProps) {
   const [inputItems, setInputItems] = useState<JobTitleSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,10 +26,10 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch(`/api/job-titles?search=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/job-titles?search=${encodeURIComponent(query)}${sector ? `&sector=${encodeURIComponent(sector)}` : ''}`);
       if (!response.ok) throw new Error('Failed to fetch results');
       const results: JobTitleSearchResult[] = await response.json();
-      
+
       // Deduplicate by code, keeping highest ranked result
       const uniqueResults = Array.from(
         results.reduce((map, item) => {

@@ -30,7 +30,8 @@ interface SearchResponse {
   query: string;
 }
 
-function consolidateResults(items: any[], query: string): ConsolidatedJobResult[] {
+function consolidateResults(items: any[], query: string, sector?: string): ConsolidatedJobResult[] {
+  const SECTOR_BOOST_ALPHA = 0.3; // Configurable boost factor
   // Use a Map to ensure unique SOC codes
   const resultsByCode = new Map<string, ConsolidatedJobResult>();
   const seenCodes = new Set<string>();
@@ -59,7 +60,13 @@ function consolidateResults(items: any[], query: string): ConsolidatedJobResult[
     const isAlternative = titleMatchQuality === 0 && matchedAlternatives.length > 0;
 
     // Calculate overall rank
-    const rank = isAlternative ? 0.9 : 1;
+    let rank = isAlternative ? 0.9 : 1;
+    
+    // Apply sector boost if sector is provided
+    if (sector && item.sector_distribution) {
+      const distribution = Math.max(0, Math.min(100, item.sector_distribution));
+      rank += SECTOR_BOOST_ALPHA * (distribution / 100);
+    }
 
     if (!resultsByCode.has(item.code)) {
       resultsByCode.set(item.code, {
@@ -123,6 +130,7 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const query = url.searchParams.get('search')?.trim() || '';
+    const sector = url.searchParams.get('sector')?.trim();
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)));
     const offset = (page - 1) * limit;
@@ -177,6 +185,13 @@ export async function GET(req: Request) {
         description: socDetailedOccupations.description,
         alternativeTitles: socDetailedOccupations.alternativeTitles,
         searchableText: socDetailedOccupations.searchableText,
+        sectorDistribution: sql<number>`
+          COALESCE((
+            SELECT percentage 
+            FROM ${socSectorDistribution} 
+            WHERE soc_code = ${socDetailedOccupations.code} 
+            AND sector_label = ${sector}
+          ), 0)`.as('sector_distribution'),
         majorGroup: {
           code: socMajorGroups.code,
           title: socMajorGroups.title,
