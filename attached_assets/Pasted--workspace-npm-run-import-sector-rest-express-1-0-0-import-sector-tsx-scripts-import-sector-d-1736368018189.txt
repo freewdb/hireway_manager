@@ -1,0 +1,46 @@
+~/workspace$ npm run import:sector
+
+> rest-express@1.0.0 import:sector
+> tsx scripts/import_sector_distribution.ts
+
+Importing sector distribution data...
+Error importing sector distribution data: PostgresError: insert or update on table "soc_sector_distribution" violates foreign key constraint "fk_soc_code"
+    at ErrorResponse (file:///home/runner/workspace/node_modules/postgres/src/connection.js:788:26)
+    at handle (file:///home/runner/workspace/node_modules/postgres/src/connection.js:474:6)
+    at TLSSocket.data (file:///home/runner/workspace/node_modules/postgres/src/connection.js:315:9)
+    at TLSSocket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23) {
+  severity_local: 'ERROR',
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (soc_code)=(11-1011.00) is not present in table "soc_detailed_occupations".',
+  schema_name: 'public',
+  table_name: 'soc_sector_distribution',
+  constraint_name: 'fk_soc_code',
+  file: 'ri_triggers.c',
+  line: '2608',
+  routine: 'ri_ReportViolation'
+}
+PostgresError: insert or update on table "soc_sector_distribution" violates foreign key constraint "fk_soc_code"
+    at ErrorResponse (file:///home/runner/workspace/node_modules/postgres/src/connection.js:788:26)
+    at handle (file:///home/runner/workspace/node_modules/postgres/src/connection.js:474:6)
+    at TLSSocket.data (file:///home/runner/workspace/node_modules/postgres/src/connection.js:315:9)
+    at TLSSocket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23) {
+  severity_local: 'ERROR',
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (soc_code)=(11-1011.00) is not present in table "soc_detailed_occupations".',
+  schema_name: 'public',
+  table_name: 'soc_sector_distribution',
+  constraint_name: 'fk_soc_code',
+  file: 'ri_triggers.c',
+  line: '2608',
+  routine: 'ri_ReportViolation'
+}
