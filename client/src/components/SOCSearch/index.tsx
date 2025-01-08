@@ -126,6 +126,20 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="font-mono text-sm text-blue-600">{item.code}</span>
                 <span className="font-medium">{item.title}</span>
+                {item.sectorDistribution !== undefined && (
+                  <div 
+                    className={`ml-auto px-2 py-0.5 text-xs rounded-full ${
+                      item.sectorDistribution >= 50 ? 'bg-green-100 text-green-700' :
+                      item.sectorDistribution >= 10 ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-red-100 text-red-700'
+                    }`}
+                    title={`${Math.round(item.sectorDistribution)}% of these roles are in your selected industry`}
+                  >
+                    {item.sectorDistribution >= 50 ? 'High' :
+                     item.sectorDistribution >= 10 ? 'Moderate' :
+                     'Low'} Match
+                  </div>
+                )}
               </div>
               <div className="text-sm text-gray-600 line-clamp-2">
                 {item.description || "Description not available"}

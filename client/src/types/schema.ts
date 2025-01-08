@@ -4,6 +4,7 @@ export interface JobTitleSearchResult {
   description?: string;
   isAlternative: boolean;
   rank?: number;
+  sectorDistribution?: number;
   majorGroup?: {
     code: string;
     title: string;
