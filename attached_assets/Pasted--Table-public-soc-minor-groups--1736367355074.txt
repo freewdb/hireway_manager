@@ -1,0 +1,20 @@
+                                                                   Table "public.soc_minor_groups"
+      Column      |         Type         | Collation | Nullable |                   Default                    | Storage  | Compression | Stats target | Description 
+------------------+----------------------+-----------+----------+----------------------------------------------+----------+-------------+--------------+-------------
+ id               | integer              |           | not null | nextval('soc_minor_groups_id_seq'::regclass) | plain    |             |              | 
+ code             | character varying(7) |           | not null |                                              | extended |             |              | 
+ major_group_code | character varying(7) |           | not null |                                              | extended |             |              | 
+ title            | text                 |           | not null |                                              | extended |             |              | 
+ description      | text                 |           |          |                                              | extended |             |              | 
+ search_vector    | tsvector             |           | not null | ''::tsvector                                 | extended |             |              | 
+Indexes:
+    "soc_minor_groups_pkey" PRIMARY KEY, btree (id)
+    "soc_minor_groups_code_key" UNIQUE CONSTRAINT, btree (code)
+    "soc_minor_groups_search_idx" gin (search_vector)
+Foreign-key constraints:
+    "soc_minor_groups_major_group_code_fkey" FOREIGN KEY (major_group_code) REFERENCES soc_major_groups(code)
+Referenced by:
+    TABLE "soc_detailed_occupations" CONSTRAINT "soc_detailed_occupations_minor_group_code_fkey" FOREIGN KEY (minor_group_code) REFERENCES soc_minor_groups(code)
+Triggers:
+    trig_update_minor_group_search_vector BEFORE INSERT OR UPDATE ON soc_minor_groups FOR EACH ROW EXECUTE FUNCTION update_minor_group_search_vector()
+Access method: heap

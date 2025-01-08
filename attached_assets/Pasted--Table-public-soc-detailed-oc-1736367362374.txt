@@ -1,0 +1,23 @@
+                                                                       Table "public.soc_detailed_occupations"
+       Column       |            Type             | Collation | Nullable |                       Default                        | Storage  | Compression | Stats target | Description 
+--------------------+-----------------------------+-----------+----------+------------------------------------------------------+----------+-------------+--------------+-------------
+ id                 | integer                     |           | not null | nextval('soc_detailed_occupations_id_seq'::regclass) | plain    |             |              | 
+ code               | character varying(7)        |           | not null |                                                      | extended |             |              | 
+ title              | text                        |           | not null |                                                      | extended |             |              | 
+ description        | text                        |           |          |                                                      | extended |             |              | 
+ minor_group_code   | character varying(7)        |           | not null |                                                      | extended |             |              | 
+ alternative_titles | text[]                      |           |          |                                                      | extended |             |              | 
+ searchable_text    | text                        |           | not null | ''::text                                             | extended |             |              | 
+ search_vector      | tsvector                    |           | not null | ''::tsvector                                         | extended |             |              | 
+ updated_at         | timestamp without time zone |           |          | CURRENT_TIMESTAMP                                    | plain    |             |              | 
+Indexes:
+    "soc_detailed_occupations_pkey" PRIMARY KEY, btree (id)
+    "soc_detailed_occupations_code_key" UNIQUE CONSTRAINT, btree (code)
+    "soc_detailed_occupations_search_idx" gin (search_vector)
+Foreign-key constraints:
+    "soc_detailed_occupations_minor_group_code_fkey" FOREIGN KEY (minor_group_code) REFERENCES soc_minor_groups(code)
+Referenced by:
+    TABLE "soc_sector_distribution" CONSTRAINT "fk_soc_code" FOREIGN KEY (soc_code) REFERENCES soc_detailed_occupations(code)
+Triggers:
+    trig_update_detailed_occupation_search_vector BEFORE INSERT OR UPDATE ON soc_detailed_occupations FOR EACH ROW EXECUTE FUNCTION update_detailed_occupation_search_vector()
+Access method: heap
