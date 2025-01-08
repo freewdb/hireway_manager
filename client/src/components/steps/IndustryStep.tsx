@@ -6,17 +6,25 @@ import { IndustryInfoCard } from "../IndustryInfoCard"; // Added import
 
 const industries = [
   { code: "11", name: "Agriculture, Forestry, Fishing and Hunting" },
-  { code: "71", name: "Arts, Entertainment, and Recreation" },
-  { code: "23", name: "Construction" },
-  { code: "52", name: "Finance and Insurance" },
-  { code: "62", name: "Health Care and Social Assistance" },
-  { code: "51", name: "Information" },
-  { code: "31", name: "Manufacturing" },
   { code: "21", name: "Mining, Quarrying, and Oil and Gas Extraction" },
-  { code: "54", name: "Professional, Scientific, and Technical Services" },
-  { code: "44", name: "Retail Trade" },
   { code: "22", name: "Utilities" },
-  { code: "42", name: "Wholesale Trade" }
+  { code: "23", name: "Construction" },
+  { code: "31-33", name: "Manufacturing" },
+  { code: "42", name: "Wholesale Trade" },
+  { code: "44-45", name: "Retail Trade" },
+  { code: "48-49", name: "Transportation and Warehousing" },
+  { code: "51", name: "Information" },
+  { code: "52", name: "Finance and Insurance" },
+  { code: "53", name: "Real Estate and Rental and Leasing" },
+  { code: "54", name: "Professional, Scientific, and Technical Services" },
+  { code: "55", name: "Management of Companies and Enterprises" },
+  { code: "56", name: "Administrative and Support and Waste Management and Remediation" },
+  { code: "61", name: "Education Services" },
+  { code: "62", name: "Health Care and Social Assistance" },
+  { code: "71", name: "Arts, Entertainment, and Recreation" },
+  { code: "72", name: "Accomodation and Food Services" },
+  { code: "81", name: "Other Services, Except Public Administration" },
+  { code: "92", name: "Public Administration" }
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 export const IndustryStep = () => {
