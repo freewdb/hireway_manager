@@ -4,7 +4,6 @@ name = "repl-nix-hirewaymanager"
 version = "0.1.0"
 description = "Hireway Manager Application"
 authors = ["Replit User <replituser@example.com>"]
-python = ">=3.11"
 
 [tool.poetry.dependencies]
 python = ">=3.11"
