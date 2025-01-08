@@ -30,14 +30,19 @@ def get_db_connection():
 
 def extract_soc_components(code: str) -> tuple:
     """Extract major, minor, and detailed components from SOC code."""
-    # Remove decimal and non-numeric characters
-    clean_code = ''.join(c for c in code if c.isdigit())
-    if len(clean_code) < 6:
-        clean_code = clean_code.ljust(6, '0')
-
-    major_code = f"{clean_code[:2]}-0000"
-    minor_code = f"{clean_code[:2]}-{clean_code[2:4]}00"
-    detailed_code = f"{clean_code[:2]}-{clean_code[2:4]}{clean_code[4:6]}"
+    # Extract base code before decimal
+    base_code = code.split('.')[0]
+    clean_base = ''.join(c for c in base_code if c.isdigit())
+    
+    # Keep the decimal part if it exists
+    decimal_part = code.split('.')[-1] if '.' in code else '00'
+    
+    if len(clean_base) < 4:
+        clean_base = clean_base.ljust(4, '0')
+    
+    major_code = f"{clean_base[:2]}-0000"
+    minor_code = f"{clean_base[:2]}-{clean_base[2:4]}00"
+    detailed_code = f"{clean_base[:2]}-{clean_base[2:4]}{decimal_part}"
 
     return major_code, minor_code, detailed_code
 

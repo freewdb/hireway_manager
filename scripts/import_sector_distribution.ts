@@ -19,7 +19,7 @@ async function importSectorDistribution() {
     // Insert new records
     for (const record of records) {
       await db.insert(socSectorDistribution).values({
-        socCode: record.onetsoc_code,
+        socCode: record.onetsoc_code.replace('.00', ''),
         sectorLabel: record.sector_label,
         sampleSize: parseInt(record.n),
         percentage: parseFloat(record.percent),
