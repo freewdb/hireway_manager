@@ -1,4 +1,3 @@
-
 import { useWizard } from "../wizard/WizardContext";
 import { SOCSearch } from "../SOCSearch";
 import WizardStep from "../wizard/WizardStep";
@@ -6,14 +5,14 @@ import { RoleInfoCard } from "../RoleInfoCard";
 import type { JobTitleSearchResult } from "@/types/schema";
 
 export const RoleStep = () => {
-  const { updateData, nextStep } = useWizard();
+  const { updateData, nextStep, data } = useWizard();
 
   const handleSelect = (result: JobTitleSearchResult) => {
     updateData("role", result.code);
     updateData("roleTitle", result.title);
     updateData("roleDescription", result.description);
     updateData("alternativeTitles", result.alternativeTitles || []);
-    
+
     if (result.code) {
       nextStep();
     }
@@ -23,8 +22,9 @@ export const RoleStep = () => {
     <WizardStep title="Select Role" stepNumber={2}>
       <div className="space-y-4">
         <SOCSearch 
-          onSelect={handleSelect}
+          onSelect={handleSelect} 
           placeholder="Search for a job title (e.g., Software Developer, IT Manager)"
+          sector={data.industry}
         />
         <RoleInfoCard />
       </div>
