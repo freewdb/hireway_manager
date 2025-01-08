@@ -50,6 +50,35 @@ export const selectSocDetailedOccupationSchema = createSelectSchema(socDetailedO
 export type SocMajorGroup = typeof socMajorGroups.$inferSelect;
 export type InsertSocMajorGroup = typeof socMajorGroups.$inferInsert;
 
+export const socMajorGroups = pgTable('soc_major_groups', {
+  id: serial('id').primaryKey(),
+  code: varchar('code', { length: 15 }).notNull().unique(),
+  title: text('title').notNull(),
+  description: text('description'),
+  searchVector: text('search_vector').notNull().default('')
+});
+
+export const socMinorGroups = pgTable('soc_minor_groups', {
+  id: serial('id').primaryKey(),
+  code: varchar('code', { length: 15 }).notNull().unique(),
+  majorGroupCode: varchar('major_group_code', { length: 15 }).notNull().references(() => socMajorGroups.code),
+  title: text('title').notNull(),
+  description: text('description'),
+  searchVector: text('search_vector').notNull().default('')
+});
+
+export const socDetailedOccupations = pgTable('soc_detailed_occupations', {
+  id: serial('id').primaryKey(),
+  code: varchar('code', { length: 15 }).notNull().unique(),
+  title: text('title').notNull(),
+  description: text('description'),
+  minorGroupCode: varchar('minor_group_code', { length: 15 }).notNull().references(() => socMinorGroups.code),
+  alternativeTitles: text('alternative_titles').array(),
+  searchableText: text('searchable_text').notNull().default(''),
+  searchVector: text('search_vector').notNull().default(''),
+  updatedAt: timestamp('updated_at').defaultNow()
+});
+
 export const socSectorDistribution = pgTable('soc_sector_distribution', {
   id: serial('id').primaryKey(),
   socCode: varchar('soc_code', { length: 15 }).notNull().references(() => socDetailedOccupations.code),
