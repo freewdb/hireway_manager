@@ -1,3 +1,4 @@
+
 import { readFile } from 'fs/promises';
 import { parse } from 'csv-parse/sync';
 import { db } from '../db';
@@ -19,7 +20,7 @@ async function importSectorDistribution() {
     // Insert new records
     for (const record of records) {
       await db.insert(socSectorDistribution).values({
-        socCode: record.onetsoc_code.replace('.00', ''),
+        socCode: record.onetsoc_code,
         sectorLabel: record.sector_label,
         sampleSize: parseInt(record.n),
         percentage: parseFloat(record.percent),
