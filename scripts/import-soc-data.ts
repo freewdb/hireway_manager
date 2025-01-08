@@ -26,8 +26,8 @@ interface ConsolidatedOccupation {
 }
 
 function extractSOCCode(onetCode: string): string {
-  // Convert ONET code (e.g. "11-1011.00") to SOC code (e.g. "11-1011")
-  return onetCode.split('.')[0];
+  // Keep the full ONET code (e.g. "11-1011.00")
+  return onetCode;
 }
 
 function extractMajorGroupCode(socCode: string): string {
