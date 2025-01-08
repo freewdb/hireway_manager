@@ -1,0 +1,48 @@
+~/workspace$ mkdir -p migrations/meta && npm run db:reset && npm run db:seed && npm run import:sector
+
+> rest-express@1.0.0 db:reset
+> drizzle-kit drop && drizzle-kit push:pg
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/home/runner/workspace/drizzle.config.ts'
+[i] no migration entries found in migrations/meta/_journal.json
+This command is deprecated, please use updated 'push' command (see https://orm.drizzle.team/kit-docs/upgrade-21#how-to-migrate-to-0210)
+
+> rest-express@1.0.0 db:seed
+> tsx scripts/seed-soc.ts
+
+Seeding SOC data...
+Major groups seeded.
+Minor groups seeded.
+Error seeding SOC data: PostgresError: value too long for type character varying(7)
+    at ErrorResponse (file:///home/runner/workspace/node_modules/postgres/src/connection.js:788:26)
+    at handle (file:///home/runner/workspace/node_modules/postgres/src/connection.js:474:6)
+    at TLSSocket.data (file:///home/runner/workspace/node_modules/postgres/src/connection.js:315:9)
+    at TLSSocket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23) {
+  severity_local: 'ERROR',
+  severity: 'ERROR',
+  code: '22001',
+  file: 'varchar.c',
+  line: '638',
+  routine: 'varchar'
+}
+Seeding failed: PostgresError: value too long for type character varying(7)
+    at ErrorResponse (file:///home/runner/workspace/node_modules/postgres/src/connection.js:788:26)
+    at handle (file:///home/runner/workspace/node_modules/postgres/src/connection.js:474:6)
+    at TLSSocket.data (file:///home/runner/workspace/node_modules/postgres/src/connection.js:315:9)
+    at TLSSocket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23) {
+  severity_local: 'ERROR',
+  severity: 'ERROR',
+  code: '22001',
+  file: 'varchar.c',
+  line: '638',
+  routine: 'varchar'
+}
