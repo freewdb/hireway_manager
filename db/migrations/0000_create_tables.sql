@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS soc_minor_groups (
 
 CREATE TABLE IF NOT EXISTS soc_detailed_occupations (
     id SERIAL PRIMARY KEY,
-    code VARCHAR(10) NOT NULL UNIQUE,
+    code VARCHAR(15) NOT NULL UNIQUE,
     title TEXT NOT NULL,
     description TEXT,
     minor_group_code VARCHAR(10) NOT NULL REFERENCES soc_minor_groups(code),
