@@ -50,6 +50,22 @@ export const selectSocDetailedOccupationSchema = createSelectSchema(socDetailedO
 export type SocMajorGroup = typeof socMajorGroups.$inferSelect;
 export type InsertSocMajorGroup = typeof socMajorGroups.$inferInsert;
 
+export const socSectorDistribution = pgTable('soc_sector_distribution', {
+  id: serial('id').primaryKey(),
+  socCode: varchar('soc_code', { length: 10 }).notNull().references(() => socDetailedOccupations.code),
+  sectorLabel: text('sector_label').notNull(),
+  sampleSize: integer('sample_size').notNull(),
+  percentage: decimal('percentage', { precision: 5, scale: 2 }).notNull(),
+  dateUpdated: date('date_updated').notNull()
+});
+
+export const insertSocSectorDistributionSchema = createInsertSchema(socSectorDistribution);
+export const selectSocSectorDistributionSchema = createSelectSchema(socSectorDistribution);
+
+export type SocSectorDistribution = typeof socSectorDistribution.$inferSelect;
+export type InsertSocSectorDistribution = typeof socSectorDistribution.$inferInsert;
+
+
 export type SocMinorGroup = typeof socMinorGroups.$inferSelect;
 export type InsertSocMinorGroup = typeof socMinorGroups.$inferInsert;
 
