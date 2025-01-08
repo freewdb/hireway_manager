@@ -21,7 +21,7 @@ const sampleData = {
   ],
   detailedOccupations: [
     {
-      code: '15-1252',
+      code: '15-1252.00',
       title: 'Software Developers',
       description: 'Research, design, and develop computer software systems. Create applications, frameworks, and other software components.',
       minorGroupCode: '15-1200',
@@ -36,7 +36,7 @@ const sampleData = {
       searchableText: 'programming coding development software engineering applications web mobile cloud architecture design systems'
     },
     {
-      code: '15-1251',
+      code: '15-1251.00',
       title: 'Computer Programmers',
       description: 'Write and test code that allows computer applications and software programs to function properly.',
       minorGroupCode: '15-1200',
