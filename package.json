@@ -10,7 +10,7 @@
     "db:push": "drizzle-kit push",
     "db:reset": "drizzle-kit drop && drizzle-kit push:pg",
     "db:seed": "tsx scripts/seed-soc.ts",
-    "migrate": "drizzle-kit generate:pg && drizzle-kit push:pg",
+    "migrate": "drizzle-kit generate && drizzle-kit push",
     "seed": "tsx scripts/seed-soc.ts",
     "import:sector": "tsx scripts/import_sector_distribution.ts"
   },
