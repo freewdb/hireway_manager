@@ -1,0 +1,114 @@
+
+1. Pass the User’s NAICS Sector to the Search Endpoint
+
+Wherever you call your /api/job-titles (or equivalent route), include the sector as a query parameter or in the request body. For example:
+
+// In your SOCSearch component (frontend):
+fetch(`/api/job-titles?query=${encodeURIComponent(query)}&sector=${encodeURIComponent(userSector)}`)
+  .then(res => res.json())
+  .then(...);
+
+	•	If you already store userSector in WizardContext, just ensure you pass that string (e.g., “Construction,” “Healthcare and social assistance,” etc.) to the backend in each search request.
+
+2. Extend the Search Handler to Accept sector
+
+In your existing search.ts (or whichever file implements /api/job-titles):
+	1.	Parse the sector from the incoming request:
+
+const query = req.query.query as string;
+const sector = req.query.sector as string | undefined;
+// fallback or validation if sector is missing
+
+
+	2.	Perform your existing fuzzy + full-text search to get a list of candidate occupations with their preliminary text-based relevance scores.
+
+3. Fetch the Matching Sector Distribution for Each SOC
+
+After the text-based scores are computed, you need to “bump” those scores for SOC codes that are strongly associated with the user’s chosen sector.
+
+Option A: Single Query + Join (Preferred if you want to avoid N queries)
+
+You can query your main occupations table (the results) and join with occupation_sector_distribution. For example (in pseudo-SQL):
+
+SELECT 
+  o.onetsoc_code,
+  o.title,
+  o.fuzzy_match_rank,
+  COALESCE(sd.percent, 0) AS distribution_percent
+FROM ( /* your existing query that returns the top results */ ) AS o
+LEFT JOIN occupation_sector_distribution sd
+  ON sd.onetsoc_code = o.onetsoc_code
+  AND sd.sector_label = $1    -- the user’s selected sector
+
+This way, each row in your result set has both fuzzy_match_rank and distribution_percent. If the sector distribution doesn’t exist, it’ll be NULL, and you can treat that as 0.
+
+
+	3.	Then apply your boost.
+
+This can be fine for a small number of results, but if you’re returning 50 or 100 occupations, you might have 50–100 queries. That’s usually not a big deal for smaller scale, but a join-based approach is more performant at scale.
+
+4. Apply the Linear Boost
+
+Once you have both the text-based rank (or fuzzy match score) and the distribution percentage, implement the formula:
+
+// Pseudocode
+const alpha = 0.3; // or 0.5, tweak as needed
+let distribution = rawDistributionPercent;
+distribution = Math.max(0, Math.min(100, distribution)); // clamp to [0, 100]
+
+const finalScore = textSearchScore + alpha * (distribution / 100.0);
+
+A few points:
+	•	alpha is how strongly you want to weight industry alignment. A value of 0.3 means a job with 100% distribution in that sector gets a +0.3 bonus.
+	•	If your text/fuzzy search scores range from 0.0 to 2.0, maybe you want a bigger range (like alpha = 1.0). You’ll need to experiment to see how strongly the industry factor reorders your results.
+	•	Clamping ensures that minor data quirks (e.g. 100.1% or 99.9%) don’t break your scale.
+
+5. Sort by Final Score and Return
+
+Replace or augment your existing sorting step so that you sort by finalScore descending:
+
+// If you accumulate results in an array:
+results.forEach(r => {
+  const distribution = Math.min(100, Math.max(0, r.distribution_percent ?? 0));
+  r.finalScore = r.fuzzy_match_rank + alpha * (distribution / 100);
+});
+
+results.sort((a, b) => b.finalScore - a.finalScore);
+
+Then return this sorted list to the frontend.
+
+6. (Optional) Include the “Distribution” in the API Response
+
+If you want the UI to highlight “High Likelihood Match,” you need the distribution percentage (or the final boosted score) in the response. For example:
+
+return res.json({
+  results: results.map(r => ({
+    socCode: r.onetsoc_code,
+    title: r.title,
+    finalScore: r.finalScore,
+    sectorDistributionPct: distribution
+  }))
+});
+
+The UI can then show a label like:
+	•	High Likelihood Match for distribution ≥ 50%
+	•	Moderate for 10–49%
+	•	etc.
+
+7. Front-End UI Changes
+
+Because you now have a sectorDistributionPct (or similar) in the returned JSON:
+	1.	Highlight or color-code results that have a large distribution.
+	2.	Possibly add a tooltip explaining why it’s boosted: “This occupation is common in your selected industry.”
+
+
+
+Putting It All Together (Summary)
+	1.	Accept sector in your search endpoint (search.ts).
+	2.	Perform your existing text/fuzzy search to get preliminary scores.
+	3.	Fetch distribution_percent from your occupation_sector_distribution table (via a LEFT JOIN or one-by-one queries).
+	4.	Compute finalScore = textSearchScore + alpha * (distributionPct / 100).
+	5.	Sort results by finalScore.
+	6.	Return the new final score and sector distribution to the UI.
+	7.	Indicate or highlight results for the user.
+
