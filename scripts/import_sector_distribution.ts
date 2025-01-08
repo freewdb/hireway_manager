@@ -1,4 +1,3 @@
-
 import { readFile } from 'fs/promises';
 import { parse } from 'csv-parse/sync';
 import { db } from '../db';
@@ -13,7 +12,7 @@ async function importSectorDistribution() {
     });
 
     console.log('Importing sector distribution data...');
-    
+
     // Clear existing data
     await db.delete(socSectorDistribution);
 
@@ -24,7 +23,7 @@ async function importSectorDistribution() {
         sectorLabel: record.sector_label,
         sampleSize: parseInt(record.n),
         percentage: parseFloat(record.percent),
-        dateUpdated: new Date(record.date_updated)
+        dateUpdated: new Date(record.date_updated).toISOString().split('T')[0]
       });
     }
 
