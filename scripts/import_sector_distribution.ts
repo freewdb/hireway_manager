@@ -6,6 +6,7 @@ import { socSectorDistribution } from '../db/schema';
 
 async function importSectorDistribution() {
   try {
+    console.log('Reading sector distribution data...');
     const fileContent = await readFile('attached_assets/occupation_sector_distribution.csv', 'utf-8');
     const records = parse(fileContent, {
       columns: true,
@@ -29,9 +30,10 @@ async function importSectorDistribution() {
     }
 
     console.log('Sector distribution data import complete');
+    process.exit(0);
   } catch (error) {
     console.error('Error importing sector distribution data:', error);
-    throw error;
+    process.exit(1);
   }
 }
 
