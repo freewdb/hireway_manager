@@ -1,0 +1,142 @@
+Below is a recommended final approach for your dev team that implements:
+	1.	Strict filtering for SOC codes that have a near-zero distribution in the user’s chosen sector.
+	2.	A “Show All” override parameter/button so the user can bypass that filter and see every matching code, regardless of sector distribution.
+
+1. Decide on a Filter Threshold
+
+Because you have cases where a job is 100% in “Mining” and 0% everywhere else, a strict filter is easy:
+	•	If distributionPct < 1 (or exactly 0), you omit that result from the final list—unless “Show All” was toggled.
+
+You could also allow some small slack, e.g. < 1% or 0.5%. But for truly exclusive roles, 0% is enough.
+
+2. Add a “Show All” Parameter in the API
+
+Modify your existing API so it accepts a parameter like ?showAll=true in the query string. For example:
+
+// If user wants to see *all* results, no matter the distribution:
+const showAll = url.searchParams.get('showAll') === 'true';
+
+3. Filter in consolidateResults()
+
+Right now, you boost the rank for a code if sector_distribution is high. To do a strict filter, simply remove items with negligible distribution before ranking (or right after you build the list) unless showAll is true.
+
+Here’s a snippet illustrating that change:
+
+function consolidateResults(items: any[], query: string, sector?: string, showAll?: boolean): ConsolidatedJobResult[] {
+  const SECTOR_BOOST_ALPHA = 0.3;
+  const SECTOR_FILTER_THRESHOLD = 1.0; // Only show codes with >=1% distribution unless showAll=true
+
+  // 1. Filter out items with distribution < threshold (if sector is set and showAll is false)
+  let filteredItems = items;
+  if (!showAll && sector) {
+    filteredItems = filteredItems.filter(item => {
+      const dist = item.sector_distribution ?? 0;
+      return dist >= SECTOR_FILTER_THRESHOLD;
+    });
+  }
+
+  // 2. Now proceed with your existing logic:
+  const resultsByCode = new Map<string, ConsolidatedJobResult>();
+  const queryLower = query.toLowerCase();
+  const queryWords = queryLower.split(/\s+/);
+
+  filteredItems.forEach((item) => {
+    // existing code...
+    let rank = 1; 
+    // if item isAlternative, etc. do your existing rank logic...
+
+    // Sector-based boost
+    if (sector && item.sector_distribution) {
+      const dist = Math.max(0, Math.min(100, item.sector_distribution));
+      rank += SECTOR_BOOST_ALPHA * (dist / 100.0);
+    }
+
+    // Set results in map...
+  });
+
+  // Sort and return
+  return Array.from(resultsByCode.values()).sort((a, b) => b.rank - a.rank);
+}
+
+The key difference is the block:
+
+if (!showAll && sector) {
+  filteredItems = filteredItems.filter(item => {
+    const dist = item.sector_distribution ?? 0;
+    return dist >= SECTOR_FILTER_THRESHOLD;
+  });
+}
+
+This ensures that if showAll is not true (the default), any code with 0% distribution in the user’s sector is simply removed.
+
+4. Update the Front-End to Include “Show All” Toggle
+
+In your SOCSearch UI or wherever you call this API, you can:
+	1.	Add a small checkbox or toggle labeled “Show all results, including cross-industry.”
+	2.	If the user toggles it, you append &showAll=true to the fetch URL:
+
+const [showAll, setShowAll] = useState(false);
+
+const fetchJobs = async (query: string) => {
+  const url = `/api/job-titles?search=${encodeURIComponent(query)}`
+    + `&sector=${encodeURIComponent(sector || '')}`
+    + (showAll ? `&showAll=true` : '');
+  
+  // fetch as normal...
+};
+
+Then if showAll is false, the strict filter is enforced. If it’s true, they see all possible results—like “Mining Machine Operator” even though their sector is “Construction.”
+
+5. Example of the Final Changes
+
+Below is a short pseudo-diff showing where you might integrate the filter in your search.ts or in the GET function that calls consolidateResults():
+
+// In GET(req: Request):
+const sector = url.searchParams.get('sector')?.trim();
++ const showAll = url.searchParams.get('showAll') === 'true';
+
+console.log('Search request received:', {
+  searchTerm: query,
+  ...
++ showAll,
+  ...
+});
+
+...
+
+// after you fetch exactMatches or potentialMatches...
+- const results = consolidateResults(exactMatches, query, sector);
++ const results = consolidateResults(exactMatches, query, sector, showAll);
+
+And in your consolidateResults():
+
+function consolidateResults(
+  items: any[],
+  query: string,
+  sector?: string,
++ showAll?: boolean
+): ConsolidatedJobResult[] {
+  ...
++ const SECTOR_FILTER_THRESHOLD = 1.0;
+  let filteredItems = items;
+  if (!showAll && sector) {
+    filteredItems = filteredItems.filter(item => {
+      const dist = item.sector_distribution ?? 0;
+      return dist >= SECTOR_FILTER_THRESHOLD;
+    });
+  }
+
+  // Then do your ranking logic on filteredItems...
+}
+
+6. UX Tips
+	•	Button/Checkbox Label: “Show me all cross-industry roles” or “Include roles that might not match my sector.”
+	•	Possibly explain (via tooltip or small text) that “By default, we hide roles that have 0% presence in your selected industry to reduce clutter.”
+
+Summary
+
+With these small adjustments, you’ll have:
+	1.	A strict by-default filter that removes obviously unrelated single-industry roles from the user’s search results.
+	2.	A “Show All” override that reverts to your old, unfiltered approach if the user needs to see every possible code.
+
+This balances a clean, intuitive user experience (no random “mining” occupations in “construction” searches) with the flexibility for advanced edge cases.
