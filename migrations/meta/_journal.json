@@ -1,13 +1,5 @@
 {
   "version": "5",
   "dialect": "pg",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1736368734401,
-      "tag": "0000_natural_lady_mastermind",
-      "breakpoints": true
-    }
-  ]
+  "entries": []
 }
