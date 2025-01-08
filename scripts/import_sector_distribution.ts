@@ -14,20 +14,32 @@ async function importSectorDistribution() {
       skip_empty_lines: true
     });
 
-    console.log('Importing sector distribution data...');
-
-    // Clear existing data
+    console.log(`Found ${records.length} records to import`);
+    console.log('Clearing existing data...');
     await db.delete(socSectorDistribution);
 
-    // Insert new records
-    for (const record of records) {
-      await db.insert(socSectorDistribution).values({
+    // Process in batches of 100
+    const BATCH_SIZE = 100;
+    let processed = 0;
+    const batches = [];
+    
+    for (let i = 0; i < records.length; i += BATCH_SIZE) {
+      const batch = records.slice(i, i + BATCH_SIZE).map(record => ({
         socCode: record.onetsoc_code,
         sectorLabel: record.sector_label,
         sampleSize: parseInt(record.n),
         percentage: parseFloat(record.percent),
         dateUpdated: new Date(record.date_updated).toISOString().split('T')[0]
-      });
+      }));
+      batches.push(batch);
+    }
+
+    console.log(`Processing ${batches.length} batches...`);
+    
+    for (const batch of batches) {
+      await db.insert(socSectorDistribution).values(batch);
+      processed += batch.length;
+      console.log(`Processed ${processed}/${records.length} records`);
     }
 
     const timeElapsed = (Date.now() - startTime) / 1000;
