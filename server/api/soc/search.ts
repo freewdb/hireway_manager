@@ -30,8 +30,19 @@ interface SearchResponse {
   query: string;
 }
 
-function consolidateResults(items: any[], query: string, sector?: string): ConsolidatedJobResult[] {
+function consolidateResults(items: any[], query: string, sector?: string, showAll?: boolean): ConsolidatedJobResult[] {
   const SECTOR_BOOST_ALPHA = 0.3; // Configurable boost factor
+  const SECTOR_FILTER_THRESHOLD = 1.0; // Only show codes with >=1% distribution unless showAll=true
+  
+  // Filter out items with low sector distribution
+  let filteredItems = items;
+  if (!showAll && sector) {
+    filteredItems = filteredItems.filter(item => {
+      const dist = item.sector_distribution ?? 0;
+      return dist >= SECTOR_FILTER_THRESHOLD;
+    });
+  }
+
   // Use a Map to ensure unique SOC codes
   const resultsByCode = new Map<string, ConsolidatedJobResult>();
   const seenCodes = new Set<string>();

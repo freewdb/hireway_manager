@@ -16,6 +16,7 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<JobTitleSearchResult | null>(null);
   const [selectedItems, setSelectedItems] = useState<JobTitleSearchResult[]>([]);
+  const [showAll, setShowAll] = useState(false); // Added showAll state
 
   const searchSOC = async (query: string) => {
     if (!query.trim()) {
@@ -26,7 +27,8 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch(`/api/job-titles?search=${encodeURIComponent(query)}${sector ? `&sector=${encodeURIComponent(sector)}` : ''}`);
+      const url = `/api/job-titles?search=${encodeURIComponent(query)}${sector ? `&sector=${encodeURIComponent(sector)}` : ''}${showAll ? '&showAll=true' : ''}`; // Updated URL
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch results');
       const results: JobTitleSearchResult[] = await response.json();
 
@@ -88,17 +90,25 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
 
   return (
     <div className={`relative w-full ${className}`}>
-      <div className="relative">
-        <input
-          {...getInputProps()}
-          className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder={placeholder}
-        />
-        {isLoading && (
-          <div className="absolute right-3 top-2.5">
-            <div className="w-5 h-5 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
-          </div>
-        )}
+      <div className="flex items-center"> {/* Added flex to align input and button */}
+        <div className="relative w-full">
+          <input
+            {...getInputProps()}
+            className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder={placeholder}
+          />
+          {isLoading && (
+            <div className="absolute right-3 top-2.5">
+              <div className="w-5 h-5 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="ml-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
+        >
+          {showAll ? 'Show Fewer' : 'Show All'}
+        </button> {/* Added Show All toggle button */}
       </div>
 
       <ul
