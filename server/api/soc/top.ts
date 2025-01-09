@@ -1,3 +1,4 @@
+
 import { sql } from 'drizzle-orm';
 import { db } from '../../../db';
 import { socDetailedOccupations, socSectorDistribution } from '../../../db/schema';
@@ -19,15 +20,24 @@ export async function GET(req: Request) {
         title: socDetailedOccupations.title,
         description: socDetailedOccupations.description,
         alternativeTitles: socDetailedOccupations.alternativeTitles,
-        sectorDistribution: socSectorDistribution.percentage
+        sectorDistribution: sql<number>`
+          COALESCE((
+            SELECT percentage 
+            FROM ${socSectorDistribution} 
+            WHERE soc_code = ${socDetailedOccupations.code}
+            AND sector_label = ${sector}
+          ), 0)`.as('sector_distribution')
       })
       .from(socDetailedOccupations)
-      .innerJoin(
-        socSectorDistribution,
-        sql`${socDetailedOccupations.code} = ${socSectorDistribution.socCode}`
-      )
-      .where(sql`${socSectorDistribution.sectorLabel} = ${sector}`)
-      .orderBy(sql`${socSectorDistribution.percentage} DESC`)
+      .where(sql`
+        EXISTS (
+          SELECT 1 FROM ${socSectorDistribution}
+          WHERE ${socSectorDistribution.socCode} = ${socDetailedOccupations.code}
+          AND ${socSectorDistribution.sectorLabel} = ${sector}
+          AND ${socSectorDistribution.percentage} > 0
+        )
+      `)
+      .orderBy(sql`sector_distribution DESC`)
       .limit(10);
 
     return new Response(JSON.stringify(topOccupations), {
