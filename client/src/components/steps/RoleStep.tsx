@@ -15,6 +15,7 @@ export const RoleStep = () => {
     updateData("roleTitle", result.title);
     updateData("roleDescription", result.description);
     updateData("alternativeTitles", result.alternativeTitles || []);
+    updateData("sectorDistribution", result.sectorDistribution || 0); //Added to update the data
 
     if (result.code) {
       nextStep();
@@ -31,6 +32,12 @@ export const RoleStep = () => {
             <div>
               <span className="font-medium">Current Selection Distribution:</span>{' '}
               {lastDistribution.toFixed(2)}% in selected industry
+            </div>
+          )}
+          {data.sectorDistribution !== undefined && (
+            <div>
+              <span className="font-medium">Overall Sector Distribution:</span>{' '}
+              {Math.round(data.sectorDistribution)}% in selected industry
             </div>
           )}
         </div>
