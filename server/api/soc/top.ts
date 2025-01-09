@@ -26,16 +26,24 @@ export async function GET(req: Request) {
             FROM ${socSectorDistribution} 
             WHERE soc_code = ${socDetailedOccupations.code} 
             AND sector_label = ${sector}
-          ), 0)`.as('sector_distribution')
+          ), 0)`.as('sector_distribution'),
+        topIndustries: sql<any[]>`
+          json_agg(
+            json_build_object(
+              'sector', sector_label,
+              'percentage', percentage
+            ) 
+          ) FILTER (WHERE sector_label IS NOT NULL)`.as('top_industries')
       })
       .from(socDetailedOccupations)
-      .where(sql`EXISTS (
-        SELECT 1 FROM ${socSectorDistribution}
-        WHERE soc_code = ${socDetailedOccupations.code}
-        AND sector_label = ${sector}
-      )`)
+      .innerJoin(
+        socSectorDistribution,
+        sql`${socDetailedOccupations.code} = ${socSectorDistribution.socCode}`
+      )
+      .where(sql`${socSectorDistribution.sectorLabel} = ${sector}`)
+      .groupBy(socDetailedOccupations.code)
       .orderBy(sql`sector_distribution DESC`)
-      .limit(8);
+      .limit(10);
 
     return new Response(JSON.stringify(topOccupations), {
       headers: { 'Content-Type': 'application/json' }
