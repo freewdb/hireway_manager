@@ -1,6 +1,29 @@
 
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { useWizard } from "./wizard/WizardContext";
-import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
+
+const industryExamples: Record<string, string[]> = {
+  "11": ["Monsanto", "Tyson Foods", "Weyerhaeuser"],
+  "21": ["ExxonMobil", "Chevron", "Rio Tinto"],
+  "22": ["Duke Energy", "PG&E", "American Water Works"],
+  "23": ["Bechtel", "Turner Construction", "AECOM"],
+  "31-33": ["General Motors", "Boeing", "Procter & Gamble"],
+  "42": ["Sysco", "McKesson", "Arrow Electronics"],
+  "44-45": ["Walmart", "Amazon", "Target"],
+  "48-49": ["UPS", "FedEx", "Union Pacific"],
+  "51": ["Disney", "Comcast", "Meta"],
+  "52": ["JPMorgan Chase", "Goldman Sachs", "Visa"],
+  "53": ["CBRE Group", "Prologis", "Simon Property Group"],
+  "54": ["Deloitte", "McKinsey", "Accenture"],
+  "55": ["Berkshire Hathaway", "Koch Industries", "Liberty Mutual"],
+  "56": ["Waste Management", "ADP", "ManpowerGroup"],
+  "61": ["Apollo Education", "Pearson", "2U"],
+  "62": ["UnitedHealth Group", "CVS Health", "HCA Healthcare"],
+  "71": ["Live Nation", "Disney Parks", "MGM Resorts"],
+  "72": ["Marriott", "McDonald's", "Starbucks"],
+  "81": ["Goodwill Industries", "H&R Block", "Service Corporation"],
+  "92": ["U.S. Postal Service", "Department of Defense", "VA"]
+};
 
 const industryDescriptions: Record<string, string> = {
   "11": "Companies in agriculture, forestry, fishing and hunting focus on growing crops, raising animals, harvesting timber, and harvesting fish and other animals from their natural habitats.",
@@ -35,13 +58,25 @@ export const IndustryInfoCard = () => {
       <CardHeader>
         <CardTitle className="flex justify-between">
           <span>Industry Information</span>
-          <span className="text-sm text-muted-foreground">{data.industry}</span>
+          <span className="text-sm text-muted-foreground">NAICS {data.industry}</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          {industryDescriptions[data.industry] || "Industry description not available."}
-        </p>
+        <div className="space-y-4">
+          <p className="text-muted-foreground">
+            {industryDescriptions[data.industry]}
+          </p>
+          <div>
+            <h4 className="font-medium mb-2">Example Companies</h4>
+            <div className="flex flex-wrap gap-2">
+              {industryExamples[data.industry]?.map((company) => (
+                <span key={company} className="px-2 py-1 bg-muted rounded-md text-sm">
+                  {company}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
