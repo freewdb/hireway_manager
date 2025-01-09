@@ -33,7 +33,7 @@ interface SearchResponse {
 function consolidateResults(items: any[], query: string, sector?: string, showAll?: boolean): ConsolidatedJobResult[] {
   const SECTOR_BOOST_ALPHA = 0.3; // Configurable boost factor
   const SECTOR_FILTER_THRESHOLD = 1.0; // Only show codes with >=1% distribution unless showAll=true
-  
+
   // Filter out items with low sector distribution
   let filteredItems = items;
   if (!showAll && sector) {
@@ -72,11 +72,18 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
 
     // Calculate overall rank
     let rank = isAlternative ? 0.9 : 1;
-    
+
     // Apply sector boost if sector is provided
     if (sector && item.sector_distribution) {
       const distribution = Math.max(0, Math.min(100, item.sector_distribution));
-      rank += SECTOR_BOOST_ALPHA * (distribution / 100);
+      // Apply stepped boost based on distribution thresholds
+      if (distribution >= 90) {
+        rank += SECTOR_BOOST_ALPHA; // Full boost for specialists
+      } else if (distribution >= 50) {
+        rank += SECTOR_BOOST_ALPHA * 0.7; // Strong boost for high matches
+      } else if (distribution >= 10) {
+        rank += SECTOR_BOOST_ALPHA * 0.3; // Moderate boost
+      }
     }
 
     if (!resultsByCode.has(item.code)) {
