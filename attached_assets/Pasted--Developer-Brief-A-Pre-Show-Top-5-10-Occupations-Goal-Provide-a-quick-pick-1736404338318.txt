@@ -1,0 +1,102 @@
+---
+
+# Developer Brief
+
+## A. **Pre-Show “Top 5–10 Occupations”**
+
+**Goal**  
+- Provide a quick-pick list of the most common roles based on the user’s selected industry (NAICS).  
+
+**Key Value**  
+1. Speeds up occupation selection by surfacing popular options.  
+2. Reduces friction: users can choose from a small set without typing.  
+3. Encourages exploration and helps them find the right role faster.
+
+**Implementation Notes**  
+- **Data Source**: Need a way to retrieve “top 5–10 occupations” per NAICS (e.g., from `soc_sector_distribution` with `ORDER BY percentage DESC LIMIT 5–10`).  
+- **UI**: Display occupation “cards” or a simple list above or around the search input.  
+- **Edge Cases**: If fewer than 5–10 roles exist for a niche industry, show only what’s available.  
+
+**Complexity & Effort**  
+- **Complexity**: Medium. Requires setting up a small endpoint or a pre-fetched data set, plus adding the new UI component.  
+
+
+---
+
+## B. **More Detailed NAICS “Card” in Industry Dropdown**
+
+**Goal**  
+- Enhance the industry selection step by showing not just the code/name but also a short description and example companies.
+
+**Key Value**  
+1. Helps non-expert users confidently choose the correct NAICS.  
+2. Reduces confusion over codes that sound similar.  
+3. Adds a more polished, user-friendly feel.
+
+**Implementation Notes**  
+- **Data Storage**: Need a new or expanded table (e.g., `naics_info`) to store short descriptions and example companies.  
+- **UI**: Convert the existing dropdown items into “cards” displaying code, name, short blurb, and company examples.  
+- **Performance**: Not a big concern if the NAICS list is short; just ensure data can be quickly retrieved.
+
+**Complexity & Effort**  
+- **Complexity**: Medium. Biggest lift is data curation/maintenance.  
+
+
+---
+
+## C. **Occupation Cards Showing Top 3 Industries + Special Flags**
+
+**Goal**  
+- When a user searches for a job title, each result card also shows the top 3 NAICS sectors by distribution, plus “rare” or “100%” flags.
+
+**Key Value**  
+1. Gives users immediate context on where the job is most common.  
+2. Warns them if it’s rare (<5% distribution) in their chosen sector.  
+3. Increases confidence that they’re selecting the correct occupation code.
+
+**Implementation Notes**  
+- **Data Requirements**: Need to store or quickly retrieve “top 3 industries” by distribution for each SOC code. Could be a precomputed table or a well-indexed query.  
+- **Flags**: 
+  - “Exclusive to X” if one sector is 100%.  
+  - “Rare” if chosen sector is under a 5% threshold.  
+- **UI**: Possibly a mini chart (bars or progress bars) or simple bullet points for each of the top 3 industries.
+
+**Complexity & Effort**  
+- **Complexity**: Medium—mostly about ensuring we have (or can fetch) the distribution data at scale.  
+
+
+---
+
+## Additional Considerations
+
+1. **Consistent Card Components**  
+   - Using a unified “card” approach for both NAICS and occupations keeps the look & feel cohesive.  
+2. **Visual Indicators (Progress Bars, “Rare” Tag, etc.)**  
+   - Adds clarity; highlight roles below 5% or call out 100% exclusivity.  
+3. **Wizard Flow**  
+   - Consider adding a confirmation if the user picks a “rare” role. This can prevent misclassification.  
+
+---
+
+## Summary: Utility vs. Difficulty
+
+1. **(A) Top 5–10 Occupations**  
+   - **Utility**: High – immediate value for quick selection  
+   - **Difficulty**: Medium – need a minor data update + small UI
+
+2. **(B) Detailed NAICS Card**  
+   - **Utility**: Medium–High – clarity for non-experts  
+   - **Difficulty**: Medium – depends on data curation + new UI
+
+3. **(C) Occupation Cards (Top 3 Industries + Flags)**  
+   - **Utility**: High – strong context, prevents misclassification  
+   - **Difficulty**: Medium – requires distribution data + extra UI logic
+
+If development time is limited, you might implement them incrementally:  
+- **Start with (B)** if users struggle to pick the correct industry.  
+- **Add (A)** to speed up occupation selection.  
+- **Finish with (C)** for deeper distribution insights and flags.
+
+---
+
+**End of Brief**
