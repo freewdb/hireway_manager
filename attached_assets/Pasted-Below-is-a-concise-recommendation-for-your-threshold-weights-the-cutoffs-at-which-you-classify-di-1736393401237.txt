@@ -1,0 +1,115 @@
+Below is a concise recommendation for your threshold “weights” (the cutoffs at which you classify distribution as Low / Moderate / High, or apply a stronger sector boost). These suggestions are based both on the distribution summary table you shared and the existing front-end code pattern (`>= 50` → High, `>= 10` → Moderate, etc.). 
+
+---
+
+## 1. Summary of Distribution Observations
+
+- **Median** is 0% in most sectors, meaning at least half of occupations have no presence (0%) in each sector.
+- **Average** is often below 5–10% in many sectors. 
+- **p90** (90th percentile) and **max** can jump above 50% or all the way to 100%, indicating that a smaller set of occupations is highly concentrated in a single sector.
+
+These patterns naturally suggest about 10% and 50% as good “break points”:
+  
+- **Below ~10%**: The occupation has a small share in that sector.  
+- **10%–50%**: The occupation has a moderate share.  
+- **Above ~50%**: The occupation is strongly concentrated in that sector.
+
+---
+
+## 2. Recommended Thresholds
+
+### A. Low / Moderate / High Matches
+
+1. **High Match**:  
+   - **Cutoff**: \(\ge 50\%\)  
+   - **Reason**: Matches the front-end code snippet that shows “High Match” if \( \text{sectorDistribution} \ge 50\).  
+   - This also aligns well with your distribution data: once an occupation is over half in that sector, it’s fairly specialized there.
+
+2. **Moderate Match**:  
+   - **Cutoff**: \(\ge 10\%\) and **< 50%**  
+   - **Reason**: The front-end snippet already uses 10% as the threshold to switch from “Low” to “Moderate.”  
+   - Empirically, from your table, jumping to 10% excludes a big chunk of roles that are just at 0–5%.  
+
+3. **Low Match**:  
+   - **Cutoff**: > 0% and **< 10%**  
+   - **Reason**: Minimally present in that sector, but not pure zero.  
+   - In your front-end code, if it’s less than 10%, you display `'Low Match'`.
+
+4. **No Presence**:  
+   - Exactly 0%  
+   - Could be optionally hidden unless user clicks “Show All,” or you can label them “No presence in this sector.”
+
+### B. Optional “Ultra High” or “Single-Industry Specialist”
+
+Some teams like having a label or further boost for occupations that are \(\ge 90\%\) or \(\ge 95\%\) in a single sector (the data columns `count_above_90`, `count_above_95`). This is optional but can highlight that the occupation is extremely specialized.
+
+---
+
+## 3. How This Fits Your Existing Code
+
+In your **client-side** `<SOCSearch>` component, you already have:
+
+```tsx
+{sector && (
+  <div 
+    className={`ml-auto inline-flex items-center px-2 py-0.5 text-xs rounded-full ${
+      item.sectorDistribution >= 50
+        ? 'bg-green-100 text-green-800'
+        : item.sectorDistribution >= 10
+        ? 'bg-yellow-100 text-yellow-800'
+        : 'bg-gray-100 text-gray-800'
+    }`}
+    title={`${Math.round(item.sectorDistribution || 0)}% of these roles are in your selected industry`}
+  >
+    {item.sectorDistribution >= 50
+      ? 'High Match'
+      : item.sectorDistribution >= 10
+      ? 'Moderate Match'
+      : 'Low Match'}
+  </div>
+)}
+```
+
+That snippet directly implements the 10% and 50% breakpoints recommended above.
+
+### Sector Boost (Server-Side)
+
+In your `consolidateResults()` function, you have:
+```ts
+if (sector && item.sector_distribution) {
+  const distribution = Math.max(0, Math.min(100, item.sector_distribution));
+  rank += SECTOR_BOOST_ALPHA * (distribution / 100);
+}
+```
+
+- **SECTOR_BOOST_ALPHA** is set at `0.3`. 
+- This means if an occupation is 100% in that sector, it gains an extra `0.3` in `rank`; if 50%, it gains `0.15` in `rank`.  
+- This is a linear boost from `0` up to `0.3`. 
+
+That’s often enough, but if you want a more pronounced jump at 50% or 90%, you could do something like:
+```ts
+// Pseudocode
+if (distribution >= 90) {
+  rank += 0.3;
+} else if (distribution >= 50) {
+  rank += 0.2;
+} else if (distribution >= 10) {
+  rank += 0.1;
+}
+// else +0
+```
+But that’s optional—your current linear approach is fine for a first pass.
+
+---
+
+## 4. Final Threshold Recommendations
+
+1. **0%** = “No Presence” (or exclude).
+2. **(0, 10%)** = “Low Match.”
+3. **[10%, 50%)** = “Moderate Match.”
+4. **[50%, 100%)** = “High Match.”
+5. *(Optional)* \(\ge 90\%\) = “Specialist” or “Ultra-High.”
+
+These cutoffs align naturally with your data distribution (most occupations are near 0% or under 10%, and the top decile can exceed 50%). They also match your existing React code that highlights different background colors at 10% and 50%. 
+
+**In short:** stick with **10%** and **50%** as your main threshold weights, possibly adding a “super-high” label at 90%+ if desired.
