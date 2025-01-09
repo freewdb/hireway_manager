@@ -16,7 +16,17 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<JobTitleSearchResult | null>(null);
   const [selectedItems, setSelectedItems] = useState<JobTitleSearchResult[]>([]);
-  const [showAll, setShowAll] = useState(false); // Added showAll state
+  const [showAll, setShowAll] = useState(false);
+  const [topOccupations, setTopOccupations] = useState<JobTitleSearchResult[]>([]);
+
+  useEffect(() => {
+    if (sector) {
+      fetch(`/api/job-titles/top?sector=${encodeURIComponent(sector)}`)
+        .then(res => res.json())
+        .then(data => setTopOccupations(data))
+        .catch(err => console.error('Failed to fetch top occupations:', err));
+    }
+  }, [sector]);
 
   const searchSOC = async (query: string) => {
     if (!query.trim()) {
@@ -90,6 +100,22 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
 
   return (
     <div className={`relative w-full ${className}`}>
+      {topOccupations.length > 0 && (
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Popular roles in this industry:</h3>
+          <div className="flex flex-wrap gap-2">
+            {topOccupations.map((occ) => (
+              <button
+                key={occ.code}
+                onClick={() => handleSelect(occ)}
+                className="px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-full hover:bg-gray-50 hover:border-gray-300 transition-colors"
+              >
+                {occ.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="flex items-center"> {/* Added flex to align input and button */}
         <div className="relative w-full">
           <input
