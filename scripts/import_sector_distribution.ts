@@ -1,3 +1,4 @@
+
 import { readFile } from 'fs/promises';
 import { parse } from 'csv-parse/sync';
 import { db } from '../db';
@@ -24,10 +25,10 @@ async function importSectorDistribution() {
 
     for (let i = 0; i < records.length; i += BATCH_SIZE) {
       const batch = records.slice(i, i + BATCH_SIZE)
-        .filter(record => record.sector && parseFloat(record.percent)) // Skip records with no sector or invalid percentage
+        .filter(record => record.sector_label && parseFloat(record.percent)) // Skip records with no sector or invalid percentage
         .map(record => ({
           socCode: record.onetsoc_code,
-          sector_label: record.sector,
+          sector: record.sector_label,
           percentage: parseFloat(record.percent)
         }));
       if (batch.length > 0) {
