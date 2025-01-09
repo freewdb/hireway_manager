@@ -1,6 +1,7 @@
 import { Switch, Route } from "wouter";
 import Home from "@/pages/Home";
 import OccupationSearch from "@/pages/OccupationSearch";
+import { SOCSearchTest } from "@/components/SOCSearch/test";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
@@ -9,6 +10,7 @@ function App() {
     <Switch>
       <Route path="/" component={HomeWithBypass} />
       <Route path="/occupation-search" component={OccupationSearch} />
+      <Route path="/test" component={SOCSearchTest} />
     </Switch>
   );
 }
