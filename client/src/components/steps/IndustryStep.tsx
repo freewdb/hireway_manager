@@ -1,7 +1,7 @@
 
+import { useState } from "react";
 import WizardStep from "../wizard/WizardStep";
 import { useWizard } from "../wizard/WizardContext";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 
 const industries = [
@@ -52,6 +52,13 @@ const industryDescriptions: Record<string, string> = {
 
 export const IndustryStep = () => {
   const { updateData, data } = useWizard();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+
+  const filteredIndustries = industries.filter(industry => 
+    industry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    industry.code.includes(searchTerm)
+  );
 
   return (
     <WizardStep title="Select Industry" stepNumber={0}>
@@ -60,22 +67,43 @@ export const IndustryStep = () => {
           Choose the industry that best describes your company.
         </p>
 
-        <Select value={data.industry} onValueChange={(value) => updateData("industry", value)}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select an industry" />
-          </SelectTrigger>
-          <SelectContent>
-            {industries.map((industry) => (
-              <SelectItem 
-                key={industry.code} 
-                value={industry.code}
-                className="font-sf-pro"
-              >
-                <span className="font-bold">{industry.code}</span> - {industry.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="relative w-full">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setIsOpen(true);
+            }}
+            onFocus={() => setIsOpen(true)}
+            placeholder="Search industries..."
+            className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+
+          {isOpen && (
+            <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-auto">
+              {filteredIndustries.map((industry) => (
+                <li
+                  key={industry.code}
+                  onClick={() => {
+                    updateData("industry", industry.code);
+                    setSearchTerm(`${industry.code} - ${industry.name}`);
+                    setIsOpen(false);
+                  }}
+                  className="px-4 py-3 cursor-pointer hover:bg-gray-50"
+                >
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span className="font-mono text-sm text-blue-600">{industry.code}</span>
+                    <span className="font-medium">{industry.name}</span>
+                  </div>
+                  <div className="text-sm text-gray-600 line-clamp-2">
+                    {industryDescriptions[industry.code]}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         {data.industry && (
           <Card className="mt-4">
