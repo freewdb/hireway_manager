@@ -35,7 +35,7 @@ export const socDetailedOccupations = pgTable('soc_detailed_occupations', {
 export const socSectorDistribution = pgTable('soc_sector_distribution', {
   id: serial('id').primaryKey(),
   socCode: varchar('soc_code', { length: 50 }).notNull().references(() => socDetailedOccupations.code),
-  sector: varchar('sector', { length: 10 }).notNull(),
+  sector: varchar('sector_label', { length: 10 }).notNull(),
   percentage: decimal('percentage', { precision: 5, scale: 2 }).notNull()
 });
 
