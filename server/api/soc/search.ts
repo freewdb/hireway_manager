@@ -108,13 +108,20 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     // Apply sector boost if sector is provided
     if (sector && item.sector_distribution) {
       const distribution = Math.max(0, Math.min(100, item.sector_distribution));
-      // Apply stepped boost based on distribution thresholds
+
+      // Enhanced sector-based boosting
       if (distribution >= 90) {
-        rank += SECTOR_BOOST_ALPHA; // Full boost for specialists
+        rank *= 2.0; // Double rank for industry specialists
+      } else if (distribution >= 75) {
+        rank *= 1.75; // Strong boost for very high representation
       } else if (distribution >= 50) {
-        rank += SECTOR_BOOST_ALPHA * 0.7; // Strong boost for high matches
+        rank *= 1.5; // Significant boost for high representation
+      } else if (distribution >= 25) {
+        rank *= 1.25; // Moderate boost for medium representation
       } else if (distribution >= 10) {
-        rank += SECTOR_BOOST_ALPHA * 0.3; // Moderate boost
+        rank *= 1.1; // Slight boost for low representation
+      } else if (distribution < 5) {
+        rank *= 0.75; // Penalty for very rare occupations in sector
       }
     }
 
