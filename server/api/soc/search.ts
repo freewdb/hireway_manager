@@ -121,7 +121,7 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     if (!resultsByCode.has(item.code)) {
       resultsByCode.set(item.code, {
         code: item.code,
-        primaryTitle: item.title, // Always use official title
+        title: item.title, // Use official title
         description: item.description || undefined,
         alternativeTitles,
         matchedAlternatives: matchedAlternative ? [matchedAlternative] : [],
@@ -271,7 +271,8 @@ export async function GET(req: Request) {
               SELECT percentage 
               FROM ${socSectorDistribution} 
               WHERE soc_code = ${socDetailedOccupations.code} 
-              AND sector_label = ${sector}
+              AND (sector_label = ${sector} OR 
+                   (${sector} = '21' AND sector_label = 'Mining, Quarrying, and Oil and Gas Extraction'))
             )
           )
         `.as('debug_distribution'),
