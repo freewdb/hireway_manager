@@ -23,11 +23,13 @@ async function importSectorDistribution() {
     const batches = [];
 
     for (let i = 0; i < records.length; i += BATCH_SIZE) {
-      const batch = records.slice(i, i + BATCH_SIZE).map(record => ({
-        socCode: record.onetsoc_code,
-        sector_label: record.sector_label || record.sector,
-        percentage: parseFloat(record.percent)
-      }));
+      const batch = records.slice(i, i + BATCH_SIZE)
+        .filter(record => record.sector) // Skip records with no sector
+        .map(record => ({
+          socCode: record.onetsoc_code,
+          sector_label: record.sector,
+          percentage: parseFloat(record.percent)
+        }));
       batches.push(batch);
     }
 
