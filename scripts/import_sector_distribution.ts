@@ -24,13 +24,15 @@ async function importSectorDistribution() {
 
     for (let i = 0; i < records.length; i += BATCH_SIZE) {
       const batch = records.slice(i, i + BATCH_SIZE)
-        .filter(record => record.sector) // Skip records with no sector
+        .filter(record => record.sector && parseFloat(record.percent)) // Skip records with no sector or invalid percentage
         .map(record => ({
           socCode: record.onetsoc_code,
           sector_label: record.sector,
           percentage: parseFloat(record.percent)
         }));
-      batches.push(batch);
+      if (batch.length > 0) {
+        batches.push(batch);
+      }
     }
 
     console.log(`Processing ${batches.length} batches...`);
