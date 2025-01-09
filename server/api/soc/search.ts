@@ -249,7 +249,17 @@ export async function GET(req: Request) {
               SELECT percentage 
               FROM ${socSectorDistribution} 
               WHERE soc_code = ${socDetailedOccupations.code} 
-              AND sector_label = ${sector}
+              AND (
+                sector_label = ${sector} OR
+                -- Handle common variations
+                CASE 
+                  WHEN ${sector} = '21' THEN sector_label = 'Mining, Quarrying, and Oil and Gas Extraction'
+                  WHEN ${sector} = '31-33' THEN sector_label = 'Manufacturing'
+                  WHEN ${sector} = '44-45' THEN sector_label = 'Retail Trade'
+                  WHEN ${sector} = '48-49' THEN sector_label = 'Transportation and Warehousing'
+                  ELSE false
+                END
+              )
             ),
             0
           )`.as('sector_distribution'),
