@@ -47,12 +47,12 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
   const resultsByCode = new Map<string, ConsolidatedJobResult>();
   const queryLower = query.toLowerCase();
 
-  // First pass - find exact matches on primary titles
+  // Process all items preserving original titles
   for (const item of filteredItems) {
-    if (item.title.toLowerCase().includes(queryLower) || queryLower.includes(item.title.toLowerCase())) {
+    if (!resultsByCode.has(item.code)) {
       resultsByCode.set(item.code, {
         code: item.code,
-        primaryTitle: item.title,
+        title: item.title, // Always use the original title
         description: item.description,
         alternativeTitles: item.alternativeTitles || [],
         matchedAlternatives: [],
