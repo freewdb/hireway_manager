@@ -1,4 +1,3 @@
-
 import { readFile } from 'fs/promises';
 import { parse } from 'csv-parse/sync';
 import { db } from '../db';
@@ -22,7 +21,7 @@ async function importSectorDistribution() {
     const BATCH_SIZE = 100;
     let processed = 0;
     const batches = [];
-    
+
     for (let i = 0; i < records.length; i += BATCH_SIZE) {
       const batch = records.slice(i, i + BATCH_SIZE).map(record => ({
         socCode: record.onetsoc_code,
@@ -33,7 +32,7 @@ async function importSectorDistribution() {
     }
 
     console.log(`Processing ${batches.length} batches...`);
-    
+
     for (const batch of batches) {
       await db.insert(socSectorDistribution).values(batch);
       processed += batch.length;
