@@ -220,11 +220,14 @@ export async function GET(req: Request) {
             LIMIT 3
           ) top`.as('top_industries'),
         sectorDistribution: sql<number>`
-          (
-            SELECT percentage 
-            FROM ${socSectorDistribution} 
-            WHERE soc_code = ${socDetailedOccupations.code} 
-            AND sector_label = ${sector}
+          COALESCE(
+            (
+              SELECT percentage 
+              FROM ${socSectorDistribution} 
+              WHERE soc_code = ${socDetailedOccupations.code} 
+              AND sector_label = ${sector}
+            ),
+            0
           )`.as('sector_distribution'),
         majorGroup: {
           code: socMajorGroups.code,
