@@ -229,6 +229,18 @@ export async function GET(req: Request) {
             ),
             0
           )`.as('sector_distribution'),
+        debug_distribution: sql`
+          SELECT json_build_object(
+            'soc_code', ${socDetailedOccupations.code},
+            'sector', ${sector},
+            'distribution', (
+              SELECT percentage 
+              FROM ${socSectorDistribution} 
+              WHERE soc_code = ${socDetailedOccupations.code} 
+              AND sector_label = ${sector}
+            )
+          )
+        `.as('debug_distribution'),
         majorGroup: {
           code: socMajorGroups.code,
           title: socMajorGroups.title,
