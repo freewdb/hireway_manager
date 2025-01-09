@@ -43,9 +43,50 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     });
   }
 
+  // Track which codes we've seen to prevent duplicates
   const resultsByCode = new Map<string, ConsolidatedJobResult>();
   const queryLower = query.toLowerCase();
-  const queryWords = queryLower.split(/\s+/);
+  
+  // First pass - find exact matches on primary titles
+  for (const item of filteredItems) {
+    if (item.title.toLowerCase().includes(queryLower) || queryLower.includes(item.title.toLowerCase())) {
+      resultsByCode.set(item.code, {
+        code: item.code,
+        title: item.title,
+        description: item.description,
+        alternativeTitles: item.alternativeTitles || [],
+        matchType: 'primary',
+        rank: 1.0,
+        majorGroup: item.majorGroup,
+        minorGroup: item.minorGroup,
+        sectorDistribution: item.sector_distribution
+      });
+    }
+  }
+
+  // Second pass - add alternative title matches only if not already included
+  for (const item of filteredItems) {
+    if (resultsByCode.has(item.code)) continue;
+    
+    const matchedAlt = (item.alternativeTitles || []).find(alt => 
+      alt.toLowerCase().includes(queryLower) || queryLower.includes(alt.toLowerCase())
+    );
+
+    if (matchedAlt) {
+      resultsByCode.set(item.code, {
+        code: item.code,
+        title: item.title, // Always use official title
+        description: item.description,
+        alternativeTitles: item.alternativeTitles || [],
+        matchType: 'alternative',
+        matchedAlternative: matchedAlt,
+        rank: 0.9,
+        majorGroup: item.majorGroup,
+        minorGroup: item.minorGroup,
+        sectorDistribution: item.sector_distribution
+      });
+    }
+  }
 
   items.forEach(item => {
     const titleLower = item.title.toLowerCase();

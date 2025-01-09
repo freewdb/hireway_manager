@@ -189,9 +189,9 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="font-mono text-sm text-blue-600">{item.code}</span>
                 <span className="font-medium">{item.title}</span>
-                {item.matchedAlternative && (
-                  <span className="text-sm text-gray-500">
-                    (Matched: {item.matchedAlternative})
+                {item.matchType === 'alternative' && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    Common Alternate Title: {item.matchedAlternative}
                   </span>
                 )}
                 {item.topIndustries && (
