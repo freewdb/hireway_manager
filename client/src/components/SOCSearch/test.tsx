@@ -1,9 +1,12 @@
+
 import { useState } from 'react';
 import { SOCSearch } from './index';
 import type { JobTitleSearchResult } from '../../../db/schema';
+import { industries } from '../steps/IndustryStep';
 
 export function SOCSearchTest() {
   const [selectedJob, setSelectedJob] = useState<JobTitleSearchResult | null>(null);
+  const [selectedIndustry, setSelectedIndustry] = useState<string>('');
 
   const handleSelect = (result: JobTitleSearchResult) => {
     setSelectedJob(result);
@@ -14,10 +17,29 @@ export function SOCSearchTest() {
     <div className="p-8 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">SOC Code Search Test</h1>
       
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Select Industry
+        </label>
+        <select 
+          value={selectedIndustry}
+          onChange={(e) => setSelectedIndustry(e.target.value)}
+          className="w-full px-4 py-2 border rounded-lg"
+        >
+          <option value="">No Industry Filter</option>
+          {industries.map((industry) => (
+            <option key={industry.code} value={industry.code}>
+              {industry.code} - {industry.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      
       <div className="mb-8">
         <SOCSearch
           onSelect={handleSelect}
           placeholder="Try searching for 'Software Engineer' or 'Developer'..."
+          sector={selectedIndustry}
           className="w-full"
         />
       </div>
@@ -48,9 +70,10 @@ export function SOCSearchTest() {
                 <dd className="text-sm">{selectedJob.description}</dd>
               </div>
             )}
-            {selectedJob.isAlternative && (
-              <div className="mt-2 text-sm text-blue-600">
-                This is an alternative title
+            {selectedJob.sectorDistribution !== undefined && (
+              <div>
+                <dt className="font-medium">Sector Distribution:</dt>
+                <dd>{Math.round(selectedJob.sectorDistribution)}%</dd>
               </div>
             )}
           </dl>
@@ -58,4 +81,4 @@ export function SOCSearchTest() {
       )}
     </div>
   );
-} 
+}
