@@ -21,7 +21,7 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
 
   useEffect(() => {
     if (sector) {
-      fetch(`/api/job-titles/top?sector=${encodeURIComponent(sector)}`)
+      fetch(`/api/soc/top?sector=${encodeURIComponent(sector)}`)
         .then(res => res.json())
         .then(data => setTopOccupations(data))
         .catch(err => console.error('Failed to fetch top occupations:', err));
