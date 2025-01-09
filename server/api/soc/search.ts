@@ -46,20 +46,21 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
   // Track which codes we've seen to prevent duplicates
   const resultsByCode = new Map<string, ConsolidatedJobResult>();
   const queryLower = query.toLowerCase();
-  
+
   // First pass - find exact matches on primary titles
   for (const item of filteredItems) {
     if (item.title.toLowerCase().includes(queryLower) || queryLower.includes(item.title.toLowerCase())) {
       resultsByCode.set(item.code, {
         code: item.code,
-        title: item.title,
+        primaryTitle: item.title,
         description: item.description,
         alternativeTitles: item.alternativeTitles || [],
-        matchType: 'primary',
+        matchedAlternatives: [],
+        isAlternative: false,
         rank: 1.0,
         majorGroup: item.majorGroup,
         minorGroup: item.minorGroup,
-        sectorDistribution: item.sector_distribution
+        topIndustries: item.topIndustries
       });
     }
   }
@@ -67,7 +68,7 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
   // Second pass - add alternative title matches only if not already included
   for (const item of filteredItems) {
     if (resultsByCode.has(item.code)) continue;
-    
+
     const matchedAlt = (item.alternativeTitles || []).find(alt => 
       alt.toLowerCase().includes(queryLower) || queryLower.includes(alt.toLowerCase())
     );
@@ -75,15 +76,15 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     if (matchedAlt) {
       resultsByCode.set(item.code, {
         code: item.code,
-        title: item.title, // Always use official title
+        primaryTitle: item.title, // Always use official title
         description: item.description,
         alternativeTitles: item.alternativeTitles || [],
-        matchType: 'alternative',
-        matchedAlternative: matchedAlt,
+        matchedAlternatives: [matchedAlt],
+        isAlternative: true,
         rank: 0.9,
         majorGroup: item.majorGroup,
         minorGroup: item.minorGroup,
-        sectorDistribution: item.sector_distribution
+        topIndustries: item.topIndustries
       });
     }
   }
@@ -91,7 +92,7 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
   items.forEach(item => {
     const titleLower = item.title.toLowerCase();
     const alternativeTitles = item.alternativeTitles || [];
-    
+
     // Find which alternative title matched (if any)
     const matchedAlternative = alternativeTitles.find(alt => 
       alt.toLowerCase().includes(queryLower) || 
@@ -120,10 +121,11 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     if (!resultsByCode.has(item.code)) {
       resultsByCode.set(item.code, {
         code: item.code,
-        title: item.title, // Always use official title
+        primaryTitle: item.title, // Always use official title
         description: item.description || undefined,
         alternativeTitles,
-        matchedAlternative, // Store which alternative title matched
+        matchedAlternatives: matchedAlternative ? [matchedAlternative] : [],
+        isAlternative: !!matchedAlternative,
         rank,
         majorGroup: item.majorGroup?.code ? {
           code: item.majorGroup.code,
@@ -133,15 +135,15 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
           code: item.minorGroup.code,
           title: item.minorGroup.title
         } : undefined,
-        topIndustries: item.topIndustries,
-        sectorDistribution: item.sectorDistribution
+        topIndustries: item.topIndustries
       });
     } else {
       const existing = resultsByCode.get(item.code)!;
       // Update rank if this match is better
       if (rank > existing.rank) {
         existing.rank = rank;
-        existing.matchedAlternative = matchedAlternative;
+        existing.matchedAlternatives = matchedAlternative ? [matchedAlternative] : [];
+        existing.isAlternative = !!matchedAlternative;
       }
 
       // Add any new alternative titles
@@ -306,7 +308,7 @@ export async function GET(req: Request) {
         .map(([code, count]) => ({
           code,
           count,
-          titles: results.filter(r => r.code === code).map(r => r.title)
+          titles: results.filter(r => r.code === code).map(r => r.primaryTitle)
         }));
 
       console.log('Results analysis:', {
@@ -398,7 +400,7 @@ export async function GET(req: Request) {
       .map(([code, count]) => ({
         code,
         count,
-        titles: results.filter(r => r.code === code).map(r => r.title)
+        titles: results.filter(r => r.code === code).map(r => r.primaryTitle)
       }));
 
     console.log('Results analysis:', {
