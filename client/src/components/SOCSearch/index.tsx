@@ -189,6 +189,11 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="font-mono text-sm text-blue-600">{item.code}</span>
                 <span className="font-medium">{item.title}</span>
+                {item.matchedAlternative && (
+                  <span className="text-sm text-gray-500">
+                    (Matched: {item.matchedAlternative})
+                  </span>
+                )}
                 {item.topIndustries && (
                   <div className="ml-2 flex gap-2">
                     {item.topIndustries.map((ind: any, i: number) => (

@@ -32,10 +32,9 @@ interface SearchResponse {
 }
 
 function consolidateResults(items: any[], query: string, sector?: string, showAll?: boolean): ConsolidatedJobResult[] {
-  const SECTOR_BOOST_ALPHA = 0.3; // Configurable boost factor
-  const SECTOR_FILTER_THRESHOLD = 1.0; // Only show codes with >=1% distribution unless showAll=true
+  const SECTOR_BOOST_ALPHA = 0.3;
+  const SECTOR_FILTER_THRESHOLD = 1.0;
 
-  // Filter out items with low sector distribution
   let filteredItems = items;
   if (!showAll && sector) {
     filteredItems = filteredItems.filter(item => {
@@ -44,35 +43,25 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     });
   }
 
-  // Use a Map to ensure unique SOC codes
   const resultsByCode = new Map<string, ConsolidatedJobResult>();
-  const seenCodes = new Set<string>();
   const queryLower = query.toLowerCase();
   const queryWords = queryLower.split(/\s+/);
 
   items.forEach(item => {
-      if (seenCodes.has(item.code)) return;
-      seenCodes.add(item.code);
     const titleLower = item.title.toLowerCase();
     const alternativeTitles = item.alternativeTitles || [];
+    
+    // Find which alternative title matched (if any)
+    const matchedAlternative = alternativeTitles.find(alt => 
+      alt.toLowerCase().includes(queryLower) || 
+      queryLower.includes(alt.toLowerCase())
+    );
 
-    // Calculate match quality for ranking
-    const titleMatchQuality = queryWords.every(word => titleLower.includes(word)) ? 1 :
-      queryWords.some(word => titleLower.includes(word)) ? 0.8 : 0;
-
-    // Find matching alternative titles
-    const matchedAlternatives = alternativeTitles.filter((alt: string) => {
-      const altLower = alt.toLowerCase();
-      return queryWords.every(word => altLower.includes(word)) ||
-             queryLower.includes(altLower) ||
-             altLower.includes(queryLower);
-    });
-
-    // Determine if this is primarily an alternative title match
-    const isAlternative = titleMatchQuality === 0 && matchedAlternatives.length > 0;
-
-    // Calculate overall rank
-    let rank = isAlternative ? 0.9 : 1;
+    // Calculate rank based on match type
+    let rank = 1.0;
+    if (matchedAlternative) {
+      rank = 0.9; // Slight penalty for alternative match
+    }
 
     // Apply sector boost if sector is provided
     if (sector && item.sector_distribution) {
@@ -90,11 +79,10 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     if (!resultsByCode.has(item.code)) {
       resultsByCode.set(item.code, {
         code: item.code,
-        primaryTitle: item.title,
+        title: item.title, // Always use official title
         description: item.description || undefined,
         alternativeTitles,
-        matchedAlternatives,
-        isAlternative,
+        matchedAlternative, // Store which alternative title matched
         rank,
         majorGroup: item.majorGroup?.code ? {
           code: item.majorGroup.code,
@@ -104,23 +92,16 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
           code: item.minorGroup.code,
           title: item.minorGroup.title
         } : undefined,
-        topIndustries: item.topIndustries
+        topIndustries: item.topIndustries,
+        sectorDistribution: item.sectorDistribution
       });
     } else {
       const existing = resultsByCode.get(item.code)!;
-
       // Update rank if this match is better
       if (rank > existing.rank) {
         existing.rank = rank;
-        existing.isAlternative = isAlternative;
+        existing.matchedAlternative = matchedAlternative;
       }
-
-      // Add any new matched alternatives
-      matchedAlternatives.forEach((alt: string) => {
-        if (!existing.matchedAlternatives.includes(alt)) {
-          existing.matchedAlternatives.push(alt);
-        }
-      });
 
       // Add any new alternative titles
       alternativeTitles.forEach((alt: string) => {
