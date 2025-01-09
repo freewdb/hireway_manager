@@ -1,0 +1,233 @@
+Below is a detailed plan of attack for implementing the three enhancements you’ve described (A, B, and C). Even though your developer is senior, I’m including a thorough breakdown so we can all be aligned on the vision, data flows, and UI changes.
+
+---
+
+# Overview of Features
+
+1. **(A)** Occupation List Cards for the Selected Industry  
+   - On the job-title page of the wizard, show the top 5–10 occupations *before* the user types in the search box.  
+   - These occupations appear as clickable “cards.” If the user sees their desired role there, they can pick it immediately without searching.
+
+2. **(B)** Enhanced NAICS Search with Descriptions and Examples  
+   - On the “Select Industry” step (where we pick NAICS codes), each search result becomes a more detailed card.  
+   - The card includes the official code/title, a short plain-language description of that industry, plus example companies.
+
+3. **(C)** Occupation Cards with “Top 3 Industries” & Flags  
+   - On the job-title search results (and also in the pre-show 5–10 occupations from part A), each occupation card should display:  
+     - The top 3 industries (by distribution).  
+     - A “100% in one industry” label if relevant.  
+     - A caution flag if it’s “rare” for the user’s chosen industry (for instance, <5% presence).
+
+The result should be a cohesive user experience that guides the user more intuitively through picking their NAICS code and then an occupation.
+
+---
+
+## Implementation Steps in Detail
+
+### 1. Data Enhancements & Endpoints
+
+1. **Database or Data Files**:  
+   - **(B) NAICS Descriptions & Examples**:  
+     - Decide where to store plain-text descriptions and example companies. Possibilities:  
+       a) A new `naics_info` table with columns: `code`, `description`, `example_companies`, etc.  
+       b) A JSON file or dictionary your server loads at startup.  
+     - Ensure each NAICS code can be looked up quickly.  
+   - **(C) Distribution Summaries for Each SOC Code**:  
+     - We already have `soc_sector_distribution`. We’ll need to fetch the top 3 NAICS sectors for each SOC code.  
+     - Potential approach: either compute on the fly (`SELECT sector_label, percentage FROM soc_sector_distribution WHERE soc_code=? ORDER BY percentage DESC LIMIT 3`) or precompute and store in a small lookup table.  
+   - For **(A)**, to get the top 5–10 occupations for a chosen NAICS code, you likely do:  
+     ```
+     SELECT soc_code, percentage 
+     FROM soc_sector_distribution
+     WHERE sector_label = {the selected NAICS code}
+     ORDER BY percentage DESC
+     LIMIT 10
+     ```
+     Then join that to the `soc_detailed_occupations` table to get the titles, etc.
+
+2. **Create or Update Endpoints**:
+   - **GET `/api/sectors/:code/top-occupations`** (for part A):  
+     - Input: `:code` = NAICS code.  
+     - Output: JSON array of up to 10 occupations, sorted by highest `percentage` in that NAICS code.  
+     - Include enough data for the “cards” (SOC code, job title, description, distribution, etc.).  
+   - **GET `/api/naics-info`** (for part B):  
+     - Or add more data to your existing NAICS search. Each item in the result includes the new fields (`description`, `example_companies`, etc.).  
+   - Optionally, you can simply extend your existing routes if you prefer. Just ensure you can fetch the “top occupations” and the “NAICS card data.”
+
+---
+
+### 2. UI Enhancements
+
+We’ll break them down by wizard screen.
+
+#### 2.1. Industry Selection Screen (the NAICS search) – (B)
+
+- **Current**: The user sees a dropdown or combobox with NAICS code & title.  
+- **Goal**: For each result item, show:  
+  1. **NAICS Code** (e.g., “52”) + Name (e.g., “Finance and Insurance”).  
+  2. **Short Description**: e.g., “Businesses engaged in financial transactions and/or in facilitating financial transactions.”  
+  3. **Example Companies**: e.g., “JPMorgan Chase, PayPal, State Farm” or something like that.
+
+**UI Implementation**:
+
+1. **Combobox**: The text input remains the same, but each dropdown item becomes a “card” row instead of plain text.  
+2. **Design**:  
+   - Title line: “52 – Finance and Insurance” (prominent).  
+   - Subtext line with a short (one-sentence or two-sentence) description.  
+   - Possibly a smaller line or bullet list of example companies.  
+3. **Implementation Approach** (Downshift or Custom UI):  
+   - In your `SOCSearch`-like component for NAICS, adapt the `getItemProps` logic so each item is rendered as a mini card.  
+   - Insert the data from your new endpoint (or expanded NAICS data) into the `items` array.  
+   - Style with e.g., a small border, padding, or a card-like container.
+
+**Example Code (Pseudo-JSX)**:
+```jsx
+<li
+  key={naics.code}
+  {...getItemProps({ item: naics, index })}
+  className={`p-3 border-b hover:bg-gray-50 ${highlightedIndex === index ? 'bg-blue-100' : ''}`}
+>
+  <div className="font-medium text-sm">
+    {naics.code} – {naics.title}
+  </div>
+  <div className="text-xs text-gray-500 mt-1">
+    {naics.description}
+  </div>
+  {naics.exampleCompanies && (
+    <div className="text-xs text-gray-400 mt-1">
+      Example Companies: {naics.exampleCompanies.join(', ')}
+    </div>
+  )}
+</li>
+```
+
+#### 2.2. Occupation Page: Pre-Search Cards for Top 5–10 (A)
+
+- **Flow**: Once the user selected their NAICS code, we know which industry they are in. On the job-title screen, show a “Top Occupations” area *above* the search bar.  
+- **Implementation**:
+  1. **On Mount**: If we have a chosen NAICS code, call `GET /api/sectors/:code/top-occupations`.  
+  2. **Store** in component state: `const [topOccupations, setTopOccupations] = useState([]);`.  
+  3. **Render**: 
+     - A small heading: “Popular roles in [User’s Sector]” or “Quick Picks.”  
+     - Then a horizontal scroll or a grid of up to 5–10 cards.  
+  4. **Card Layout**: Each card can have:  
+     - Title, short description, maybe distribution% within that sector.  
+     - On click, we call `onSelect(occupation)`.  
+  5. **Edge Case**: If the sector has no or few matches, skip or show a “No top roles” message.  
+
+**Pseudo Layout**:
+```jsx
+{topOccupations.length > 0 && (
+  <div className="mb-4">
+    <h3 className="text-lg font-bold">Top Occupations in {sectorName}</h3>
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-2">
+      {topOccupations.map((occ) => (
+        <OccupationCard
+          key={occ.code}
+          occupation={occ}
+          onClick={() => handleSelect(occ)}
+        />
+      ))}
+    </div>
+  </div>
+)}
+```
+*(Where `OccupationCard` is a small component that displays the job title, etc.)*
+
+#### 2.3. Occupation Cards (Search Results) with Top 3 Industries & Rare/100% Flags (C)
+
+When the user sees the final search results from your `/api/job-titles` or the fuzzy endpoint, each occupation result is displayed as a card:
+
+1. **Top 3 Industries**:  
+   - For each occupation, we do a quick fetch to get its top 3 NAICS distributions. (Or the backend includes them in the results if that’s easier/better for performance.)  
+   - Display them below the job title in small text. For instance:  
+     ```
+     "Most Common in: 31_33 (Manufacturing - 50%), 62 (Health Care - 25%), 44_45 (Retail - 10%)"
+     ```
+2. **Exclusive (100%)**:  
+   - If the highest distribution is 100% in one sector, show a highlight: `"100% in Mining"`. Possibly style it with a small badge.  
+3. **Rare in the user’s chosen sector**:  
+   - If your user’s chosen sector distribution for this code < 5% (or whatever threshold), show a subtle “Rare in This Sector” or caution icon.  
+   - You can do this check on the front-end once you have the `sectorDistribution` for the user’s chosen NAICS or do it in the backend.  
+
+**Pseudo Code**:
+```jsx
+function OccupationCard({ occupation, userSector }) {
+  const { code, title, topIndustries, userSectorDistribution } = occupation;
+
+  const isExclusive = topIndustries?.[0]?.percentage === 100;
+  const isRare = userSectorDistribution < 5 && userSectorDistribution > 0;
+
+  return (
+    <div className="p-4 border rounded-md hover:shadow">
+      <h4 className="font-semibold">{title}</h4>
+      {isExclusive && (
+        <div className="text-red-600 text-xs font-bold">Exclusive to {topIndustries[0].sectorLabel}</div>
+      )}
+      {isRare && (
+        <div className="text-yellow-600 text-xs font-bold">Rare in {userSector}</div>
+      )}
+      <ul className="text-xs text-gray-600 mt-1">
+        {topIndustries.slice(0,3).map(ind => (
+          <li key={ind.sectorLabel}>
+            {ind.sectorLabel} – {ind.percentage}%
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+---
+
+### 3. Data Flow & Logic
+
+1. **Storing “Top 3 industries”**: Decide if you want to:
+   - A) Compute on the fly: For each `soc_code`, query `soc_sector_distribution` sorted by `percentage DESC LIMIT 3`.  
+   - B) Precompute an array in a new column or cache. If your DB is fast and well indexed, on-the-fly is likely fine.  
+
+2. **Sector**: 
+   - If the user has chosen a sector, we pass `sector=xx` as a query param. The endpoint returns `(distribution, top3industries)` for each occupation. Then the front-end can show the caution or exclusive messages.
+
+3. **Performance**:
+   - For top 5–10 occupations (A), you’re only pulling a small set. That’s easy to handle.  
+   - For search results, you might have up to 20 results. If for each we do a “top 3 industries” DB query, that could be 20 queries. That’s typically not a big deal for a modern DB, but you might want a single SQL query that covers all returned SOC codes in one go. Then you join in code.  
+
+---
+
+### 4. Additional Implementation Notes
+
+- **Maintain Consistent Card Design**:  
+  - Possibly define a shared `Card` component or a small utility that both (A) and (C) can use, so the style is consistent.  
+- **Use the Same “Caution” Colors or Badges**:  
+  - For the “rare in this sector” alert, pick a consistent color or icon (like a small triangle or exclamation).  
+- **Edge Cases**:  
+  - If an occupation is not found in the user’s sector at all (0%), do we hide it, or label it “0% in your sector”? Possibly that’s a bigger caution if they want to pick it anyway.  
+  - If a sector is an “Unknown” or if the user hasn’t selected a sector, skip the sector-based flags.  
+
+---
+
+## Final “To-Do” Summary
+
+1. **Data & Endpoints**  
+   - Expand or create a table for NAICS descriptions + example companies.  
+   - Add a “top-occupations” endpoint or logic in existing routes.  
+   - Implement or update your job-titles endpoint to include top 3 industries distribution & the user’s selected sector distribution.
+
+2. **NAICS UI** (Step B)  
+   - Convert the NAICS search results into visually richer cards with short descriptions and example companies.  
+   - Possibly implement a separate React component that takes in the NAICS item data and returns a card layout.
+
+3. **Occupation UI** (Step A + Step C)  
+   - Show “Top Occupations in [sector]” as a row of clickable cards above the search bar.  
+   - In the search results themselves, update each item to be a card that can show:  
+     1. Occupation name & description.  
+     2. (Optional) top 3 industries.  
+     3. “Exclusive” or “Rare” flags, based on distribution logic.
+
+4. **Styling & Testing**  
+   - Ensure the layout is responsive: the cards can flow in a grid or horizontally scroll.  
+   - Test with a few sectors to verify the “top 5–10” logic, the “rare” threshold, and the “exclusive” threshold.  
+
+
