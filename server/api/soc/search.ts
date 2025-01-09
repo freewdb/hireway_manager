@@ -1,6 +1,6 @@
 import { eq, sql, and, or, desc, ilike } from 'drizzle-orm';
 import { db } from '../../../db';
-import { socDetailedOccupations, socMajorGroups, socMinorGroups } from '../../../db/schema';
+import { socDetailedOccupations, socMajorGroups, socMinorGroups, socSectorDistribution } from '../../../db/schema';
 import type { JobTitleSearchResult } from '../../../db/schema';
 import Fuse from 'fuse.js';
 
@@ -20,6 +20,7 @@ interface ConsolidatedJobResult {
     code: string;
     title: string;
   };
+  topIndustries?: { sector: string; percentage: number }[];
 }
 
 interface SearchResponse {
@@ -102,7 +103,8 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
         minorGroup: item.minorGroup?.code ? {
           code: item.minorGroup.code,
           title: item.minorGroup.title
-        } : undefined
+        } : undefined,
+        topIndustries: item.topIndustries
       });
     } else {
       const existing = resultsByCode.get(item.code)!;
@@ -203,6 +205,20 @@ export async function GET(req: Request) {
         description: socDetailedOccupations.description,
         alternativeTitles: socDetailedOccupations.alternativeTitles,
         searchableText: socDetailedOccupations.searchableText,
+        topIndustries: sql<any[]>`
+          SELECT json_agg(
+            json_build_object(
+              'sector', sector_label,
+              'percentage', percentage
+            )
+          )
+          FROM (
+            SELECT sector_label, percentage 
+            FROM ${socSectorDistribution}
+            WHERE soc_code = ${socDetailedOccupations.code}
+            ORDER BY percentage DESC 
+            LIMIT 3
+          ) top`.as('top_industries'),
         sectorDistribution: sql<number>`
           COALESCE((
             SELECT percentage 

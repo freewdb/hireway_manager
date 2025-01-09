@@ -162,21 +162,32 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="font-mono text-sm text-blue-600">{item.code}</span>
                 <span className="font-medium">{item.title}</span>
+                {item.topIndustries && (
+                  <div className="ml-2 flex gap-2">
+                    {item.topIndustries.map((ind: any, i: number) => (
+                      <span key={ind.sector} className="text-xs px-2 py-0.5 bg-gray-100 rounded-full">
+                        {ind.sector} ({Math.round(ind.percentage)}%)
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {sector && (
                   <div 
                     className={`ml-auto inline-flex items-center px-2 py-0.5 text-xs rounded-full ${
+                      item.sectorDistribution === 100 ? 'bg-purple-100 text-purple-800' :
                       item.sectorDistribution >= 90 ? 'bg-blue-100 text-blue-800' :
                       item.sectorDistribution >= 50 ? 'bg-green-100 text-green-800' :
+                      item.sectorDistribution < 5 ? 'bg-red-100 text-red-800' :
                       item.sectorDistribution >= 10 ? 'bg-yellow-100 text-yellow-800' :
-                      item.sectorDistribution === 0 ? 'bg-red-100 text-red-800' :
                       'bg-gray-100 text-gray-800'
                     }`}
                     title={`${Math.round(item.sectorDistribution || 0)}% of these roles are in your selected industry`}
                   >
-                    {item.sectorDistribution >= 90 ? 'Specialist' :
+                    {item.sectorDistribution === 100 ? 'Exclusive' :
+                     item.sectorDistribution >= 90 ? 'Specialist' :
                      item.sectorDistribution >= 50 ? 'High Match' :
+                     item.sectorDistribution < 5 ? 'Rare' :
                      item.sectorDistribution >= 10 ? 'Moderate Match' :
-                     item.sectorDistribution === 0 ? 'No Presence' :
                      'Low Match'}
                   </div>
                 )}
