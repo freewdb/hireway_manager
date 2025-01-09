@@ -8,7 +8,7 @@ async function importSectorDistribution() {
   try {
     const startTime = Date.now();
     console.log('Reading sector distribution data...');
-    const fileContent = await readFile('attached_assets/occupation_sector_distribution.csv', 'utf-8');
+    const fileContent = await readFile('occupation_sector_distribution2.csv', 'utf-8');
     const records = parse(fileContent, {
       columns: true,
       skip_empty_lines: true
@@ -26,10 +26,8 @@ async function importSectorDistribution() {
     for (let i = 0; i < records.length; i += BATCH_SIZE) {
       const batch = records.slice(i, i + BATCH_SIZE).map(record => ({
         socCode: record.onetsoc_code,
-        sectorLabel: record.sector_label,
-        sampleSize: parseInt(record.n),
-        percentage: parseFloat(record.percent),
-        dateUpdated: new Date(record.date_updated).toISOString().split('T')[0]
+        sector: record.sector,
+        percentage: parseFloat(record.percent)
       }));
       batches.push(batch);
     }
