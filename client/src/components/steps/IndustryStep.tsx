@@ -4,7 +4,7 @@ import WizardStep from "../wizard/WizardStep";
 import { useWizard } from "../wizard/WizardContext";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 
-const industries = [
+export const industries = [
   { code: "11", name: "Agriculture, Forestry, Fishing and Hunting" },
   { code: "21", name: "Mining, Quarrying, and Oil and Gas Extraction" },
   { code: "22", name: "Utilities" },
