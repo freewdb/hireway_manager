@@ -1,4 +1,3 @@
-
 import { sql } from 'drizzle-orm';
 import { db } from '../../../db';
 import { socDetailedOccupations, socSectorDistribution } from '../../../db/schema';
@@ -20,20 +19,7 @@ export async function GET(req: Request) {
         title: socDetailedOccupations.title,
         description: socDetailedOccupations.description,
         alternativeTitles: socDetailedOccupations.alternativeTitles,
-        sectorDistribution: sql<number>`
-          COALESCE((
-            SELECT percentage 
-            FROM ${socSectorDistribution} 
-            WHERE soc_code = ${socDetailedOccupations.code} 
-            AND sector_label = ${sector}
-          ), 0)`.as('sector_distribution'),
-        topIndustries: sql<any[]>`
-          json_agg(
-            json_build_object(
-              'sector', sector_label,
-              'percentage', percentage
-            ) 
-          ) FILTER (WHERE sector_label IS NOT NULL)`.as('top_industries')
+        sectorDistribution: socSectorDistribution.percentage
       })
       .from(socDetailedOccupations)
       .innerJoin(
@@ -41,8 +27,7 @@ export async function GET(req: Request) {
         sql`${socDetailedOccupations.code} = ${socSectorDistribution.socCode}`
       )
       .where(sql`${socSectorDistribution.sectorLabel} = ${sector}`)
-      .groupBy(socDetailedOccupations.code)
-      .orderBy(sql`sector_distribution DESC`)
+      .orderBy(sql`${socSectorDistribution.percentage} DESC`)
       .limit(10);
 
     return new Response(JSON.stringify(topOccupations), {
