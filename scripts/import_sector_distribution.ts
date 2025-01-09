@@ -26,7 +26,7 @@ async function importSectorDistribution() {
     for (let i = 0; i < records.length; i += BATCH_SIZE) {
       const batch = records.slice(i, i + BATCH_SIZE).map(record => ({
         socCode: record.onetsoc_code,
-        sector: record.sector_label || record.sector,
+        sectorLabel: record.sector_label || record.sector,
         percentage: parseFloat(record.percent)
       }));
       batches.push(batch);
