@@ -14,18 +14,20 @@ export async function GET(req: Request) {
       });
     }
 
+    const sectorLabel = `NAICS${sector}`;
+    
     const topOccupations = await db
       .select({
         code: socDetailedOccupations.code,
         title: socDetailedOccupations.title,
         description: socDetailedOccupations.description,
         alternativeTitles: socDetailedOccupations.alternativeTitles,
-        sectorDistribution: sql<number>`
+        distribution: sql<number>`
           COALESCE((
             SELECT percentage 
             FROM ${socSectorDistribution} 
             WHERE soc_code = ${socDetailedOccupations.code}
-            AND sector_label = CONCAT('NAICS', ${sector})
+            AND sector_label = ${sectorLabel}
           ), 0)`.as('sector_distribution')
       })
       .from(socDetailedOccupations)
@@ -33,7 +35,7 @@ export async function GET(req: Request) {
         EXISTS (
           SELECT 1 FROM ${socSectorDistribution}
           WHERE ${socSectorDistribution.socCode} = ${socDetailedOccupations.code}
-          AND sector_label = CONCAT('NAICS', ${sector})
+          AND sector_label = ${sectorLabel}
           AND ${socSectorDistribution.percentage} > 0
         )
       `)
@@ -45,7 +47,7 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error('Error fetching top occupations:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    return new Response(JSON.stringify({ error: 'Internal server error', details: String(error) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
