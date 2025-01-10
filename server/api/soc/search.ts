@@ -280,6 +280,18 @@ export async function GET(req: Request) {
             ),
             0
           )`.as('sector_distribution'),
+        debug_sector: sql`
+          SELECT json_build_object(
+            'soc_code', ${socDetailedOccupations.code},
+            'sector_label', ${`NAICS${sector}`},
+            'query', 'SELECT percentage FROM soc_sector_distribution WHERE soc_code = ' || quote_literal(${socDetailedOccupations.code}) || ' AND sector_label = ' || quote_literal(${`NAICS${sector}`}),
+            'found_record', EXISTS(
+              SELECT 1 FROM ${socSectorDistribution}
+              WHERE soc_code = ${socDetailedOccupations.code}
+              AND sector_label = ${`NAICS${sector}`}
+            )
+          )
+        `.as('debug_sector'),
         debug_distribution: sql`
           SELECT json_build_object(
             'soc_code', ${socDetailedOccupations.code},
