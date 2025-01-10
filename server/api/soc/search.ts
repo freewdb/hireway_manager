@@ -181,6 +181,20 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const query = url.searchParams.get('search')?.trim() || '';
     const sector = url.searchParams.get('sector')?.trim();
+    
+    console.log('Search params:', {
+      query,
+      sector,
+      rawQuery: url.searchParams.toString()
+    });
+
+    // Debug specific SOC code lookup
+    const socDebug = await db.execute(sql`
+      SELECT code, title, description 
+      FROM soc_detailed_occupations 
+      WHERE code = '47-5041.00'
+    `);
+    console.log('SOC debug lookup:', socDebug.rows);
 
     // Debug database connection and queries
     const dbDebug = await db.execute(sql`
