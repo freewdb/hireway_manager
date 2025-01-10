@@ -4,6 +4,8 @@ import postgres from 'postgres';
 import { sql } from 'drizzle-orm';
 
 async function verifySOCCodes() {
+  let client: ReturnType<typeof postgres> | null = null;
+  
   try {
     console.log('Running detailed diagnostics...');
     
@@ -13,38 +15,38 @@ async function verifySOCCodes() {
     }
     console.log('Database URL is set');
 
-    // Create postgres client with more explicit error handling
-    const client = postgres(process.env.DATABASE_URL, { 
+    // Create postgres client
+    client = postgres(process.env.DATABASE_URL, { 
       max: 1,
-      timeout: 5,
-      debug: console.log
+      idle_timeout: 5
     });
-    
-    // Initialize drizzle
-    const db = drizzle(client);
     console.log('Database client initialized');
 
     // Test connection
-    const testResult = await client.query('SELECT current_database(), current_schema();');
+    const testResult = await client`SELECT current_database(), current_schema()`;
     console.log('Connection test result:', testResult);
     
     // Check sector distribution
-    const distributionCheck = await client.query(`
+    const distributionCheck = await client`
       SELECT * FROM soc_sector_distribution 
       WHERE soc_code = '47-5041.00' 
-      AND sector_label = 'NAICS21';
-    `);
+      AND sector_label = 'NAICS21'
+    `;
     console.log('Distribution check:', distributionCheck);
 
     // Check occupation
-    const occupationCheck = await client.query(`
+    const occupationCheck = await client`
       SELECT code, title FROM soc_detailed_occupations 
-      WHERE code = '47-5041.00';
-    `);
+      WHERE code = '47-5041.00'
+    `;
     console.log('Occupation check:', occupationCheck);
 
   } catch (error) {
     console.error('Error during verification:', error);
+  } finally {
+    if (client) {
+      await client.end();
+    }
   }
 }
 
