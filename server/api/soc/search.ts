@@ -269,8 +269,7 @@ export async function GET(req: Request) {
               SELECT percentage 
               FROM ${socSectorDistribution} 
               WHERE soc_code = ${socDetailedOccupations.code} 
-              AND (sector_label = ${sector} OR 
-                   (${sector} = '21' AND sector_label = 'Mining, Quarrying, and Oil and Gas Extraction'))
+              AND sector_label = CONCAT('NAICS', ${sector})
             )
           )
         `.as('debug_distribution'),
