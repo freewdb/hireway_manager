@@ -19,9 +19,6 @@ async function verifySOCCodes() {
     .where(sql`${socDetailedOccupations.code} = '47-5041.00'`);
 
   console.log('Detailed occupation record:', occupation);
-
-  console.log('Detailed Occupation:', occupation);
-  console.log('Sector Distribution:', distribution);
 }
 
 verifySOCCodes().catch(console.error);
