@@ -1,5 +1,6 @@
 
 import { db } from '../db';
+import { sql } from 'drizzle-orm';
 import { socDetailedOccupations, socSectorDistribution } from '../db/schema';
 
 async function verifySOCCodes() {
@@ -7,12 +8,12 @@ async function verifySOCCodes() {
   
   const occupation = await db.select()
     .from(socDetailedOccupations)
-    .where(sql`code = '47-5041.00'`)
+    .where(sql`${socDetailedOccupations.code} = '47-5041.00'`)
     .limit(1);
 
   const distribution = await db.select()
     .from(socSectorDistribution)
-    .where(sql`soc_code = '47-5041.00' AND sector_label = 'NAICS21'`)
+    .where(sql`${socSectorDistribution.socCode} = '47-5041.00' AND ${socSectorDistribution.sectorLabel} = 'NAICS21'`)
     .limit(1);
 
   console.log('Detailed Occupation:', occupation);
