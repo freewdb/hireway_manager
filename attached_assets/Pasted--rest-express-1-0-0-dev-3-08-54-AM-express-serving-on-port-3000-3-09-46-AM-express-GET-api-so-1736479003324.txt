@@ -1,0 +1,155 @@
+
+> rest-express@1.0.0 dev
+3:08:54 AM [express] serving on port 3000
+3:09:46 AM [express] GET /api/soc/top 200 in 8ms
+3:09:46 AM [express] GET /api/soc/top 200 in 3ms
+Search request received: {
+  searchTerm: 'forklift ',
+  queryParams: { search: 'forklift ', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: forklift 
+Initial database query results: {
+  count: 4,
+  searchTerm: 'forklift ',
+  firstResult: {
+    code: '47-2073.00',
+    title: 'Operating Engineers and Other Construction Equipment Operators',
+    searchableText: 'Operating Engineers and Other Construction Equipment Operators Operate one or several types of power'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 285,
+  fuseResultsCount: 285,
+  topResults: [
+    { title: 'Forklift Driver', score: 0.007096001898217786 },
+    { title: 'Forklift Operator', score: 0.007096001898217786 },
+    { title: 'Forklift Technician', score: 0.007096001898217786 }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '53-7051.00',
+    title: 'Forklift Driver',
+    isAlternative: true,
+    rank: 0.893613598291604,
+    description: 'Operate industrial trucks or tractors equipped to move materials around a warehouse, storage yard, factory, construction site, or similar location.',
+    majorGroup: {
+      id: 23,
+      code: '53-0000',
+      title: 'Major Group 53',
+      description: 'Major occupational group 53',
+      searchVector: 'Major Group 53'
+    },
+    minorGroup: {
+      id: 23,
+      code: '53--000',
+      majorGroupCode: '53-0000',
+      title: 'Minor Group 53--000',
+      description: 'Minor occupational group 53--000',
+      searchVector: 'Minor Group 53--000'
+    }
+  }
+}
+3:09:53 AM [express] GET /api/job-titles 304 in 384ms :: [{"code":"53-7051.00","title":"Forklift Dri…
+Search request received: {
+  searchTerm: 'forklift operator',
+  queryParams: { search: 'forklift operator', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: forklift operator
+Initial database query results: {
+  count: 3,
+  searchTerm: 'forklift operator',
+  firstResult: {
+    code: '47-2073.00',
+    title: 'Operating Engineers and Other Construction Equipment Operators',
+    searchableText: 'Operating Engineers and Other Construction Equipment Operators Operate one or several types of power'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 222,
+  fuseResultsCount: 222,
+  topResults: [
+    { title: 'Forklift Operator', score: 0.05947176957043451 },
+    { title: 'Forklift Operator', score: 0.06144114080425127 },
+    { title: 'Forklift Operator', score: 0.06254017281936673 }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '53-7051.00',
+    title: 'Forklift Operator',
+    isAlternative: true,
+    rank: 0.846475407386609,
+    description: 'Operate industrial trucks or tractors equipped to move materials around a warehouse, storage yard, factory, construction site, or similar location.',
+    majorGroup: {
+      id: 23,
+      code: '53-0000',
+      title: 'Major Group 53',
+      description: 'Major occupational group 53',
+      searchVector: 'Major Group 53'
+    },
+    minorGroup: {
+      id: 23,
+      code: '53--000',
+      majorGroupCode: '53-0000',
+      title: 'Minor Group 53--000',
+      description: 'Minor occupational group 53--000',
+      searchVector: 'Minor Group 53--000'
+    }
+  }
+}
+3:09:54 AM [express] GET /api/job-titles 304 in 186ms :: [{"code":"53-7051.00","title":"Forklift Ope…
+Search request received: {
+  searchTerm: 'Forklift Operator',
+  queryParams: { search: 'Forklift Operator', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: Forklift Operator
+Initial database query results: {
+  count: 3,
+  searchTerm: 'Forklift Operator',
+  firstResult: {
+    code: '47-2073.00',
+    title: 'Operating Engineers and Other Construction Equipment Operators',
+    searchableText: 'Operating Engineers and Other Construction Equipment Operators Operate one or several types of power'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 222,
+  fuseResultsCount: 222,
+  topResults: [
+    { title: 'Forklift Operator', score: 0.05947176957043451 },
+    { title: 'Forklift Operator', score: 0.06144114080425127 },
+    { title: 'Forklift Operator', score: 0.06254017281936673 }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '53-7051.00',
+    title: 'Forklift Operator',
+    isAlternative: true,
+    rank: 0.846475407386609,
+    description: 'Operate industrial trucks or tractors equipped to move materials around a warehouse, storage yard, factory, construction site, or similar location.',
+    majorGroup: {
+      id: 23,
+      code: '53-0000',
+      title: 'Major Group 53',
+      description: 'Major occupational group 53',
+      searchVector: 'Major Group 53'
+    },
+    minorGroup: {
+      id: 23,
+      code: '53--000',
+      majorGroupCode: '53-0000',
+      title: 'Minor Group 53--000',
+      description: 'Minor occupational group 53--000',
+      searchVector: 'Minor Group 53--000'
+    }
+  }
+}
+3:09:59 AM [express] GET /api/job-titles 304 in 152ms :: [{"code":"53-7051.00","title":"Forklift Ope…
