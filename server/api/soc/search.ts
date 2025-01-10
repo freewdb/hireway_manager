@@ -256,7 +256,7 @@ export async function GET(req: Request) {
               SELECT percentage 
               FROM ${socSectorDistribution} 
               WHERE soc_code = ${socDetailedOccupations.code} 
-              AND ${socSectorDistribution.sectorLabel} = ${sector}
+              AND ${socSectorDistribution.sectorLabel} = CONCAT('NAICS', ${sector})
               LIMIT 1
             ),
             0
