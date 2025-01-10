@@ -25,7 +25,7 @@ export async function GET(req: Request) {
             SELECT percentage 
             FROM ${socSectorDistribution} 
             WHERE soc_code = ${socDetailedOccupations.code}
-            AND sector_label = ${sector}
+            AND sector_label = CONCAT('NAICS', ${sector})
           ), 0)`.as('sector_distribution')
       })
       .from(socDetailedOccupations)
