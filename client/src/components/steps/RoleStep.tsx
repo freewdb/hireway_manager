@@ -33,7 +33,7 @@ export const RoleStep = () => {
           {data.sectorDistribution !== undefined && (
             <div>
               <span className="font-medium">Overall Sector Distribution:</span>{' '}
-              {data.sectorDistribution ? Math.round(data.sectorDistribution) : 0}% in selected industry
+              {Math.round(data.sectorDistribution)}% in selected industry
             </div>
           )}
         </div>
