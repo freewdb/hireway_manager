@@ -265,20 +265,17 @@ export async function GET(req: Request) {
           SELECT json_build_object(
             'soc_code', ${socDetailedOccupations.code},
             'sector', ${sector},
-            'query_info', (
-              SELECT json_build_object(
-                'full_query', 'SELECT percentage FROM soc_sector_distribution WHERE soc_code = ''' || ${socDetailedOccupations.code} || ''' AND sector_label = ''NAICS' || ${sector} || '''',
-                'sector_label', 'NAICS' || ${sector},
-                'raw_result', (
-                  SELECT row_to_json(dist)
-                  FROM (
-                    SELECT * FROM ${socSectorDistribution}
-                    WHERE soc_code = ${socDetailedOccupations.code} 
-                    AND sector_label = 'NAICS' || ${sector}
-                    LIMIT 1
-                  ) dist
-                )
-              )
+            'distribution', (
+              SELECT percentage 
+              FROM ${socSectorDistribution} 
+              WHERE soc_code = ${socDetailedOccupations.code} 
+              AND sector_label = CONCAT('NAICS', ${sector})
+              LIMIT 1
+            ),
+            'debug', json_build_object(
+              'query', format('SELECT percentage FROM soc_sector_distribution WHERE soc_code = %L AND sector_label = %L',
+                            ${socDetailedOccupations.code},
+                            CONCAT('NAICS', ${sector}))
             )
           )
         `.as('debug_distribution'),
