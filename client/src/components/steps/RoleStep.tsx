@@ -23,7 +23,7 @@ export const RoleStep = () => {
       <div className="space-y-4">
         <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
           <div><span className="font-medium">Selected NAICS:</span> {data.industry}</div>
-          <div><span className="font-medium">Query Addition:</span> sector={data.industry}</div>
+          <div><span className="font-medium">Query Addition:</span> sector=NAICS{data.industry}</div>
           {lastDistribution !== null && (
             <div>
               <span className="font-medium">Current Selection Distribution:</span>{' '}
