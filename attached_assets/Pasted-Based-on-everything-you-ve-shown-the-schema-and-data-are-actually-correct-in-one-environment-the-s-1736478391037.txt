@@ -1,0 +1,57 @@
+Based on everything you’ve shown, the schema and data are actually correct in one environment (the script that finds “100.00%” works fine), yet the server/API is still seeing “0%.” Since the exact same SQL query should return the same data, the most common explanation is that the API code and your verification script are connected to different PostgreSQL databases (an environment mismatch).
+
+In other words:
+	1.	tsx scripts/verify-soc-codes.ts is clearly hitting a database that has
+
+soc_code = '47-5041.00', sector_label = 'NAICS21', percentage = 100.00
+
+
+	2.	Your running server (which powers the UI) is likely hitting a different database or a different schema that has
+
+soc_code = '47-5041.00', sector_label = 'NAICS21', percentage = 0.00
+
+or no matching record so the COALESCE becomes zero.
+
+Here’s how to confirm that:
+
+1. Check environment variables
+	•	Look in your .env or config: Are you specifying different DATABASE_URL (or similar) for local scripts vs. the running server?
+	•	If you’re using Docker, or if you have both a local Postgres and a remote Postgres, the scripts might be connecting to your local DB while the server is still pointed at, e.g., a staging DB that never got the updated data.
+
+A quick test is to add a console.log inside your server code to print out process.env.DATABASE_URL (or whichever env variable sets the DB connection). Compare that to what your script uses.
+
+2. Force the server to run the same “verify” query
+
+Just like you did in verify-soc-codes.ts, add a small route or snippet inside server/api/soc/search.ts (or a temporary route) that does:
+
+const row = await db.query.socSectorDistribution.findMany({
+  where: (fields, { eq }) => eq(fields.socCode, '47-5041.00')
+});
+console.log('Server sees distribution row for 47-5041.00:', row);
+
+Then hit that route from your browser. If you see percentage: "0.00" or no row at all, you definitely know the API is reading a different DB instance than your script.
+
+3. Confirm migrations or data imports ran in the same DB
+
+If your server is connecting to the correct DB URL, but the data is still out of sync, then it’s possible you:
+	•	Ran the import script in one environment (or database)
+	•	Did not run it (or it failed) in the environment the server uses
+
+Re-run your import, but watch the logs carefully to ensure it’s pointing to the same DB. Or do a SELECT COUNT(*) etc. from inside the server code as a final check that the data truly matches.
+
+4. No difference in code: “47-5041.00” vs “47-5041”
+
+You’ve already shown that both the table and the script logs have the .00 included, so a code mismatch is not the culprit here. The query is literally:
+
+SELECT percentage
+FROM soc_sector_distribution
+WHERE soc_code = '47-5041.00'
+AND sector_label = 'NAICS21'
+
+…which matches your table exactly. That’s perfect—so if one environment has the correct row, it must be environment mismatch for the other environment not to see it.
+
+Bottom line
+
+	You are definitely hitting two different databases (or possibly two different schemas) between verify-soc-codes.ts and your running server.
+
+Check your .env / Docker configs or any “dev vs. prod” settings to align them. Once the server and the script both talk to the same Postgres instance (with the same data loaded), you’ll see the correct 100.00% in the UI.
