@@ -1,0 +1,58 @@
+~/workspace$ tsx scripts/verify-soc-codes.ts
+Checking SOC code "47-5041.00" in both tables...
+Detailed Occupation: [
+  {
+    id: 769,
+    code: '47-5041.00',
+    title: 'Continuous Mining Machine Operators',
+    description: 'Operate self-propelled mining machines that rip coal, metal and nonmetal ores, rock, stone, or sand from the mine face and load it onto conveyors, shuttle cars, or trucks in a continuous operation.',
+    minorGroupCode: '47--000',
+    alternativeTitles: [
+      'Bore Miner Operator',
+      'Concrete Crusher Loader Operator',
+      'Continuous Miner',
+      'Continuous Miner Operator (CMO)',
+      'Continuous Mining Machine Coal Miner',
+      'Continuous Mining Machine Company Miner',
+      'Continuous Mining Machine Contract Miner',
+      'Continuous Mining Machine Lode Miner',
+      'Continuous Mining Machine Miner',
+      'Continuous Mining Machine Operator',
+      'Continuous Mining Operator (CMO)',
+      'Crusher Loader Equipment Operator',
+      'Crusher Loader Operator',
+      'Crusher Operator',
+      'Crusher Plant Operator',
+      'Dozer Operator',
+      'Equipment Operator',
+      'Excavator Operator',
+      'Forklift Operator',
+      'Forklift Wheel Loader',
+      'Front End Wheel Loader Operator',
+      'Heavy Equipment Operator',
+      'Loader Operator',
+      'Logging Shovel Operator',
+      'Material Equipment Operator',
+      'Mine Technician',
+      'Mine Utility Operator',
+      'Miner',
+      'Miner Operator',
+      'Quarry Plant Crusher Operator',
+      'Self-Propelled Mining Machine Operator',
+      'Shovel Log Loader Operator',
+      'Shovel Operator',
+      'Wheel Loader Operator'
+    ],
+    searchableText: 'Continuous Mining Machine Operators Operate self-propelled mining machines that rip coal, metal and nonmetal ores, rock, stone, or sand from the mine face and load it onto conveyors, shuttle cars, or trucks in a continuous operation. Bore Miner Operator Concrete Crusher Loader Operator Continuous Miner Continuous Miner Operator (CMO) Continuous Mining Machine Coal Miner Continuous Mining Machine Company Miner Continuous Mining Machine Contract Miner Continuous Mining Machine Lode Miner Continuous Mining Machine Miner Continuous Mining Machine Operator Continuous Mining Operator (CMO) Crusher Loader Equipment Operator Crusher Loader Operator Crusher Operator Crusher Plant Operator Dozer Operator Equipment Operator Excavator Operator Forklift Operator Forklift Wheel Loader Front End Wheel Loader Operator Heavy Equipment Operator Loader Operator Logging Shovel Operator Material Equipment Operator Mine Technician Mine Utility Operator Miner Miner Operator Quarry Plant Crusher Operator Self-Propelled Mining Machine Operator Shovel Log Loader Operator Shovel Operator Wheel Loader Operator',
+    searchVector: 'Continuous Mining Machine Operators Operate self-propelled mining machines that rip coal, metal and nonmetal ores, rock, stone, or sand from the mine face and load it onto conveyors, shuttle cars, or trucks in a continuous operation. Bore Miner Operator Concrete Crusher Loader Operator Continuous Miner Continuous Miner Operator (CMO) Continuous Mining Machine Coal Miner Continuous Mining Machine Company Miner Continuous Mining Machine Contract Miner Continuous Mining Machine Lode Miner Continuous Mining Machine Miner Continuous Mining Machine Operator Continuous Mining Operator (CMO) Crusher Loader Equipment Operator Crusher Loader Operator Crusher Operator Crusher Plant Operator Dozer Operator Equipment Operator Excavator Operator Forklift Operator Forklift Wheel Loader Front End Wheel Loader Operator Heavy Equipment Operator Loader Operator Logging Shovel Operator Material Equipment Operator Mine Technician Mine Utility Operator Miner Miner Operator Quarry Plant Crusher Operator Self-Propelled Mining Machine Operator Shovel Log Loader Operator Shovel Operator Wheel Loader Operator',
+    updatedAt: 2025-01-08T20:44:24.308Z
+  }
+]
+Sector Distribution: [
+  {
+    id: 38313,
+    socCode: '47-5041.00',
+    sectorLabel: 'NAICS21',
+    percentage: '100.00'
+  }
+]
