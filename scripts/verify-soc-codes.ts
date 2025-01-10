@@ -1,53 +1,47 @@
 
-import { db } from '../db';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import { sql } from 'drizzle-orm';
 
 async function verifySOCCodes() {
   try {
     console.log('Running detailed diagnostics...');
     
-    // Test database connection first
-    try {
-      if (!process.env.DATABASE_URL) {
-        throw new Error('DATABASE_URL environment variable is not set');
-      }
-
-      const dbTest = await db.execute(sql`SELECT current_database(), current_schema()`);
-      if (!dbTest?.rows?.length) {
-        throw new Error('Database query returned no results');
-      }
-      console.log('Database connection successful:', {
-        database: dbTest.rows[0].current_database,
-        schema: dbTest.rows[0].current_schema
-      });
-    } catch (err) {
-      console.error('Database connection error:', err);
-      return;
+    // Check DATABASE_URL
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL environment variable is not set');
     }
+    console.log('Database URL is set');
+
+    // Create postgres client with more explicit error handling
+    const client = postgres(process.env.DATABASE_URL, { 
+      max: 1,
+      timeout: 5,
+      debug: console.log
+    });
     
-    // Check exact row in sector distribution
-    const distributionCheck = await db.execute(sql`
+    // Initialize drizzle
+    const db = drizzle(client);
+    console.log('Database client initialized');
+
+    // Test connection
+    const testResult = await client.query('SELECT current_database(), current_schema();');
+    console.log('Connection test result:', testResult);
+    
+    // Check sector distribution
+    const distributionCheck = await client.query(`
       SELECT * FROM soc_sector_distribution 
       WHERE soc_code = '47-5041.00' 
       AND sector_label = 'NAICS21';
     `);
-    console.log('Distribution check:', distributionCheck?.rows || []);
+    console.log('Distribution check:', distributionCheck);
 
-    // Check if code exists in occupations table
-    const occupationCheck = await db.execute(sql`
+    // Check occupation
+    const occupationCheck = await client.query(`
       SELECT code, title FROM soc_detailed_occupations 
       WHERE code = '47-5041.00';
     `);
-    console.log('Occupation check:', occupationCheck?.rows || []);
-
-    // Check all sector distributions for this occupation
-    const allDistributions = await db.execute(sql`
-      SELECT soc_code, sector_label, percentage 
-      FROM soc_sector_distribution 
-      WHERE soc_code = '47-5041.00'
-      ORDER BY percentage DESC;
-    `);
-    console.log('All distributions:', allDistributions?.rows || []);
+    console.log('Occupation check:', occupationCheck);
 
   } catch (error) {
     console.error('Error during verification:', error);
