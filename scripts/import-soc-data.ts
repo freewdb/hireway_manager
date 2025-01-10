@@ -1,4 +1,3 @@
-
 import { readFile } from 'fs/promises';
 import { parse } from 'csv-parse/sync';
 import { db } from '../db';
@@ -26,7 +25,7 @@ interface ConsolidatedOccupation {
 }
 
 function extractSOCCode(onetCode: string): string {
-  // Keep the full ONET code (e.g. "11-1011.00")
+  // Keep full ONET code
   return onetCode;
 }
 
@@ -206,11 +205,11 @@ async function importSOCData() {
 
     // Consolidate occupations with the same SOC code
     const consolidatedOccupations = new Map<string, ConsolidatedOccupation>();
-    
+
     for (const occupation of occupations) {
       const socCode = extractSOCCode(occupation.onetsoc_code);
       const minorGroupCode = extractMinorGroupCode(socCode);
-      
+
       if (!consolidatedOccupations.has(socCode)) {
         consolidatedOccupations.set(socCode, {
           code: socCode,
@@ -220,14 +219,14 @@ async function importSOCData() {
           minorGroupCode
         });
       }
-      
+
       const consolidated = consolidatedOccupations.get(socCode)!;
-      
+
       // Add the current title as an alternative if it's different from the primary
       if (occupation.title !== consolidated.title) {
         consolidated.alternativeTitles.add(occupation.title);
       }
-      
+
       // Add any alternate titles for this occupation
       const altTitles = alternatesBySOC[socCode];
       if (altTitles) {
@@ -240,7 +239,7 @@ async function importSOCData() {
     // Extract unique major and minor groups
     const majorGroups = new Set<string>();
     const minorGroups = new Set<string>();
-    
+
     for (const [socCode] of consolidatedOccupations) {
       majorGroups.add(extractMajorGroupCode(socCode));
       minorGroups.add(extractMinorGroupCode(socCode));
