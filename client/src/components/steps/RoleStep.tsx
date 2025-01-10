@@ -15,11 +15,7 @@ export const RoleStep = () => {
     updateData("roleTitle", result.title);
     updateData("roleDescription", result.description);
     updateData("alternativeTitles", result.alternativeTitles || []);
-    updateData("sectorDistribution", result.sectorDistribution || 0); //Added to update the data
-
-    if (result.code) {
-      nextStep();
-    }
+    updateData("sectorDistribution", result.sectorDistribution || 0);
   };
 
   return (
