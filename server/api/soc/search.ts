@@ -269,7 +269,7 @@ export async function GET(req: Request) {
               SELECT percentage::numeric 
               FROM ${socSectorDistribution} 
               WHERE soc_code = ${socDetailedOccupations.code} 
-              AND sector_label = CONCAT('NAICS', ${sector})
+              AND sector_label = 'NAICS' || ${sector}
             ),
             'debug', json_build_object(
               'query', format('SELECT percentage FROM soc_sector_distribution WHERE soc_code = %L AND sector_label = %L',
