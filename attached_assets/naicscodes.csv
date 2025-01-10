@@ -1,0 +1,22 @@
+Sector,Code,concat
+Unclassified,0,NAICS00
+"Agriculture, forestry, fishing and hunting",11,NAICS11
+Mining,21,NAICS21
+Utilities,22,NAICS22
+Construction,23,NAICS23
+Manufacturing,31_33,NAICS31_33
+Wholesale trade,42,NAICS42
+Retail trade,44_45,NAICS44_45
+Transportation and warehousing,48_49,NAICS48_49
+Information,51,NAICS51
+Finance and insurance,52,NAICS52
+Real estate and rental and leasing,53,NAICS53
+"Professional, Scientific and Technical Services",54,NAICS54
+Management of Companies and Enterprises,55,NAICS55
+Administrative and support and waste management and remediation services,56,NAICS56
+Education services,61,NAICS61
+Health care and social assistance,62,NAICS62
+"Arts, entertainment, and recreation",71,NAICS71
+Accommodation and food services,72,NAICS72
+"Other services, except public administration",81,NAICS81
+Public administration,92,NAICS92
