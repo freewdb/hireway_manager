@@ -269,13 +269,20 @@ export async function GET(req: Request) {
               SELECT percentage 
               FROM ${socSectorDistribution} 
               WHERE soc_code = ${socDetailedOccupations.code} 
-              AND sector_label = CONCAT('NAICS', ${sector})
-              LIMIT 1
+              AND sector_label = 'NAICS' || ${sector}
             ),
             'debug', json_build_object(
               'query', format('SELECT percentage FROM soc_sector_distribution WHERE soc_code = %L AND sector_label = %L',
                             ${socDetailedOccupations.code},
-                            CONCAT('NAICS', ${sector}))
+                            'NAICS' || ${sector}),
+              'result', (
+                SELECT row_to_json(dist)
+                FROM (
+                  SELECT * FROM ${socSectorDistribution}
+                  WHERE soc_code = ${socDetailedOccupations.code} 
+                  AND sector_label = 'NAICS' || ${sector}
+                ) dist
+              )
             )
           )
         `.as('debug_distribution'),
