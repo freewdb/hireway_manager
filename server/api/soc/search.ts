@@ -182,6 +182,11 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const query = url.searchParams.get('search')?.trim() || '';
     const sector = url.searchParams.get('sector')?.trim();
+    console.log('Sector query debug:', {
+      rawSector: sector,
+      constructedLabel: `NAICS${sector}`,
+      sampleQuery: `SELECT percentage FROM soc_sector_distribution WHERE soc_code = '47-5041.00' AND sector_label = 'NAICS${sector}'`
+    });
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)));
     const offset = (page - 1) * limit;
