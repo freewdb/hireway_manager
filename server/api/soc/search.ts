@@ -108,13 +108,13 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     // Apply sector boost if sector is provided
     if (sector && item.sectorDistribution) {
       const distribution = parseFloat(item.sectorDistribution);
-      
+
       if (distribution > 0) {
         // Normalize distribution to 0-100 scale and apply logarithmic boost
         const normalizedDist = Math.min(100, distribution);
         const boost = 1 + (Math.log10(normalizedDist + 1) / Math.log10(101));
         rank *= boost;
-        
+
         // Extra boost for highly represented occupations
         if (distribution >= 10) {
           rank *= 1.5;
@@ -288,18 +288,18 @@ export async function GET(req: Request) {
               SELECT percentage::numeric 
               FROM ${socSectorDistribution} 
               WHERE soc_code = ${socDetailedOccupations.code} 
-              AND sector_label = 'NAICS' || ${sector}
+              AND sector_label = ${`NAICS${sector}`}
             ),
             'debug', json_build_object(
               'query', format('SELECT percentage FROM soc_sector_distribution WHERE soc_code = %L AND sector_label = %L',
                             ${socDetailedOccupations.code},
-                            'NAICS' || ${sector}),
+                            ${`NAICS${sector}`}),
               'result', (
                 SELECT row_to_json(dist)
                 FROM (
                   SELECT * FROM ${socSectorDistribution}
                   WHERE soc_code = ${socDetailedOccupations.code} 
-                  AND sector_label = 'NAICS' || ${sector}
+                  AND sector_label = ${`NAICS${sector}`}
                 ) dist
               )
             )
