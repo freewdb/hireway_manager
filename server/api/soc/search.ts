@@ -185,7 +185,14 @@ export async function GET(req: Request) {
     console.log('Search params:', {
       query,
       sector,
-      rawQuery: url.searchParams.toString()
+      rawQuery: url.searchParams.toString(),
+      timestamp: new Date().toISOString()
+    });
+
+    console.log('Testing distribution lookup:', {
+      sampleSOC: '47-5041.00',
+      sampleSector: 'NAICS21',
+      query: `SELECT percentage FROM soc_sector_distribution WHERE soc_code = '47-5041.00' AND sector_label = 'NAICS21'`
     });
 
     // Debug specific SOC code lookup
