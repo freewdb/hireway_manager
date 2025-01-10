@@ -10,12 +10,16 @@ export const RoleStep = () => {
   const [lastDistribution, setLastDistribution] = useState<number | null>(null);
 
   const handleSelect = (result: JobTitleSearchResult) => {
-    setLastDistribution(result.sectorDistribution || null);
+    const distribution = result.sectorDistribution || result.topIndustries?.find(ind => 
+      ind.sector === `NAICS${data.industry}`
+    )?.percentage || 0;
+    
+    setLastDistribution(distribution);
     updateData("role", result.code);
     updateData("roleTitle", result.title);
     updateData("roleDescription", result.description);
     updateData("alternativeTitles", result.alternativeTitles || []);
-    updateData("sectorDistribution", result.sectorDistribution || 0);
+    updateData("sectorDistribution", distribution);
   };
 
   return (
