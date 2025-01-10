@@ -272,10 +272,10 @@ export async function GET(req: Request) {
         sectorDistribution: sql<number>`
           COALESCE(
             (
-              SELECT percentage 
+              SELECT percentage::numeric
               FROM ${socSectorDistribution} 
               WHERE soc_code = ${socDetailedOccupations.code} 
-              AND sector_label = ${`NAICS${sector}`}
+              AND sector_label = 'NAICS21'
               LIMIT 1
             ),
             0
