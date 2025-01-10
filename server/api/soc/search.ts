@@ -256,31 +256,7 @@ export async function GET(req: Request) {
               SELECT percentage 
               FROM ${socSectorDistribution} 
               WHERE soc_code = ${socDetailedOccupations.code} 
-              AND sector_label = (
-                CASE 
-                  WHEN ${sector} = 'NAICS11' THEN 'NAICS11'
-                  WHEN ${sector} = 'NAICS21' THEN 'NAICS21'
-                  WHEN ${sector} = 'NAICS22' THEN 'NAICS22'
-                  WHEN ${sector} = 'NAICS23' THEN 'NAICS23'
-                  WHEN ${sector} = 'NAICS31-33' OR ${sector} = 'NAICS31_33' THEN 'NAICS31_33'
-                  WHEN ${sector} = 'NAICS42' THEN 'NAICS42'
-                  WHEN ${sector} = 'NAICS44-45' OR ${sector} = 'NAICS44_45' THEN 'NAICS44_45'
-                  WHEN ${sector} = 'NAICS48-49' OR ${sector} = 'NAICS48_49' THEN 'NAICS48_49'
-                  WHEN ${sector} = 'NAICS51' THEN 'NAICS51'
-                  WHEN ${sector} = 'NAICS52' THEN 'NAICS52'
-                  WHEN ${sector} = 'NAICS53' THEN 'NAICS53'
-                  WHEN ${sector} = 'NAICS54' THEN 'NAICS54'
-                  WHEN ${sector} = 'NAICS55' THEN 'NAICS55'
-                  WHEN ${sector} = 'NAICS56' THEN 'NAICS56'
-                  WHEN ${sector} = 'NAICS61' THEN 'NAICS61'
-                  WHEN ${sector} = 'NAICS62' THEN 'NAICS62'
-                  WHEN ${sector} = 'NAICS71' THEN 'NAICS71'
-                  WHEN ${sector} = 'NAICS72' THEN 'NAICS72'
-                  WHEN ${sector} = 'NAICS81' THEN 'NAICS81'
-                  WHEN ${sector} = 'NAICS92' THEN 'NAICS92'
-                  ELSE ${sector}
-                END
-              )
+              AND ${socSectorDistribution.sectorLabel} = ${sector}
               LIMIT 1
             ),
             0
