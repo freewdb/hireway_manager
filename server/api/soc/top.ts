@@ -33,7 +33,7 @@ export async function GET(req: Request) {
         EXISTS (
           SELECT 1 FROM ${socSectorDistribution}
           WHERE ${socSectorDistribution.socCode} = ${socDetailedOccupations.code}
-          AND ${socSectorDistribution.sectorLabel} = ${sector}
+          AND sector_label = CONCAT('NAICS', ${sector})
           AND ${socSectorDistribution.percentage} > 0
         )
       `)
