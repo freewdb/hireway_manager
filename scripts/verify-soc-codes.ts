@@ -1,15 +1,19 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import { socDetailedOccupations, socSectorDistribution } from '../db/schema';
 
 async function verifySOCCodes() {
   try {
     console.log('Running detailed diagnostics...');
     
     // Test database connection first
-    const dbTest = await db.execute(sql`SELECT current_database(), current_schema()`);
-    console.log('Database connection test:', dbTest.rows[0]);
+    try {
+      const dbTest = await db.execute(sql`SELECT current_database();`);
+      console.log('Connected to database:', dbTest.rows[0]?.current_database);
+    } catch (err) {
+      console.error('Database connection error:', err);
+      return;
+    }
     
     // Check exact row in sector distribution
     const distributionCheck = await db.execute(sql`
@@ -41,6 +45,7 @@ async function verifySOCCodes() {
   }
 }
 
+// Execute and handle any errors
 verifySOCCodes()
   .catch(console.error)
   .finally(() => {
