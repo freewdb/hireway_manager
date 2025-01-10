@@ -182,6 +182,21 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const query = url.searchParams.get('search')?.trim() || '';
     const sector = url.searchParams.get('sector')?.trim();
+
+    // Debug database connection and queries
+    const dbDebug = await db.execute(sql`
+      SELECT current_database(), current_schema();
+    `);
+    console.log('Database connection debug:', dbDebug.rows[0]);
+
+    // Debug specific sector distribution query
+    const distDebug = await db.execute(sql`
+      SELECT * FROM soc_sector_distribution 
+      WHERE soc_code = '47-5041.00' 
+      AND sector_label = 'NAICS21';
+    `);
+    console.log('Sector distribution debug:', distDebug.rows);
+
     console.log('Sector query debug:', {
       rawSector: sector,
       constructedLabel: `NAICS${sector}`,
