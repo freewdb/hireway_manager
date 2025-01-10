@@ -1,4 +1,3 @@
-
 import { readFile } from 'fs/promises';
 import { parse } from 'csv-parse/sync';
 import { db } from '../db';
