@@ -8,12 +8,14 @@ import { useState } from "react";
 export const RoleStep = () => {
   const { updateData, nextStep, data } = useWizard();
   const [lastDistribution, setLastDistribution] = useState<number | null>(null);
+  const selectedOccupation = data.role ? {code: data.role, title: data.roleTitle} : null;
+
 
   const handleSelect = (result: JobTitleSearchResult) => {
     const distribution = result.sectorDistribution || result.topIndustries?.find(ind => 
       ind.sector === `NAICS${data.industry}`
     )?.percentage || 0;
-    
+
     setLastDistribution(distribution);
     updateData("role", result.code);
     updateData("roleTitle", result.title);
@@ -25,7 +27,7 @@ export const RoleStep = () => {
   return (
     <WizardStep title="Select Role" stepNumber={2}>
       <div className="space-y-4">
-        <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+        <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm font-mono">
           <div><span className="font-medium">Selected NAICS:</span> {data.industry}</div>
           <div><span className="font-medium">Query Addition:</span> sector=NAICS{data.industry}</div>
           {lastDistribution !== null && (
@@ -39,6 +41,21 @@ export const RoleStep = () => {
               <span className="font-medium">Overall Sector Distribution:</span>{' '}
               {Math.round(data.sectorDistribution)}% in selected industry
             </div>
+          )}
+          {selectedOccupation && (
+            <>
+              <div><span className="font-medium">Current Selection SOC:</span> {selectedOccupation.code} - {selectedOccupation.title}</div>
+              <div><span className="font-medium">Current Query:</span> SELECT percentage FROM soc_sector_distribution WHERE soc_code = '{selectedOccupation.code}' AND sector_label = 'NAICS{data.industry}';</div>
+              <div><span className="font-medium">Current Query Results:</span> {lastDistribution?.toFixed(2)}</div>
+              <div>
+                <span className="font-medium">Current Selection Applied Boost:</span> {lastDistribution >= 90 ? '2.0x (≥90%)' :
+                  lastDistribution >= 75 ? '1.75x (≥75%)' :
+                  lastDistribution >= 50 ? '1.5x (≥50%)' :
+                  lastDistribution >= 25 ? '1.25x (≥25%)' :
+                  lastDistribution >= 10 ? '1.1x (≥10%)' :
+                  lastDistribution < 5 ? '0.75x (<5%)' : '1.0x'}
+              </div>
+            </>
           )}
         </div>
         <SOCSearch 
