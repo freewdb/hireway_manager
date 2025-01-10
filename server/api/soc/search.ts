@@ -301,7 +301,7 @@ export async function GET(req: Request) {
                   WHEN ${sector} = '31_33' THEN 'NAICS31_33'
                   WHEN ${sector} = '44_45' THEN 'NAICS44_45'
                   WHEN ${sector} = '48_49' THEN 'NAICS48_49'
-                  ELSE CONCAT('NAICS', LPAD(${sector}, 2, '0'))
+                  ELSE 'NAICS' || LPAD(${sector}, 2, '0')
                 END
               )
               LIMIT 1
