@@ -39,7 +39,7 @@ export async function GET(req: Request) {
         title: socDetailedOccupations.title,
         description: socDetailedOccupations.description,
         alternativeTitles: socDetailedOccupations.alternativeTitles,
-        sectorDistribution: sql<number>`
+        distribution: sql<number>`
           COALESCE((
             SELECT percentage 
             FROM ${socSectorDistribution} 
@@ -48,14 +48,12 @@ export async function GET(req: Request) {
           ), 0)`.as('sector_distribution')
       })
       .from(socDetailedOccupations)
-      .where(sql`
-        EXISTS (
-          SELECT 1 FROM ${socSectorDistribution}
-          WHERE ${socSectorDistribution.socCode} = ${socDetailedOccupations.code}
-          AND sector_label = ${sectorLabel}
-          AND percentage > 0
-        )
-      `)
+      .innerJoin(
+        socSectorDistribution,
+        sql`${socSectorDistribution.socCode} = ${socDetailedOccupations.code} 
+            AND ${socSectorDistribution.sectorLabel} = ${sectorLabel}
+            AND ${socSectorDistribution.percentage} > 1.0`
+      )
       .orderBy(sql`sector_distribution DESC`)
       .limit(10);
 
