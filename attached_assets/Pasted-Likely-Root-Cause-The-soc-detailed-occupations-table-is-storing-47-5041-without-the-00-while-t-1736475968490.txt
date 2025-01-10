@@ -1,0 +1,75 @@
+Likely Root Cause: The soc_detailed_occupations table is storing "47-5041" (without the .00) while the soc_sector_distribution table stores "47-5041.00". Because the strings do not match exactly, the query returns no row—and thus reports a 0% distribution—even though the database does contain a 100.00% row for "47-5041.00".
+
+Why It Happens
+
+In your posted code, there are two contradictory approaches for handling the ONET/SOC codes:
+	1.	Importing SOC data (in import-soc-data.ts under attached_assets) strips the .00
+
+function extractSOCCode(onetCode: string): string {
+  // Convert "11-1011.00" -> "11-1011"
+  return onetCode.split('.')[0];
+}
+...
+consolidatedOccupations.set(socCode, {
+  code: socCode, // e.g. "47-5041"
+  ...
+});
+
+
+	2.	Importing sector data (in import_sector_distribution.ts) uses record.onetsoc_code without stripping
+
+.map(record => ({
+  socCode: record.onetsoc_code, // e.g. "47-5041.00"
+  sectorLabel: record.sector,
+  percentage: parseFloat(record.percent)
+}));
+
+
+
+As a result, your soc_detailed_occupations table ends up with codes like "47-5041", but your soc_sector_distribution table ends up with "47-5041.00". A query like
+
+SELECT percentage
+FROM soc_sector_distribution
+WHERE soc_code = '47-5041'
+  AND sector_label = 'NAICS21';
+
+will not find the row that has soc_code = '47-5041.00'.
+
+How To Confirm
+	1.	Run a direct SELECT against each table to see the real values:
+
+SELECT code FROM soc_detailed_occupations WHERE code LIKE '47-5041%';
+SELECT soc_code FROM soc_sector_distribution WHERE soc_code LIKE '47-5041%';
+
+You’ll likely see one table has "47-5041" and the other has "47-5041.00".
+
+	2.	Check your logs (especially the debug output in server/api/soc/search.ts), which shows how the final SQL is being constructed. Look at the debug_distribution field, which prints out the actual soc_code and sector_label used in the sub-query. Compare that to the row in soc_sector_distribution you found with 100% distribution.
+
+How To Fix
+
+You have two main options:
+
+1) Preserve the full ONET code ("47-5041.00") everywhere
+	•	Remove the line .split('.') from your import-soc-data.ts, so the “detailed occupations” insert stores the code exactly as "47-5041.00".
+	•	Keep the “sector distribution” import as is (since it’s already using record.onetsoc_code).
+	•	Going forward, every table uses the full code with the .00.
+
+2) Strip the .00 everywhere (i.e. store "47-5041" in both tables)
+	•	Modify your sector distribution import in import_sector_distribution.ts:
+
+.map(record => ({
+  socCode: record.onetsoc_code.split('.')[0], // also remove .00
+  sectorLabel: record.sector,
+  percentage: parseFloat(record.percent)
+}));
+
+
+	•	Then both soc_detailed_occupations and soc_sector_distribution would store "47-5041".
+
+As long as both the detailed_occupations.code and sector_distribution.soc_code are consistent, your queries will match and you’ll see the correct 100% distribution in the UI.
+
+Key Takeaway
+
+	Always ensure the SOC code format in soc_detailed_occupations matches soc_sector_distribution.
+
+Any mismatch (like "47-5041" vs. "47-5041.00") breaks the join/lookup queries and yields an incorrect “0%” result in the frontend.
