@@ -274,8 +274,8 @@ export async function GET(req: Request) {
             (
               SELECT percentage::numeric
               FROM ${socSectorDistribution} 
-              WHERE soc_code = '47-5041.00'
-              AND sector_label = 'NAICS21'
+              WHERE soc_code = ${socDetailedOccupations.code}
+              AND sector_label = ${`NAICS${sector}`}
               LIMIT 1
             ),
             0
