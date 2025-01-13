@@ -73,6 +73,7 @@ export async function GET(req: Request) {
     
     console.log('Debug query results:', debugQuery[0]);
 
+    console.log('Executing top occupations query...');
     const topOccupations = await db
       .select({
         code: socDetailedOccupations.code,
@@ -88,22 +89,38 @@ export async function GET(req: Request) {
           ), 0)`.as('sector_distribution')
       })
       .from(socDetailedOccupations)
-      .innerJoin(
+      .leftJoin(
         socSectorDistribution,
         sql`${socSectorDistribution.socCode} = ${socDetailedOccupations.code} 
-            AND ${socSectorDistribution.sectorLabel} = ${sectorLabel}
-            AND ${socSectorDistribution.percentage} > 1.0`
+            AND ${socSectorDistribution.sectorLabel} = ${sectorLabel}`
       )
+      .where(sql`${socSectorDistribution.percentage} > 1.0`)
       .orderBy(sql`sector_distribution DESC`)
       .limit(10);
+
+    console.log('Top occupations query results:', {
+      count: topOccupations.length,
+      sectorLabel: sectorLabel.sql,
+      firstResult: topOccupations[0]
+    });
 
     console.log('Top occupations query returned:', topOccupations.length, 'results');
     if (topOccupations.length === 0) {
       console.log('No results found for sector:', sectorLabel);
     }
 
-    return new Response(JSON.stringify(topOccupations), {
-      headers: { 'Content-Type': 'application/json' }
+    // Ensure we return an empty array if no results
+    const response = topOccupations.length ? topOccupations : [];
+    console.log('Sending response:', {
+      resultCount: response.length,
+      firstResult: response[0]
+    });
+
+    return new Response(JSON.stringify(response), {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store'
+      }
     });
   } catch (error) {
     console.error('Error in /api/soc/top:', error);
@@ -112,7 +129,10 @@ export async function GET(req: Request) {
       details: error instanceof Error ? error.message : String(error)
     }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store'
+      }
     });
   }
 }
