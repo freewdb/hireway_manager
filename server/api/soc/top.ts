@@ -1,6 +1,7 @@
+
 import { sql } from 'drizzle-orm';
 import { db } from '../../../db';
-import { socDetailedOccupations, socSectorDistribution, sectorLookup } from '../../../db/schema';
+import { socDetailedOccupations, socSectorDistribution } from '../../../db/schema';
 
 export async function GET(req: Request) {
   try {
@@ -11,20 +12,29 @@ export async function GET(req: Request) {
       return Response.json([]);
     }
 
+    const sectorLabel = `NAICS${sector}`;
+    
     const topOccupations = await db
       .select({
         code: socDetailedOccupations.code,
         title: socDetailedOccupations.title,
         description: socDetailedOccupations.description,
-        sectorDistribution: sql<number>`
+        distribution: sql<number>`
           COALESCE((
             SELECT percentage 
-            FROM ${socSectorDistribution} sd
-            WHERE sd.soc_code = ${socDetailedOccupations.code}
-            AND sd.sector_label = ${`NAICS${sector}`}
-          ), 0)`.as('sector_distribution')
+            FROM ${socSectorDistribution}
+            WHERE soc_code = ${socDetailedOccupations.code}
+            AND sector_label = ${sectorLabel}
+          ), 0)
+        `.as('sector_distribution')
       })
       .from(socDetailedOccupations)
+      .where(sql`EXISTS (
+        SELECT 1 
+        FROM ${socSectorDistribution}
+        WHERE soc_code = ${socDetailedOccupations.code}
+        AND sector_label = ${sectorLabel}
+      )`)
       .orderBy(sql`sector_distribution DESC`)
       .limit(10);
 
