@@ -65,6 +65,16 @@ export type InsertSocDetailedOccupation = typeof socDetailedOccupations.$inferIn
 export type SocSectorDistribution = typeof socSectorDistribution.$inferSelect;
 export type InsertSocSectorDistribution = typeof socSectorDistribution.$inferInsert;
 
+export const sectorLookup = pgTable('sectorlu', {
+  id: serial('id').primaryKey(),
+  naics: varchar('naics', { length: 5 }).notNull(),
+  concat: varchar('concat', { length: 10 }).notNull(),
+  sector: varchar('sector', { length: 255 }).notNull()
+});
+
+export type SectorLookup = typeof sectorLookup.$inferSelect;
+export type InsertSectorLookup = typeof sectorLookup.$inferInsert;
+
 // Export additional interface for the API response
 export interface JobTitleSearchResult {
   code: string;
