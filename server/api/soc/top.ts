@@ -5,13 +5,15 @@ import { socDetailedOccupations, socSectorDistribution } from '../../../db/schem
 
 export async function GET(req: Request) {
   try {
+    console.log('Received request to /api/soc/top');
     const url = new URL(req.url);
     const sector = url.searchParams.get('sector');
 
     if (!sector) {
       console.log('No sector provided to /api/soc/top');
-      return new Response(JSON.stringify([]), {
-        headers: { 'Content-Type': 'application/json' }
+      return new Response(JSON.stringify({ error: 'Sector parameter is required' }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 400
       });
     }
 
@@ -99,7 +101,10 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error('Error in /api/soc/top:', error);
-    return new Response(JSON.stringify({ error: String(error) }), {
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : String(error)
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
