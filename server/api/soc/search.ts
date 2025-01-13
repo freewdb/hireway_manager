@@ -116,12 +116,7 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
         const boost = 1 + (Math.log10(normalizedDist + 1) / Math.log10(101));
         rank *= boost;
 
-        // Extra boost for highly represented occupations
-        if (distribution >= 10) {
-          rank *= 1.5;
-        }
-
-        console.log('Sector boost applied:', {
+        console.log('Distribution info:', {
           code: item.code,
           title: item.title,
           sectorLabel: `NAICS${sector}`,
@@ -130,11 +125,20 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
           boost,
           originalRank,
           finalRank: rank,
-          highRepBoost: distribution >= 10
         });
+
+        // Extra boost for highly represented occupations
+        if (distribution >= 10) {
+          rank *= 1.5;
+          console.log('High representation bonus applied:', {
+            code: item.code,
+            distribution,
+            finalRank: rank
+          });
+        }
       } else {
         rank *= 0.5; // Significant penalty for occupations not represented in sector
-        console.log('Sector penalty applied:', {
+        console.log('Zero distribution penalty:', {
           code: item.code,
           title: item.title,
           sectorLabel: `NAICS${sector}`,
@@ -202,7 +206,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const query = url.searchParams.get('search')?.trim() || '';
     const sector = url.searchParams.get('sector')?.trim();
-    
+
     console.log('Search params:', {
       query,
       sector,
@@ -422,7 +426,7 @@ export async function GET(req: Request) {
       .limit(100);
 
     if (exactMatches.length >= 5) {
-      const results = consolidateResults(exactMatches, query);
+      const results = consolidateResults(exactMatches, query, sector);
 
       // Check for duplicates
       const codeFrequency = results.reduce((acc, curr) => {
@@ -514,7 +518,7 @@ export async function GET(req: Request) {
     });
 
     const fuseResults = fuse.search(query);
-    const results = consolidateResults(fuseResults.map(r => r.item), query);
+    const results = consolidateResults(fuseResults.map(r => r.item), query, sector);
 
     // Check for duplicates
     const codeFrequency = results.reduce((acc, curr) => {
