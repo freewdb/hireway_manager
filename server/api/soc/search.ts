@@ -221,7 +221,7 @@ export async function GET(req: Request) {
       const testQuery = await db.execute(sql`
         SELECT soc_code, percentage 
         FROM ${socSectorDistribution}
-        WHERE sector_label = ${'NAICS' + sector}
+        WHERE sector_label = ${`NAICS${sector}`}
         LIMIT 3;
       `);
       console.log('Test sector distribution query:', {
@@ -244,7 +244,7 @@ export async function GET(req: Request) {
             SELECT percentage::numeric
             FROM ${socSectorDistribution}
             WHERE soc_code = soc.code
-            AND sector_label = ${'NAICS' || sector}
+            AND sector_label = ${sector ? `NAICS${sector}` : 'NONE'}
             LIMIT 1
           ),
           0
