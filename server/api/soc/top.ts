@@ -1,3 +1,4 @@
+
 import { sql } from 'drizzle-orm';
 import { db } from '../../../db';
 import { socDetailedOccupations, socSectorDistribution, sectorLookup } from '../../../db/schema';
@@ -18,25 +19,21 @@ export async function GET(req: Request) {
         code: socDetailedOccupations.code,
         title: socDetailedOccupations.title,
         description: socDetailedOccupations.description,
-        distribution: sql<number>`
-          COALESCE((
-            SELECT percentage 
-            FROM ${socSectorDistribution} 
-            WHERE soc_code = ${socDetailedOccupations.code}
-            AND sector_label = ${sectorLookup.concat}
-          ), 0)`.as('sector_distribution')
+        sectorDistribution: sql<number>`
+          COALESCE(
+            (
+              SELECT percentage::numeric 
+              FROM ${socSectorDistribution} sd
+              INNER JOIN ${sectorLookup} sl ON sl.concat = sd.sector_label
+              WHERE sd.soc_code = ${socDetailedOccupations.code}
+              AND sl.naics = ${sector}
+              LIMIT 1
+            ),
+            0
+          )
+        `.as('sector_distribution')
       })
       .from(socDetailedOccupations)
-      .innerJoin(
-        socSectorDistribution,
-        sql`${socSectorDistribution.socCode} = ${socDetailedOccupations.code}`
-      )
-      .innerJoin(
-        sectorLookup,
-        sql`${sectorLookup.naics} = ${sector}`
-      )
-      .where(sql`${socSectorDistribution.sectorLabel} = ${sectorLookup.concat}`)
-      .where(sql`${socSectorDistribution.percentage} > 1.0`)
       .orderBy(sql`sector_distribution DESC`)
       .limit(10);
 
