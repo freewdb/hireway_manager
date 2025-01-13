@@ -25,6 +25,12 @@ export async function GET(req: Request) {
         ELSE 'NAICS' || LPAD(${sector}, 2, '0')
       END
     `;
+    
+    console.log('Processing sector:', {
+      rawSector: sector,
+      processedLabel: sectorLabel.sql,
+      params: sectorLabel.params
+    });
     console.log('Fetching top occupations for sector:', {
       rawSector: sector,
       formattedLabel: sectorLabel.sql,
