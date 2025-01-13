@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { db } from '../../../db';
-import { socDetailedOccupations, socSectorDistribution } from '../../../db/schema';
+import { socDetailedOccupations, socSectorDistribution, sectorLookup } from '../../../db/schema';
 
 export async function GET(req: Request) {
   try {
@@ -13,15 +13,6 @@ export async function GET(req: Request) {
       });
     }
 
-    const sectorLabel = sql`
-      CASE 
-        WHEN ${sector} = '31_33' THEN 'NAICS31_33'
-        WHEN ${sector} = '44_45' THEN 'NAICS44_45'
-        WHEN ${sector} = '48_49' THEN 'NAICS48_49'
-        ELSE 'NAICS' || ${sector}
-      END
-    `;
-
     const topOccupations = await db
       .select({
         code: socDetailedOccupations.code,
@@ -32,36 +23,31 @@ export async function GET(req: Request) {
             SELECT percentage 
             FROM ${socSectorDistribution} 
             WHERE soc_code = ${socDetailedOccupations.code}
-            AND sector_label = ${sectorLabel}
+            AND sector_label = ${sectorLookup.concat}
           ), 0)`.as('sector_distribution')
       })
       .from(socDetailedOccupations)
       .innerJoin(
         socSectorDistribution,
-        sql`${socSectorDistribution.socCode} = ${socDetailedOccupations.code} 
-            AND ${socSectorDistribution.sectorLabel} = ${sectorLabel}
-            AND ${socSectorDistribution.percentage} > 1.0`
+        sql`${socSectorDistribution.socCode} = ${socDetailedOccupations.code}`
       )
+      .innerJoin(
+        sectorLookup,
+        sql`${sectorLookup.naics} = ${sector}`
+      )
+      .where(sql`${socSectorDistribution.sectorLabel} = ${sectorLookup.concat}`)
+      .where(sql`${socSectorDistribution.percentage} > 1.0`)
       .orderBy(sql`sector_distribution DESC`)
       .limit(10);
 
-    return new Response(JSON.stringify(topOccupations || []), {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store'
-      }
+    return new Response(JSON.stringify(topOccupations), {
+      headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('Error in /api/soc/top:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : String(error)
-    }), {
+    console.error('Error fetching top occupations:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store'
-      }
+      headers: { 'Content-Type': 'application/json' }
     });
   }
 }
