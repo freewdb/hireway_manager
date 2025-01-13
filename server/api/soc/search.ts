@@ -212,8 +212,24 @@ export async function GET(req: Request) {
       sector,
       rawQuery: url.searchParams.toString(),
       sectorLabel: sector ? `NAICS${sector}` : 'none',
+      constructedLabel: `NAICS${sector}`,
       timestamp: new Date().toISOString()
     });
+
+    // Debug sector distribution query
+    if (sector) {
+      const testQuery = await db.execute(sql`
+        SELECT soc_code, percentage 
+        FROM ${socSectorDistribution}
+        WHERE sector_label = ${'NAICS' + sector}
+        LIMIT 3;
+      `);
+      console.log('Test sector distribution query:', {
+        sectorLabel: `NAICS${sector}`,
+        results: testQuery.rows,
+        count: testQuery.rows.length
+      });
+    }
 
     // Debug exact matches query
     const exactMatchesQuery = sql`
