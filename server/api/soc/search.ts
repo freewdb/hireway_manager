@@ -101,14 +101,33 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
 
     // Calculate rank based on match type
     let rank = 1.0;
+    console.log('Initial rank calculation:', {
+      code: item.code,
+      title: item.title,
+      initialRank: rank
+    });
+
     if (matchedAlternative) {
       rank = 0.9; // Slight penalty for alternative match
+      console.log('Alternative title penalty applied:', {
+        code: item.code,
+        title: item.title,
+        matchedAlternative,
+        rankAfterPenalty: rank
+      });
     }
 
     // Apply sector boost if sector is provided
     if (sector && item.sectorDistribution) {
       const distribution = parseFloat(item.sectorDistribution);
       const originalRank = rank;
+      console.log('Sector distribution found:', {
+        code: item.code,
+        title: item.title,
+        sector: `NAICS${sector}`,
+        distribution,
+        rankBeforeBoost: originalRank
+      });
 
       if (distribution > 0) {
         // Normalize distribution to 0-100 scale and apply logarithmic boost
@@ -116,7 +135,7 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
         const boost = 1 + (Math.log10(normalizedDist + 1) / Math.log10(101));
         rank *= boost;
 
-        console.log('Distribution info:', {
+        console.log('Sector boost calculation:', {
           code: item.code,
           title: item.title,
           sectorLabel: `NAICS${sector}`,
@@ -218,13 +237,19 @@ export async function GET(req: Request) {
 
     // Debug sector distribution query
     if (sector) {
+      console.log('Constructing sector distribution query:', {
+        sector,
+        sectorLabel: `NAICS${sector}`,
+        table: 'soc_sector_distribution'
+      });
+      
       const testQuery = await db.execute(sql`
         SELECT soc_code, percentage 
         FROM ${socSectorDistribution}
         WHERE sector_label = ${`NAICS${sector}`}
         LIMIT 3;
       `);
-      console.log('Test sector distribution query:', {
+      console.log('Test sector distribution query results:', {
         sectorLabel: `NAICS${sector}`,
         results: testQuery.rows,
         count: testQuery.rows.length
