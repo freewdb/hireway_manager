@@ -107,7 +107,7 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
             {topOccupations.map((occ) => {
               const isExclusive = occ.sectorDistribution >= 90;
               const isRare = occ.sectorDistribution < 5;
-              
+
               return (
                 <button
                   key={occ.code}
@@ -118,7 +118,7 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
                     <div className="font-medium text-gray-900">{occ.title}</div>
                     <span className="text-xs font-mono text-gray-500">{occ.code}</span>
                   </div>
-                  
+
                   {isExclusive && (
                     <span className="inline-flex items-center px-2 py-0.5 mt-2 text-xs font-medium bg-green-50 text-green-700 rounded-full">
                       Primary Industry
@@ -129,11 +129,11 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
                       Rare in this industry
                     </span>
                   )}
-                  
+
                   <div className="mt-1 text-sm text-gray-500 line-clamp-2">
                     {occ.description}
                   </div>
-                  
+
                   <div className="mt-2 text-xs text-gray-400">
                     {Math.round(occ.sectorDistribution)}% in this industry
                   </div>
@@ -206,21 +206,21 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
                 {sector && (
                   <div 
                     className={`ml-auto inline-flex items-center px-2 py-0.5 text-xs rounded-full ${
-                      item.sectorDistribution === null ? 'bg-gray-100 text-gray-800' :
+                      !item.sectorDistribution ? 'bg-gray-100 text-gray-800' :
+                      item.sectorDistribution >= 90 ? 'bg-indigo-100 text-indigo-800' :
                       item.sectorDistribution >= 75 ? 'bg-purple-100 text-purple-800' :
                       item.sectorDistribution >= 30 ? 'bg-green-100 text-green-800' :
-                      item.sectorDistribution >= 15 ? 'bg-yellow-100 text-yellow-800' :
-                      item.sectorDistribution >= 5 ? 'bg-orange-100 text-orange-800' :
+                      item.sectorDistribution >= 10 ? 'bg-yellow-100 text-yellow-800' :
                       'bg-red-100 text-red-800'
                     }`}
                     title={`${Math.round(item.sectorDistribution || 0)}% of these roles are in your selected industry`}
                   >
-                    {item.sectorDistribution === null ? 'Unknown' :
+                    {!item.sectorDistribution ? 'Not Present' :
+                     item.sectorDistribution >= 90 ? 'Primary Industry Role' :
                      item.sectorDistribution >= 75 ? 'Industry Specialist' :
-                     item.sectorDistribution >= 30 ? 'High Match' :
-                     item.sectorDistribution >= 15 ? 'Moderate Match' :
-                     item.sectorDistribution >= 5 ? 'Low Match' :
-                     'Uncommon'}
+                     item.sectorDistribution >= 30 ? 'Common in Industry' :
+                     item.sectorDistribution >= 10 ? 'Present in Industry' :
+                     'Rare in Industry'}
                   </div>
                 )}
               </div>

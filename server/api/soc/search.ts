@@ -393,9 +393,10 @@ export async function GET(req: Request) {
           COALESCE(
             (
               SELECT percentage::numeric
-              FROM ${socSectorDistribution} 
-              WHERE soc_code = ${socDetailedOccupations.code}
-              AND sector_label = ${'NAICS' || sector}
+              FROM ${socSectorDistribution} sd
+              INNER JOIN ${sectorLookup} sl ON sl.concat = sd.sector_label
+              WHERE sd.soc_code = ${socDetailedOccupations.code}
+              AND sl.naics = ${sector}
               LIMIT 1
             ),
             0
