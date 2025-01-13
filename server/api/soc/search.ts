@@ -108,6 +108,7 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     // Apply sector boost if sector is provided
     if (sector && item.sectorDistribution) {
       const distribution = parseFloat(item.sectorDistribution);
+      const originalRank = rank;
 
       if (distribution > 0) {
         // Normalize distribution to 0-100 scale and apply logarithmic boost
@@ -119,8 +120,28 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
         if (distribution >= 10) {
           rank *= 1.5;
         }
+
+        console.log('Sector boost applied:', {
+          code: item.code,
+          title: item.title,
+          sectorLabel: `NAICS${sector}`,
+          distribution,
+          normalizedDist,
+          boost,
+          originalRank,
+          finalRank: rank,
+          highRepBoost: distribution >= 10
+        });
       } else {
         rank *= 0.5; // Significant penalty for occupations not represented in sector
+        console.log('Sector penalty applied:', {
+          code: item.code,
+          title: item.title,
+          sectorLabel: `NAICS${sector}`,
+          distribution,
+          originalRank,
+          finalRank: rank
+        });
       }
     }
 
@@ -186,7 +207,40 @@ export async function GET(req: Request) {
       query,
       sector,
       rawQuery: url.searchParams.toString(),
+      sectorLabel: sector ? `NAICS${sector}` : 'none',
       timestamp: new Date().toISOString()
+    });
+
+    // Debug exact matches query
+    const exactMatchesQuery = sql`
+      SELECT
+        soc.code,
+        soc.title,
+        soc.description,
+        soc.alternative_titles,
+        soc.searchable_text,
+        COALESCE(
+          (
+            SELECT percentage::numeric
+            FROM ${socSectorDistribution}
+            WHERE soc_code = soc.code
+            AND sector_label = ${'NAICS' || sector}
+            LIMIT 1
+          ),
+          0
+        ) as sector_distribution
+      FROM ${socDetailedOccupations} soc
+      WHERE ${or(
+        ilike(socDetailedOccupations.title, `%${query}%`),
+        sql`${socDetailedOccupations.alternativeTitles}::text[] && ARRAY[${query}]::text[]`,
+        sql`to_tsvector('english', ${socDetailedOccupations.searchableText}) @@ plainto_tsquery('english', ${query})`
+      )}
+      LIMIT 100
+    `;
+
+    console.log('Executing exact matches query:', {
+      sql: exactMatchesQuery.sql,
+      params: exactMatchesQuery.params
     });
 
     console.log('Testing distribution lookup:', {

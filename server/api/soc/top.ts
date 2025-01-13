@@ -23,7 +23,32 @@ export async function GET(req: Request) {
         ELSE 'NAICS' || LPAD(${sector}, 2, '0')
       END
     `;
-    console.log('Fetching top occupations for sector using formatted label');
+    console.log('Fetching top occupations for sector:', {
+      rawSector: sector,
+      formattedLabel: sectorLabel.sql,
+      sectorLabelParams: sectorLabel.params,
+      timestamp: new Date().toISOString()
+    });
+
+    // Debug sector distribution query
+    const distributionQuery = sql`
+      SELECT soc_code, sector_label, percentage 
+      FROM ${socSectorDistribution}
+      WHERE sector_label = ${sectorLabel}
+      ORDER BY percentage DESC
+      LIMIT 5
+    `;
+
+    console.log('Executing distribution query:', {
+      sql: distributionQuery.sql,
+      params: distributionQuery.params
+    });
+
+    const sampleDistribution = await db.execute(distributionQuery);
+    console.log('Sample sector distribution:', {
+      results: sampleDistribution.rows,
+      count: sampleDistribution.rows.length
+    });
     
     // Debug query
     const debugQuery = await db
