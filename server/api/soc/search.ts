@@ -458,25 +458,68 @@ export async function GET(req: Request) {
     if (exactMatches.length >= 5) {
       const results = await consolidateResults(exactMatches, query, sector);
 
+      // Log initial results before deduplication
+      console.log('Pre-consolidation results:', {
+        totalResults: results.length,
+        firstFiveResults: results.slice(0, 5).map(r => ({
+          code: r.code,
+          title: r.title,
+          primaryTitle: r.primaryTitle,
+          rank: r.rank,
+          sectorDistribution: r.sectorDistribution
+        }))
+      });
+
       // Check for duplicates
       const codeFrequency = results.reduce((acc, curr) => {
+        if (acc[curr.code]) {
+          console.log('Found duplicate entry:', {
+            code: curr.code,
+            existingTitle: acc[curr.code].title,
+            newTitle: curr.title,
+            existingRank: acc[curr.code].rank,
+            newRank: curr.rank
+          });
+        }
         acc[curr.code] = (acc[curr.code] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
       const duplicates = Object.entries(codeFrequency)
         .filter(([_, count]) => count > 1)
-        .map(([code, count]) => ({
-          code,
-          count,
-          titles: results.filter(r => r.code === code).map(r => r.primaryTitle)
-        }));
+        .map(([code, count]) => {
+          const matches = results.filter(r => r.code === code);
+          console.log(`Consolidating ${count} entries for ${code}:`,
+            matches.map(m => ({
+              title: m.title,
+              rank: m.rank,
+              isAlternative: m.isAlternative
+            }))
+          );
+          return {
+            code,
+            count,
+            titles: matches.map(r => r.primaryTitle)
+          };
+        });
 
       console.log('Results analysis:', {
         count: results.length,
         uniqueCodes: Object.keys(codeFrequency).length,
         duplicates: duplicates.length ? duplicates : 'None',
         firstResult: results[0]
+      });
+
+      // Log final consolidated results
+      console.log('Post-consolidation results:', {
+        totalResults: results.length,
+        firstFiveResults: results.slice(0, 5).map(r => ({
+          code: r.code,
+          title: r.title,
+          primaryTitle: r.primaryTitle,
+          rank: r.rank,
+          sectorDistribution: r.sectorDistribution
+        }))
       });
 
       const response: SearchResponse = {
@@ -550,25 +593,68 @@ export async function GET(req: Request) {
     const fuseResults = fuse.search(query);
     const results = await consolidateResults(fuseResults.map(r => r.item), query, sector);
 
+    // Log initial results before deduplication
+    console.log('Pre-consolidation results:', {
+      totalResults: results.length,
+      firstFiveResults: results.slice(0, 5).map(r => ({
+        code: r.code,
+        title: r.title,
+        primaryTitle: r.primaryTitle,
+        rank: r.rank,
+        sectorDistribution: r.sectorDistribution
+      }))
+    });
+
     // Check for duplicates
     const codeFrequency = results.reduce((acc, curr) => {
+      if (acc[curr.code]) {
+        console.log('Found duplicate entry:', {
+          code: curr.code,
+          existingTitle: acc[curr.code].title,
+          newTitle: curr.title,
+          existingRank: acc[curr.code].rank,
+          newRank: curr.rank
+        });
+      }
       acc[curr.code] = (acc[curr.code] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     const duplicates = Object.entries(codeFrequency)
       .filter(([_, count]) => count > 1)
-      .map(([code, count]) => ({
-        code,
-        count,
-        titles: results.filter(r => r.code === code).map(r => r.primaryTitle)
-      }));
+      .map(([code, count]) => {
+        const matches = results.filter(r => r.code === code);
+        console.log(`Consolidating ${count} entries for ${code}:`,
+          matches.map(m => ({
+            title: m.title,
+            rank: m.rank,
+            isAlternative: m.isAlternative
+          }))
+        );
+        return {
+          code,
+          count,
+          titles: matches.map(r => r.primaryTitle)
+        };
+      });
 
     console.log('Results analysis:', {
       count: results.length,
       uniqueCodes: Object.keys(codeFrequency).length,
       duplicates: duplicates.length ? duplicates : 'None',
       firstResult: results[0]
+    });
+
+    // Log final consolidated results
+    console.log('Post-consolidation results:', {
+      totalResults: results.length,
+      firstFiveResults: results.slice(0, 5).map(r => ({
+        code: r.code,
+        title: r.title,
+        primaryTitle: r.primaryTitle,
+        rank: r.rank,
+        sectorDistribution: r.sectorDistribution
+      }))
     });
 
     const response: SearchResponse = {
