@@ -100,31 +100,12 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
 
   return (
     <div className={`relative w-full ${className}`}>
-      <div className="flex items-center mb-4">
-        <div className="relative w-full">
-          <input
-            {...getInputProps()}
-            className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder={placeholder}
-          />
-          {isLoading && (
-            <div className="absolute right-3 top-2.5">
-              <div className="w-5 h-5 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
-            </div>
-          )}
-        </div>
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="ml-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
-        >
-          {showAll ? 'Show Fewer' : 'Show All'}
-        </button>
-      </div>
-
-      {topOccupations.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Popular roles in this industry:</h3>
-          <div className="h-96 overflow-y-auto pr-2 space-y-3">
+      <div className="flex gap-6">
+        {/* Left column for popular roles */}
+        {topOccupations.length > 0 && (
+          <div className="w-1/3">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Popular roles in this industry:</h3>
+            <div className="h-[calc(100vh-200px)] overflow-y-auto pr-2 space-y-3">
             {topOccupations.map((occ) => {
               const isExclusive = occ.sectorDistribution >= 90;
               const isRare = occ.sectorDistribution < 5;
@@ -162,28 +143,31 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
               );
             })}
           </div>
-        </div>
-      )}
-      <div className="flex items-center"> {/* Added flex to align input and button */}
-        <div className="relative w-full">
-          <input
-            {...getInputProps()}
-            className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder={placeholder}
-          />
-          {isLoading && (
-            <div className="absolute right-3 top-2.5">
-              <div className="w-5 h-5 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+          </div>
+        )}
+
+        {/* Right column for search */}
+        <div className="flex-1 flex flex-col justify-center min-h-[calc(100vh-200px)]">
+          <div className="flex items-center max-w-2xl mx-auto w-full">
+            <div className="relative flex-1">
+              <input
+                {...getInputProps()}
+                className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder={placeholder}
+              />
+              {isLoading && (
+                <div className="absolute right-3 top-2.5">
+                  <div className="w-5 h-5 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="ml-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
-        >
-          {showAll ? 'Show Fewer' : 'Show All'}
-        </button> {/* Added Show All toggle button */}
-      </div>
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="ml-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
+            >
+              {showAll ? 'Show Fewer' : 'Show All'}
+            </button>
+          </div>
 
       <ul
         {...getMenuProps()}
