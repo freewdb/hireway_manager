@@ -33,13 +33,13 @@ interface SearchResponse {
 
 function consolidateResults(items: any[], query: string, sector?: string, showAll?: boolean): ConsolidatedJobResult[] {
   const SECTOR_BOOST_ALPHA = 0.3;
-  const SECTOR_FILTER_THRESHOLD = 1.0;
+  const SECTOR_FILTER_THRESHOLD = 0.1; // Lower threshold to show more results
 
   let filteredItems = items;
   if (!showAll && sector) {
     filteredItems = filteredItems.filter(item => {
-      const dist = item.sector_distribution ?? 0;
-      return dist >= SECTOR_FILTER_THRESHOLD;
+      const dist = parseFloat(item.sector_distribution) || 0;
+      return dist >= SECTOR_FILTER_THRESHOLD || !item.sector_distribution;
     });
   }
 
