@@ -37,7 +37,7 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
     try {
       setIsLoading(true);
       setError(null);
-      const url = `/api/soc/search?search=${encodeURIComponent(query)}${sector ? `&sector=${encodeURIComponent(sector)}` : ''}${showAll ? '&showAll=true' : ''}`; // Use SOC search endpoint
+      const url = `/api/soc/search?search=${encodeURIComponent(query)}${sector ? `&sector=${encodeURIComponent(sector)}` : ''}${showAll ? '&showAll=true' : ''}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch results');
       const results: JobTitleSearchResult[] = await response.json();
@@ -100,10 +100,31 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
 
   return (
     <div className={`relative w-full ${className}`}>
+      <div className="flex items-center mb-4">
+        <div className="relative w-full">
+          <input
+            {...getInputProps()}
+            className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder={placeholder}
+          />
+          {isLoading && (
+            <div className="absolute right-3 top-2.5">
+              <div className="w-5 h-5 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="ml-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
+        >
+          {showAll ? 'Show Fewer' : 'Show All'}
+        </button>
+      </div>
+
       {topOccupations.length > 0 && (
         <div className="mb-6">
           <h3 className="text-sm font-medium text-gray-700 mb-3">Popular roles in this industry:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="space-y-3">
             {topOccupations.map((occ) => {
               const isExclusive = occ.sectorDistribution >= 90;
               const isRare = occ.sectorDistribution < 5;
