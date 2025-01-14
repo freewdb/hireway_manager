@@ -202,12 +202,13 @@ export function SOCSearch({
           </div>
         </div>
       )}
-      <div className="flex items-center"> {/* Added flex to align input and button */}
+      <div className="flex items-center">
         <div className="relative w-full">
           <input
-            {...getInputProps()}
-            className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder={placeholder}
+            {...getInputProps({
+              placeholder,
+              className: "w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            })}
           />
           {isLoading && (
             <div className="absolute right-3 top-2.5">
@@ -220,11 +221,15 @@ export function SOCSearch({
           className="ml-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
         >
           {showAll ? 'Show Fewer' : 'Show All'}
-        </button> {/* Added Show All toggle button */}
+        </button>
       </div>
 
       <ul
-        {...getMenuProps()}
+        {...getMenuProps({
+          className: `absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-auto ${
+            !isOpen || inputItems.length === 0 ? 'hidden' : ''
+          }`
+        })}
         className={`absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-auto ${
           !isOpen || inputItems.length === 0 ? 'hidden' : ''
         }`}
