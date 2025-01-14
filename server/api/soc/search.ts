@@ -31,7 +31,7 @@ interface SearchResponse {
   query: string;
 }
 
-function consolidateResults(items: any[], query: string, sector?: string, showAll?: boolean): ConsolidatedJobResult[] {
+async function consolidateResults(items: any[], query: string, sector?: string, showAll?: boolean): Promise<ConsolidatedJobResult[]> {
   const SECTOR_BOOST_ALPHA = 0.3;
   const SECTOR_FILTER_THRESHOLD = 1.0;
 
@@ -50,9 +50,15 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
   // Process all items preserving original titles
   for (const item of filteredItems) {
     if (!resultsByCode.has(item.code)) {
+      // Get official title from detailed occupations
+      const officialTitle = await db.query.socDetailedOccupations.findFirst({
+        where: eq(socDetailedOccupations.code, item.code),
+        columns: { title: true }
+      });
+
       resultsByCode.set(item.code, {
         code: item.code,
-        title: item.title, // Always use the original title
+        title: officialTitle?.title || item.title, // Use official title if found
         description: item.description,
         alternativeTitles: item.alternativeTitles || [],
         matchedAlternatives: [],
@@ -74,9 +80,15 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     );
 
     if (matchedAlt) {
+      // Get official title from detailed occupations
+      const officialTitle = await db.query.socDetailedOccupations.findFirst({
+        where: eq(socDetailedOccupations.code, item.code),
+        columns: { title: true }
+      });
+
       resultsByCode.set(item.code, {
         code: item.code,
-        primaryTitle: item.title, // Always use official title
+        primaryTitle: officialTitle?.title || item.title, // Always use official title
         description: item.description,
         alternativeTitles: item.alternativeTitles || [],
         matchedAlternatives: [matchedAlt],
@@ -89,7 +101,7 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     }
   }
 
-  items.forEach(item => {
+  items.forEach(async item => {
     const titleLower = item.title.toLowerCase();
     const alternativeTitles = item.alternativeTitles || [];
 
@@ -170,16 +182,14 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
 
     if (!resultsByCode.has(item.code)) {
       // Get the official title from detailed occupations if this is an alternative match
-      const officialTitle = item.isAlternative ? 
-        (await db.query.socDetailedOccupations.findFirst({
-          where: eq(socDetailedOccupations.code, item.code),
-          columns: { title: true }
-        }))?.title || item.title : 
-        item.title;
+      const officialTitle = await db.query.socDetailedOccupations.findFirst({
+        where: eq(socDetailedOccupations.code, item.code),
+        columns: { title: true }
+      });
 
       resultsByCode.set(item.code, {
         code: item.code,
-        title: officialTitle,
+        title: officialTitle?.title || item.title,
         description: item.description || undefined,
         alternativeTitles,
         matchedAlternatives: matchedAlternative ? [matchedAlternative] : [],
@@ -251,7 +261,7 @@ export async function GET(req: Request) {
         sectorLabel: `NAICS${sector}`,
         table: 'soc_sector_distribution'
       });
-      
+
       const testQuery = await db.execute(sql`
         SELECT soc_code, percentage 
         FROM ${socSectorDistribution}
@@ -477,7 +487,7 @@ export async function GET(req: Request) {
       .limit(100);
 
     if (exactMatches.length >= 5) {
-      const results = consolidateResults(exactMatches, query, sector);
+      const results = await consolidateResults(exactMatches, query, sector);
 
       // Check for duplicates
       const codeFrequency = results.reduce((acc, curr) => {
@@ -569,7 +579,7 @@ export async function GET(req: Request) {
     });
 
     const fuseResults = fuse.search(query);
-    const results = consolidateResults(fuseResults.map(r => r.item), query, sector);
+    const results = await consolidateResults(fuseResults.map(r => r.item), query, sector);
 
     // Check for duplicates
     const codeFrequency = results.reduce((acc, curr) => {
