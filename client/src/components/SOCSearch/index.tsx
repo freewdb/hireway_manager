@@ -241,7 +241,6 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
           ))
         )}
       </ul>
-      </div>
     </div>
   );
 }
