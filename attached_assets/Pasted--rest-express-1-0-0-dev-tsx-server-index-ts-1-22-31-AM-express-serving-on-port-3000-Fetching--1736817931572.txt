@@ -1,0 +1,70 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+1:22:31 AM [express] serving on port 3000
+Fetching top occupations: {
+  sector: '21',
+  sectorLabel: 'NAICS21',
+  query: 'SELECT TOP 10 FROM soc_detailed_occupations WITH SECTOR DISTRIBUTION'
+}
+Top occupations found: {
+  count: 10,
+  first: {
+    code: '47-5043.00',
+    title: 'Roof Bolters, Mining',
+    description: 'Operate machinery to install roof support bolts in underground mine.',
+    sectorDistribution: '100.00'
+  },
+  sector: 'NAICS21'
+}
+1:25:06 AM [express] GET /api/soc/top 304 in 1704ms :: [{"code":"47-5043.00","title":"Roof Bolters, …
+Fetching top occupations: {
+  sector: '21',
+  sectorLabel: 'NAICS21',
+  query: 'SELECT TOP 10 FROM soc_detailed_occupations WITH SECTOR DISTRIBUTION'
+}
+Top occupations found: {
+  count: 10,
+  first: {
+    code: '47-5043.00',
+    title: 'Roof Bolters, Mining',
+    description: 'Operate machinery to install roof support bolts in underground mine.',
+    sectorDistribution: '100.00'
+  },
+  sector: 'NAICS21'
+}
+1:25:07 AM [express] GET /api/soc/top 304 in 505ms :: [{"code":"47-5043.00","title":"Roof Bolters, M…
+Fetching top occupations: {
+  sector: '21',
+  sectorLabel: 'NAICS21',
+  query: 'SELECT TOP 10 FROM soc_detailed_occupations WITH SECTOR DISTRIBUTION'
+}
+Top occupations found: {
+  count: 10,
+  first: {
+    code: '47-5043.00',
+    title: 'Roof Bolters, Mining',
+    description: 'Operate machinery to install roof support bolts in underground mine.',
+    sectorDistribution: '100.00'
+  },
+  sector: 'NAICS21'
+}
+1:25:07 AM [express] GET /api/soc/top 304 in 506ms :: [{"code":"47-5043.00","title":"Roof Bolters, M…
+Fetching top occupations: {
+  sector: '21',
+  sectorLabel: 'NAICS21',
+  query: 'SELECT TOP 10 FROM soc_detailed_occupations WITH SECTOR DISTRIBUTION'
+}
+Top occupations found: {
+  count: 10,
+  first: {
+    code: '47-5043.00',
+    title: 'Roof Bolters, Mining',
+    description: 'Operate machinery to install roof support bolts in underground mine.',
+    sectorDistribution: '100.00'
+  },
+  sector: 'NAICS21'
+}
+1:25:08 AM [express] GET /api/soc/top 304 in 506ms :: [{"code":"47-5043.00","title":"Roof Bolters, M…
+1:25:11 AM [express] GET /api/soc/search 200 in 11ms
