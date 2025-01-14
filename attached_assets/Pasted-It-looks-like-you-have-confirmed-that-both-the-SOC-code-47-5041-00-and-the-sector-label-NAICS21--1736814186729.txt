@@ -1,0 +1,150 @@
+It looks like you have confirmed that both the SOC code (47-5041.00) and the sector label (NAICS21) match exactly in the database. In other words:
+	1.	soc_sector_distribution table has a row:
+	•	soc_code = '47-5041.00'
+	•	sector_label = 'NAICS21'
+	•	percentage = 100.00
+	2.	soc_detailed_occupations table has a row:
+	•	code = '47-5041.00'
+	•	with the matching job title and description.
+
+Hence there is no format mismatch in your actual stored data. Normally, that’s the leading culprit when a query yields “no results,” so it’s good you verified data is indeed aligned.
+
+Below are the possible reasons why your application code could still fail to retrieve the record, plus what to check next.
+
+1. Verify Your Request Parameter is Indeed ?sector=21
+
+From top.ts, you generate:
+
+const sectorLabel = `NAICS${sector}`;
+
+await db
+  .select({ ... })
+  .from(socDetailedOccupations)
+  .where(sql`
+    EXISTS (
+      SELECT 1
+      FROM soc_sector_distribution
+      WHERE soc_code = soc_detailed_occupations.code
+      AND sector_label = ${sectorLabel}
+    )
+  `)
+  .orderBy(sql`sector_distribution DESC`)
+  .limit(10);
+
+	•	If the user passes ?sector=21, then sectorLabel = 'NAICS21'.
+	•	That exactly matches the row in the DB (sector_label = 'NAICS21').
+	•	Check: Make sure your front-end or client code is actually calling .../top?sector=21 (and not sector=NAICS21 or sector=“21.0”, etc.).
+
+Likewise, in your “search.ts” or “search pipeline,” confirm the param is ?sector=21, not ?sector=“NAICS21”.
+
+If you pass ?sector=NAICS21 (instead of just 21), your code ends up building NAICSNAICS21 as the final label. That would fail.
+
+Therefore, the key is making sure the client code is sending exactly sector=21, so your server code constructs NAICS21.
+
+2. Confirm the “Top 10” Occupations in top.ts Are Actually Returned
+
+In top.ts, the relevant snippet:
+
+const topOccupations = await db
+  .select({
+    code: socDetailedOccupations.code,
+    ...
+    distribution: sql<number>`
+      COALESCE((
+        SELECT percentage 
+        FROM soc_sector_distribution
+        WHERE soc_code = soc_detailed_occupations.code
+        AND sector_label = ${sectorLabel} 
+      ), 0)`.as('sector_distribution')
+  })
+  .from(socDetailedOccupations)
+  .where(sql`EXISTS (
+    SELECT 1 
+    FROM soc_sector_distribution
+    WHERE soc_code = soc_detailed_occupations.code
+    AND sector_label = ${sectorLabel}
+  )`)
+  .orderBy(sql`sector_distribution DESC`)
+  .limit(10);
+
+	•	This should yield an array that includes 47-5041.00 if that is indeed one of the top distributions for NAICS21.
+	•	If you’re not seeing it in the returned array, check:
+	•	Does that job have 100% distribution (which it does!), so presumably it’s definitely top 10 or at least top 1 in that industry.
+	•	Possibly the code never reaches this block (e.g., !sector or the route not being called).
+
+Try: Add an explicit debug line to top.ts after the query:
+
+console.log('Top Occupations result:', topOccupations);
+
+Then see if it contains your row. If it does, then your front-end code for displaying these top occupations might be missing or has a bug. If it does not, then the code path might be skipping that section or the request param is spelled differently.
+
+3. Confirm That the “Sector Distribution” Is Not Overridden Later
+
+Sometimes you retrieve the row with 100.00, but then, in a subsequent transform step, it gets replaced. For example, your search.ts code might be applying a different SELECT or COALESCE that zeroes it out. But from your snippets, it looks consistent: both search.ts and top.ts do similar logic. In search.ts, the sector distribution is read from:
+
+COALESCE(
+  ( SELECT percentage::numeric 
+    FROM soc_sector_distribution 
+    WHERE soc_code = ...
+    AND sector_label = ...
+  ),
+0 ) as sector_distribution
+
+If you see debug logs or console.log() calls show sector_distribution = 0, possibly the subselect is skipping the row, or the parameter is mismatched.
+
+Since you verified the row is correct in the DB, your next step is to confirm the code is calling that subselect with the exact '47-5041.00' and 'NAICS21'. So again, a mismatch in param or a missing decimal is usually the culprit.
+
+4. Double-Check the “SearchAll” or “ShowAll” Filter in search.ts
+
+You have logic like:
+
+function consolidateResults(items: any[], query: string, sector?: string, showAll?: boolean) {
+  ...
+  if (!showAll && sector) {
+    filteredItems = filteredItems.filter(item => {
+      const dist = item.sector_distribution ?? 0;
+      return dist >= SECTOR_FILTER_THRESHOLD;  // default is 1.0?
+    });
+  }
+  ...
+}
+
+If sector_distribution is 100, great— it passes the >= 1.0 check. But if for some reason your code is not reading the 100% from the DB, or if you’re applying a log transform in a second pass, you might see 0. Then it’s below the threshold, so it is dropped.
+
+Hence the occupant “47-5041.00” might vanish from final results. Check your logs right after the DB query but before the filteredItems = ... filter(...) step.
+
+5. Watch Out for a Race Condition or Different Endpoints
+	•	If your front-end is calling /api/soc/top?sector=21 but also calling /api/job-titles?search=...&sector=21, you might be looking at the “search result” but forgetting the user never typed anything that matches “continuous mining machine operator.” So the search pipeline sees zero results, while your “top occupations” endpoint would do find it.
+	•	Conversely, if you’re only looking at the “top occupations,” maybe your front end is calling the endpoint incorrectly or not at all.
+
+6. Final Steps to Debug
+	1.	Add console logging to your “top.ts” and “search.ts” endpoints to output the final arrays of rows just before they’re returned, especially printing out soc_code, sector_label, and percentage.
+	2.	Make a direct cURL or Postman call to those endpoints:
+	•	GET /api/soc/top?sector=21
+	•	GET /api/job-titles?search=mining&sector=21
+Then see if the JSON includes 47-5041.00.
+	3.	Confirm your front end is passing exactly ?sector=21.
+	4.	Verify no trailing spaces or quotes in the param (like sector="21").
+	5.	If you still see zero results in the front end, but your logs confirm the Node server is returning an array with 47-5041.00, you have a front-end state or UI rendering issue.
+
+Given your snippet:
+
+SELECT * FROM soc_sector_distribution
+WHERE soc_code = '47-5041.00'
+AND sector_label = 'NAICS21';
+
+returns
+
+id  soc_code      sector_label    percentage
+38313  47-5041.00  NAICS21         100.00
+
+and your soc_detailed_occupations also has 47-5041.00, everything is lined up in the database. So a data mismatch is not the problem. Now it’s purely about the route param (i.e., sector=21 vs. sector=NAICS21) or a subsequent filtering step that discards that row.
+
+In Short
+
+Because your DB checks out (the row is indeed correct), the next debugging step is to ensure:
+	1.	The user request includes ?sector=21.
+	2.	The code constructs sector_label = 'NAICS21'.
+	3.	No subsequent logic filters out that record.
+
+You should see 47-5041.00 with a 100% distribution come through in your final results.
