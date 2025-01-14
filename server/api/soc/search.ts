@@ -281,10 +281,9 @@ export async function GET(req: Request) {
           COALESCE(
             (
               SELECT percentage::numeric
-              FROM ${socSectorDistribution} sd
-              INNER JOIN ${socSectorDistribution} sl ON sl.soc_code = sd.soc_code AND sl.sector_label = ${sector ? `NAICS${sector}` : 'NONE'}
+              FROM ${socSectorDistribution} sd 
               WHERE sd.soc_code = ${socDetailedOccupations.code}
-              LIMIT 1
+              AND sd.sector_label = ${sector ? `NAICS${sector}` : sql`'NONE'`}
             ),
             0
           )`.as('sector_distribution'),
