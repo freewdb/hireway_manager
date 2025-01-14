@@ -4,7 +4,7 @@ import { sql, desc, and, eq } from 'drizzle-orm';
 
 export async function GET(req: Request) {
   try {
-    const url = new URL(req.url);
+    const url = new URL(req.url, 'http://dummy.com');
     const sector = url.searchParams.get('sector')?.trim();
     const sectorLabel = sector ? `NAICS${sector}` : null;
 
