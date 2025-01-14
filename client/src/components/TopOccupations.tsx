@@ -22,7 +22,7 @@ export function TopOccupations({ sector, onSelect }: TopOccupationsProps) {
   if (!topOccupations.length) return null;
 
   return (
-    <div className="w-80 shrink-0">
+    <div className="w-80 fixed right-8 top-8">
       <h3 className="text-sm font-medium text-gray-700 mb-3">Popular roles in this industry:</h3>
       <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-200px)]">
         {topOccupations.map((occ) => {

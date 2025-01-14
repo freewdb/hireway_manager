@@ -59,19 +59,17 @@ export const RoleStep = () => {
             </>
           )}
         </div>
-        <div className="mt-4 flex gap-6">
-          <div className="flex-1">
-            <SOCSearch 
-              onSelect={handleSelect} 
-              sector={data.industry} 
-              placeholder="Search for a job title (e.g., Software Developer, IT Manager)"
-            />
-          </div>
-          <TopOccupations
-            sector={data.industry}
-            onSelect={handleSelect}
+        <div className="mt-4 pr-96">
+          <SOCSearch 
+            onSelect={handleSelect} 
+            sector={data.industry} 
+            placeholder="Search for a job title (e.g., Software Developer, IT Manager)"
           />
         </div>
+        <TopOccupations
+          sector={data.industry}
+          onSelect={handleSelect}
+        />
         <RoleInfoCard />
       </div>
     </WizardStep>
