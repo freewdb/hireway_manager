@@ -52,17 +52,14 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
   // Process all items preserving original titles
   for (const item of filteredItems) {
     if (!resultsByCode.has(item.code)) {
-      // Get official title from detailed occupations
-      const primaryTitle = await db.query.socDetailedOccupations.findFirst({
-        where: eq(socDetailedOccupations.code, item.code),
-        columns: { title: true }
-      });
+      // Use the primary title from the original query
+      const primaryTitle = item.primaryTitle;
 
       console.log('Processing search result:', {
         code: item.code,
-        officialTitle: primaryTitle?.title,
+        officialTitle: primaryTitle,
         matchedTitle: item.title,
-        isAlternative: item.title !== primaryTitle?.title,
+        isAlternative: item.title !== primaryTitle,
         alternativeTitlesCount: item.alternativeTitles?.length || 0,
         sectorDistribution: item.sectorDistribution,
         sector: sector ? `NAICS${sector}` : undefined,
@@ -71,8 +68,8 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
 
       resultsByCode.set(item.code, {
         code: item.code,
-        primaryTitle: primaryTitle?.title || item.title,
-        title: primaryTitle?.title || item.title, // Use official title if found
+        primaryTitle: primaryTitle,
+        title: primaryTitle, // Use official title if found
         description: item.description,
         alternativeTitles: item.alternativeTitles || [],
         matchedAlternatives: [],
@@ -95,17 +92,14 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
     );
 
     if (matchedAlt) {
-      // Get official title from detailed occupations
-      const primaryTitle = await db.query.socDetailedOccupations.findFirst({
-        where: eq(socDetailedOccupations.code, item.code),
-        columns: { title: true }
-      });
+      // Use the primary title from the original query
+      const primaryTitle = item.primaryTitle;
 
       console.log('Processing search result:', {
         code: item.code,
-        officialTitle: primaryTitle?.title,
+        officialTitle: primaryTitle,
         matchedTitle: item.title,
-        isAlternative: item.title !== primaryTitle?.title,
+        isAlternative: item.title !== primaryTitle,
         alternativeTitlesCount: item.alternativeTitles?.length || 0,
         sectorDistribution: item.sectorDistribution,
         sector: sector ? `NAICS${sector}` : undefined,
@@ -114,8 +108,8 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
 
       resultsByCode.set(item.code, {
         code: item.code,
-        primaryTitle: primaryTitle?.title || item.title,
-        title: primaryTitle?.title || item.title, // Always use official title
+        primaryTitle: primaryTitle,
+        title: primaryTitle, // Always use official title
         description: item.description,
         alternativeTitles: item.alternativeTitles || [],
         matchedAlternatives: [matchedAlt],
@@ -168,15 +162,11 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
 
     if (!resultsByCode.has(item.code)) {
       // Get the official title from detailed occupations if this is an alternative match
-      const primaryTitle = await db.query.socDetailedOccupations.findFirst({
-        where: eq(socDetailedOccupations.code, item.code),
-        columns: { title: true }
-      });
 
       resultsByCode.set(item.code, {
         code: item.code,
-        primaryTitle: primaryTitle?.title || item.title,
-        title: primaryTitle?.title || item.title,
+        primaryTitle: item.primaryTitle,
+        title: item.primaryTitle,
         description: item.description || undefined,
         alternativeTitles,
         matchedAlternatives: matchedAlternative ? [matchedAlternative] : [],
@@ -284,6 +274,7 @@ export async function GET(req: Request) {
         description: socDetailedOccupations.description,
         alternativeTitles: socDetailedOccupations.alternativeTitles,
         searchableText: socDetailedOccupations.searchableText,
+        primaryTitle: socDetailedOccupations.title,
         topIndustries: sql<any[]>`
           SELECT json_agg(
             json_build_object(
