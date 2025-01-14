@@ -23,7 +23,7 @@ export function SOCSearch({
   const [inputItems, setInputItems] = useState<JobTitleSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedItem, setSelectedItem] = useState<JobTitleSearchResult | null>(null);
+  const [selectedSearchItem, setSelectedSearchItem] = useState<JobTitleSearchResult | null>(null);
   const [selectedItems, setSelectedItems] = useState<JobTitleSearchResult[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [topOccupations, setTopOccupations] = useState<JobTitleSearchResult[]>([]);
@@ -113,10 +113,10 @@ export function SOCSearch({
   };
 
   useEffect(() => {
-    if (selectedItem) {
-      setSelectedItems(prev => [...prev, selectedItem]);
+    if (selectedSearchItem) {
+      setSelectedItems(prev => [...prev, selectedSearchItem]);
     }
-  }, [selectedItem]);
+  }, [selectedSearchItem]);
 
 
   const {
