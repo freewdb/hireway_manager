@@ -21,11 +21,15 @@ export async function GET(req: Request) {
       sectorLabel
     });
     
+    console.log('Using sector label:', sectorLabel);
+    
     const results = await db.select({
       code: socDetailedOccupations.code,
       title: socDetailedOccupations.title,
       description: socDetailedOccupations.description,
-      sectorDistribution: socSectorDistribution.percentage
+      sectorDistribution: socSectorDistribution.percentage,
+      socCode: socSectorDistribution.socCode,
+      sectorLabel: socSectorDistribution.sectorLabel
     })
     .from(socDetailedOccupations)
     .leftJoin(
@@ -35,6 +39,8 @@ export async function GET(req: Request) {
     )
     .orderBy(desc(socSectorDistribution.percentage))
     .limit(10);
+
+    console.log('Sample result record:', results[0]);
 
     console.log('Top occupations found:', { count: results.length, first: results[0], sector: sectorLabel });
 
