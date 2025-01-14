@@ -58,6 +58,14 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
         columns: { title: true }
       });
 
+      console.log('Processing result:', {
+        code: item.code,
+        officialTitle: primaryTitle?.title,
+        matchedTitle: item.title,
+        isAlternative: item.title !== primaryTitle?.title,
+        alternativeTitlesCount: item.alternativeTitles?.length || 0
+      });
+
       resultsByCode.set(item.code, {
         code: item.code,
         primaryTitle: primaryTitle?.title || item.title,
@@ -90,6 +98,14 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
         columns: { title: true }
       });
 
+      console.log('Processing result:', {
+        code: item.code,
+        officialTitle: primaryTitle?.title,
+        matchedTitle: item.title,
+        isAlternative: item.title !== primaryTitle?.title,
+        alternativeTitlesCount: item.alternativeTitles?.length || 0
+      });
+
       resultsByCode.set(item.code, {
         code: item.code,
         primaryTitle: primaryTitle?.title || item.title,
@@ -119,33 +135,15 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
 
     // Calculate rank based on match type
     let rank = 1.0;
-    console.log('Initial rank calculation:', {
-      code: item.code,
-      title: item.title,
-      initialRank: rank
-    });
 
     if (matchedAlternative) {
       rank = 0.9; // Slight penalty for alternative match
-      console.log('Alternative title penalty applied:', {
-        code: item.code,
-        title: item.title,
-        matchedAlternative,
-        rankAfterPenalty: rank
-      });
     }
 
     // Apply sector boost if sector is provided
     if (sector && item.sectorDistribution) {
       const distribution = parseFloat(item.sectorDistribution);
       const originalRank = rank;
-      console.log('Sector distribution found:', {
-        code: item.code,
-        title: item.title,
-        sector: `NAICS${sector}`,
-        distribution,
-        rankBeforeBoost: originalRank
-      });
 
       if (distribution > 0) {
         // Normalize distribution to 0-100 scale and apply logarithmic boost
@@ -153,36 +151,12 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
         const boost = 1 + (Math.log10(normalizedDist + 1) / Math.log10(101));
         rank *= boost;
 
-        console.log('Sector boost calculation:', {
-          code: item.code,
-          title: item.title,
-          sectorLabel: `NAICS${sector}`,
-          distribution,
-          normalizedDist,
-          boost,
-          originalRank,
-          finalRank: rank,
-        });
-
         // Extra boost for highly represented occupations
         if (distribution >= 10) {
           rank *= 1.5;
-          console.log('High representation bonus applied:', {
-            code: item.code,
-            distribution,
-            finalRank: rank
-          });
         }
       } else {
         rank *= 0.5; // Significant penalty for occupations not represented in sector
-        console.log('Zero distribution penalty:', {
-          code: item.code,
-          title: item.title,
-          sectorLabel: `NAICS${sector}`,
-          distribution,
-          originalRank,
-          finalRank: rank
-        });
       }
     }
 
@@ -252,113 +226,17 @@ export async function GET(req: Request) {
     const query = url.searchParams.get('search')?.trim() || '';
     const sector = url.searchParams.get('sector')?.trim();
 
-    console.log('Search params:', {
+    console.log('Search request:', {
       query,
       sector,
-      rawQuery: url.searchParams.toString(),
-      sectorLabel: sector ? `NAICS${sector}` : 'none',
-      constructedLabel: `NAICS${sector}`,
+      alternativeTitles: true, // Flag to show we're checking alt titles
       timestamp: new Date().toISOString()
     });
 
-    // Debug sector distribution query
-    if (sector) {
-      console.log('Constructing sector distribution query:', {
-        sector,
-        sectorLabel: `NAICS${sector}`,
-        table: 'soc_sector_distribution'
-      });
 
-      const testQuery = await db.execute(sql`
-        SELECT soc_code, percentage 
-        FROM ${socSectorDistribution}
-        WHERE sector_label = ${`NAICS${sector}`}
-        LIMIT 3;
-      `);
-      console.log('Test sector distribution query results:', {
-        sectorLabel: `NAICS${sector}`,
-        results: testQuery.rows,
-        count: testQuery.rows.length
-      });
-    }
-
-    // Debug exact matches query
-    const exactMatchesQuery = sql`
-      SELECT
-        soc.code,
-        soc.title,
-        soc.description,
-        soc.alternative_titles,
-        soc.searchable_text,
-        COALESCE(
-          (
-            SELECT percentage::numeric
-            FROM ${socSectorDistribution}
-            WHERE soc_code = soc.code
-            AND sector_label = ${sector ? `NAICS${sector}` : 'NONE'}
-            LIMIT 1
-          ),
-          0
-        ) as sector_distribution
-      FROM ${socDetailedOccupations} soc
-      WHERE ${or(
-        ilike(socDetailedOccupations.title, `%${query}%`),
-        sql`${socDetailedOccupations.alternativeTitles}::text[] && ARRAY[${query}]::text[]`,
-        sql`to_tsvector('english', ${socDetailedOccupations.searchableText}) @@ plainto_tsquery('english', ${query})`
-      )}
-      LIMIT 100
-    `;
-
-    console.log('Executing exact matches query:', {
-      sql: exactMatchesQuery.sql,
-      params: exactMatchesQuery.params
-    });
-
-    console.log('Testing distribution lookup:', {
-      sampleSOC: '47-5041.00',
-      sampleSector: 'NAICS21',
-      query: `SELECT percentage FROM soc_sector_distribution WHERE soc_code = '47-5041.00' AND sector_label = 'NAICS21'`
-    });
-
-    // Debug specific SOC code lookup
-    const socDebug = await db.execute(sql`
-      SELECT code, title, description 
-      FROM soc_detailed_occupations 
-      WHERE code = '47-5041.00'
-    `);
-    console.log('SOC debug lookup:', socDebug.rows);
-
-    // Debug database connection and queries
-    const dbDebug = await db.execute(sql`
-      SELECT current_database(), current_schema();
-    `);
-    console.log('Database connection debug:', dbDebug.rows[0]);
-
-    // Debug specific sector distribution query
-    const distDebug = await db.execute(sql`
-      SELECT * FROM soc_sector_distribution 
-      WHERE soc_code = '47-5041.00' 
-      AND sector_label = 'NAICS21';
-    `);
-    console.log('Sector distribution debug:', distDebug.rows);
-
-    console.log('Sector query debug:', {
-      rawSector: sector,
-      constructedLabel: `NAICS${sector}`,
-      sampleQuery: `SELECT percentage FROM soc_sector_distribution WHERE soc_code = '47-5041.00' AND sector_label = 'NAICS${sector}'`
-    });
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)));
     const offset = (page - 1) * limit;
-
-    console.log('Search request received:', {
-      searchTerm: query,
-      page,
-      limit,
-      offset,
-      queryParams: Object.fromEntries(url.searchParams),
-      path: url.pathname
-    });
 
     // If no query, return browsable categories
     if (!query || query.length < 2) {
@@ -393,7 +271,6 @@ export async function GET(req: Request) {
     }
 
     // First try exact match with title and alternative titles
-    console.log('Attempting exact match search for:', query);
     const exactMatches = await db
       .select({
         code: socDetailedOccupations.code,
@@ -458,29 +335,7 @@ export async function GET(req: Request) {
     if (exactMatches.length >= 5) {
       const results = await consolidateResults(exactMatches, query, sector);
 
-      // Log initial results before deduplication
-      console.log('Pre-consolidation results:', {
-        totalResults: results.length,
-        firstFiveResults: results.slice(0, 5).map(r => ({
-          code: r.code,
-          title: r.title,
-          primaryTitle: r.primaryTitle,
-          rank: r.rank,
-          sectorDistribution: r.sectorDistribution
-        }))
-      });
-
-      // Check for duplicates
       const codeFrequency = results.reduce((acc, curr) => {
-        if (acc[curr.code]) {
-          console.log('Found duplicate entry:', {
-            code: curr.code,
-            existingTitle: acc[curr.code].title,
-            newTitle: curr.title,
-            existingRank: acc[curr.code].rank,
-            newRank: curr.rank
-          });
-        }
         acc[curr.code] = (acc[curr.code] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
@@ -489,13 +344,6 @@ export async function GET(req: Request) {
         .filter(([_, count]) => count > 1)
         .map(([code, count]) => {
           const matches = results.filter(r => r.code === code);
-          console.log(`Consolidating ${count} entries for ${code}:`,
-            matches.map(m => ({
-              title: m.title,
-              rank: m.rank,
-              isAlternative: m.isAlternative
-            }))
-          );
           return {
             code,
             count,
@@ -503,24 +351,6 @@ export async function GET(req: Request) {
           };
         });
 
-      console.log('Results analysis:', {
-        count: results.length,
-        uniqueCodes: Object.keys(codeFrequency).length,
-        duplicates: duplicates.length ? duplicates : 'None',
-        firstResult: results[0]
-      });
-
-      // Log final consolidated results
-      console.log('Post-consolidation results:', {
-        totalResults: results.length,
-        firstFiveResults: results.slice(0, 5).map(r => ({
-          code: r.code,
-          title: r.title,
-          primaryTitle: r.primaryTitle,
-          rank: r.rank,
-          sectorDistribution: r.sectorDistribution
-        }))
-      });
 
       const response: SearchResponse = {
         items: results.slice(offset, offset + limit),
@@ -530,21 +360,12 @@ export async function GET(req: Request) {
         query
       };
 
-      console.log('Returning exact match results:', {
-        totalCount: results.length,
-        returnedCount: response.items.length,
-        page,
-        totalPages: response.totalPages
-      });
-
       return new Response(JSON.stringify(response), {
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
     // If not enough exact matches, try fuzzy search
-    console.log('Few or no exact matches, trying fuzzy search...');
-
     const potentialMatches = await db
       .select({
         code: socDetailedOccupations.code,
@@ -593,29 +414,7 @@ export async function GET(req: Request) {
     const fuseResults = fuse.search(query);
     const results = await consolidateResults(fuseResults.map(r => r.item), query, sector);
 
-    // Log initial results before deduplication
-    console.log('Pre-consolidation results:', {
-      totalResults: results.length,
-      firstFiveResults: results.slice(0, 5).map(r => ({
-        code: r.code,
-        title: r.title,
-        primaryTitle: r.primaryTitle,
-        rank: r.rank,
-        sectorDistribution: r.sectorDistribution
-      }))
-    });
-
-    // Check for duplicates
     const codeFrequency = results.reduce((acc, curr) => {
-      if (acc[curr.code]) {
-        console.log('Found duplicate entry:', {
-          code: curr.code,
-          existingTitle: acc[curr.code].title,
-          newTitle: curr.title,
-          existingRank: acc[curr.code].rank,
-          newRank: curr.rank
-        });
-      }
       acc[curr.code] = (acc[curr.code] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -624,38 +423,12 @@ export async function GET(req: Request) {
       .filter(([_, count]) => count > 1)
       .map(([code, count]) => {
         const matches = results.filter(r => r.code === code);
-        console.log(`Consolidating ${count} entries for ${code}:`,
-          matches.map(m => ({
-            title: m.title,
-            rank: m.rank,
-            isAlternative: m.isAlternative
-          }))
-        );
         return {
           code,
           count,
           titles: matches.map(r => r.primaryTitle)
         };
       });
-
-    console.log('Results analysis:', {
-      count: results.length,
-      uniqueCodes: Object.keys(codeFrequency).length,
-      duplicates: duplicates.length ? duplicates : 'None',
-      firstResult: results[0]
-    });
-
-    // Log final consolidated results
-    console.log('Post-consolidation results:', {
-      totalResults: results.length,
-      firstFiveResults: results.slice(0, 5).map(r => ({
-        code: r.code,
-        title: r.title,
-        primaryTitle: r.primaryTitle,
-        rank: r.rank,
-        sectorDistribution: r.sectorDistribution
-      }))
-    });
 
     const response: SearchResponse = {
       items: results.slice(offset, offset + limit),
@@ -664,13 +437,6 @@ export async function GET(req: Request) {
       totalPages: Math.ceil(results.length / limit),
       query
     };
-
-    console.log('Returning fuzzy search results:', {
-      totalCount: results.length,
-      returnedCount: response.items.length,
-      page,
-      totalPages: response.totalPages
-    });
 
     return new Response(JSON.stringify(response), {
       headers: { 'Content-Type': 'application/json' }
