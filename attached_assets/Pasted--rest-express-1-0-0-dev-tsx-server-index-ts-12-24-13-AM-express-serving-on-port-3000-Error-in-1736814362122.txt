@@ -1,0 +1,207 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+12:24:13 AM [express] serving on port 3000
+Error in top occupations endpoint: TypeError: Invalid URL
+    at new URL (node:internal/url:806:29)
+    at Module.GET (/home/runner/workspace/server/api/soc/top.ts:8:17)
+    at <anonymous> (/home/runner/workspace/server/routes.ts:177:34)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/runner/workspace/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at <anonymous> (/home/runner/workspace/server/index.ts:37:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at urlencodedParser (/home/runner/workspace/node_modules/body-parser/lib/types/urlencoded.js:94:7)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at jsonParser (/home/runner/workspace/node_modules/body-parser/lib/types/json.js:113:7)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at expressInit (/home/runner/workspace/node_modules/express/lib/middleware/init.js:40:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at query (/home/runner/workspace/node_modules/express/lib/middleware/query.js:45:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/router/index.js:175:3)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/application.js:181:10)
+    at Server.app (/home/runner/workspace/node_modules/express/lib/express.js:39:9)
+    at Server.emit (node:events:518:28)
+    at parserOnIncoming (node:_http_server:1141:12)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17) {
+  code: 'ERR_INVALID_URL',
+  input: '/api/soc/top?sector=21'
+}
+12:25:06 AM [express] GET /api/soc/top 500 in 295ms :: {"error":"Internal server error","details":"In…
+Error in top occupations endpoint: TypeError: Invalid URL
+    at new URL (node:internal/url:806:29)
+    at Module.GET (/home/runner/workspace/server/api/soc/top.ts:8:17)
+    at <anonymous> (/home/runner/workspace/server/routes.ts:177:34)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/runner/workspace/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at <anonymous> (/home/runner/workspace/server/index.ts:37:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at urlencodedParser (/home/runner/workspace/node_modules/body-parser/lib/types/urlencoded.js:94:7)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at jsonParser (/home/runner/workspace/node_modules/body-parser/lib/types/json.js:113:7)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at expressInit (/home/runner/workspace/node_modules/express/lib/middleware/init.js:40:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at query (/home/runner/workspace/node_modules/express/lib/middleware/query.js:45:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/router/index.js:175:3)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/application.js:181:10)
+    at Server.app (/home/runner/workspace/node_modules/express/lib/express.js:39:9)
+    at Server.emit (node:events:518:28)
+    at parserOnIncoming (node:_http_server:1141:12)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17) {
+  code: 'ERR_INVALID_URL',
+  input: '/api/soc/top?sector=21'
+}
+12:25:06 AM [express] GET /api/soc/top 500 in 6ms :: {"error":"Internal server error","details":"Inva…
+Search request received: {
+  searchTerm: 'forklift operator',
+  queryParams: { search: 'forklift operator', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: forklift operator
+Initial database query results: {
+  count: 3,
+  searchTerm: 'forklift operator',
+  firstResult: {
+    code: '47-2073.00',
+    title: 'Operating Engineers and Other Construction Equipment Operators',
+    searchableText: 'Operating Engineers and Other Construction Equipment Operators Operate one or several types of power'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 222,
+  fuseResultsCount: 222,
+  topResults: [
+    { title: 'Forklift Operator', score: 0.05947176957043451 },
+    { title: 'Forklift Operator', score: 0.06144114080425127 },
+    { title: 'Forklift Operator', score: 0.06254017281936673 }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '53-7051.00',
+    title: 'Forklift Operator',
+    isAlternative: true,
+    rank: 0.846475407386609,
+    description: 'Operate industrial trucks or tractors equipped to move materials around a warehouse, storage yard, factory, construction site, or similar location.',
+    majorGroup: {
+      id: 23,
+      code: '53-0000',
+      title: 'Major Group 53',
+      description: 'Major occupational group 53',
+      searchVector: 'Major Group 53'
+    },
+    minorGroup: {
+      id: 23,
+      code: '53--000',
+      majorGroupCode: '53-0000',
+      title: 'Minor Group 53--000',
+      description: 'Minor occupational group 53--000',
+      searchVector: 'Minor Group 53--000'
+    }
+  }
+}
+12:25:12 AM [express] GET /api/job-titles 304 in 1266ms :: [{"code":"53-7051.00","title":"Forklift Op…
+Search request received: {
+  searchTerm: 'Forklift Operator',
+  queryParams: { search: 'Forklift Operator', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: Forklift Operator
+Initial database query results: {
+  count: 3,
+  searchTerm: 'Forklift Operator',
+  firstResult: {
+    code: '47-2073.00',
+    title: 'Operating Engineers and Other Construction Equipment Operators',
+    searchableText: 'Operating Engineers and Other Construction Equipment Operators Operate one or several types of power'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 222,
+  fuseResultsCount: 222,
+  topResults: [
+    { title: 'Forklift Operator', score: 0.05947176957043451 },
+    { title: 'Forklift Operator', score: 0.06144114080425127 },
+    { title: 'Forklift Operator', score: 0.06254017281936673 }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '53-7051.00',
+    title: 'Forklift Operator',
+    isAlternative: true,
+    rank: 0.846475407386609,
+    description: 'Operate industrial trucks or tractors equipped to move materials around a warehouse, storage yard, factory, construction site, or similar location.',
+    majorGroup: {
+      id: 23,
+      code: '53-0000',
+      title: 'Major Group 53',
+      description: 'Major occupational group 53',
+      searchVector: 'Major Group 53'
+    },
+    minorGroup: {
+      id: 23,
+      code: '53--000',
+      majorGroupCode: '53-0000',
+      title: 'Minor Group 53--000',
+      description: 'Minor occupational group 53--000',
+      searchVector: 'Minor Group 53--000'
+    }
+  }
+}
+12:25:16 AM [express] GET /api/job-titles 304 in 178ms :: [{"code":"53-7051.00","title":"Forklift Ope…
