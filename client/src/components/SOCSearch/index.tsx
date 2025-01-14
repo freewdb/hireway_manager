@@ -12,7 +12,14 @@ interface SOCSearchProps {
   topOccupationsOnly?: boolean;
 }
 
-export function SOCSearch({ onSelect, placeholder = 'Search for a job title...', className = '', sector }: SOCSearchProps) {
+export function SOCSearch({ 
+  onSelect, 
+  placeholder = 'Search for a job title...', 
+  className = '', 
+  sector,
+  hideTopOccupations = false,
+  topOccupationsOnly = false 
+}: SOCSearchProps) {
   const [inputItems, setInputItems] = useState<JobTitleSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
