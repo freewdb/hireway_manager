@@ -97,30 +97,28 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
   });
 
   return (
-    <div className={`flex flex-col ${className}`}>
-      <div className="flex gap-6">
-        <div className="flex-1">
-          <div className="relative w-full">
-            <input
-              {...getInputProps()}
-              className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder={placeholder}
-            />
-            {isLoading && (
-              <div className="absolute right-3 top-2.5">
-                <div className="w-5 h-5 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
-              </div>
-            )}
-          </div>
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className="ml-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
-          >
-            {showAll ? 'Show Fewer' : 'Show All'}
-          </button>
+    <div className={`flex gap-6 ${className}`}>
+      <div className="flex-1">
+        <div className="relative w-full">
+          <input
+            {...getInputProps()}
+            className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder={placeholder}
+          />
+          {isLoading && (
+            <div className="absolute right-3 top-2.5">
+              <div className="w-5 h-5 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+            </div>
+          )}
         </div>
-      </div>
-      <ul
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="ml-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
+        >
+          {showAll ? 'Show Fewer' : 'Show All'}
+        </button>
+
+        <ul
           {...getMenuProps()}
           className={`w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-auto ${
             !isOpen || inputItems.length === 0 ? 'hidden' : ''
