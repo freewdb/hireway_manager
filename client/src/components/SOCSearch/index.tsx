@@ -97,8 +97,8 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
   });
 
   return (
-    <div className={`flex gap-6 ${className}`}>
-      <div className="flex-1">
+    <div className={`flex flex-col items-center ${className}`}>
+      <div className="w-full max-w-2xl">
         <div className="relative w-full">
           <input
             {...getInputProps()}
@@ -111,16 +111,18 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
             </div>
           )}
         </div>
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="ml-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
-        >
-          {showAll ? 'Show Fewer' : 'Show All'}
-        </button>
+        <div className="flex justify-center mt-2">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
+          >
+            {showAll ? 'Show Fewer' : 'Show All'}
+          </button>
+        </div>
 
         <ul
           {...getMenuProps()}
-          className={`w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-auto ${
+          className={`w-full mt-4 space-y-4 ${
             !isOpen || inputItems.length === 0 ? 'hidden' : ''
           }`}
         >
@@ -134,10 +136,10 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
                   item,
                   index,
                 })}
-                className={`px-4 py-3 cursor-pointer ${
+                className={`p-4 cursor-pointer bg-white border border-gray-200 rounded-lg shadow-sm ${
                   highlightedIndex === index
-                    ? 'bg-blue-100'
-                    : 'hover:bg-gray-50'
+                    ? 'ring-2 ring-blue-500 border-transparent'
+                    : 'hover:border-blue-300 hover:shadow'
                 }`}
               >
                 <div className="flex items-baseline gap-2 mb-1">
