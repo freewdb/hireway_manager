@@ -4,8 +4,8 @@ import { sql, desc } from 'drizzle-orm';
 
 export async function GET(req: Request) {
   try {
-    const url = new URL(req.url);
-    const sector = url.searchParams.get('sector')?.trim();
+    // Get sector directly from request URL
+    const sector = new URLSearchParams(req.url.split('?')[1]).get('sector')?.trim();
 
     console.log('Fetching top occupations:', { sector, sectorLabel: sector ? `NAICS${sector}` : null });
 
