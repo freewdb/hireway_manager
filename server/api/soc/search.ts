@@ -34,7 +34,6 @@ interface SearchResponse {
 }
 
 async function consolidateResults(items: any[], query: string, sector?: string, showAll?: boolean): Promise<ConsolidatedJobResult[]> {
-  const SECTOR_BOOST_ALPHA = 0.3;
   const SECTOR_FILTER_THRESHOLD = 1.0;
 
   let filteredItems = items;
@@ -45,81 +44,70 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
     });
   }
 
-  // Track which codes we've seen to prevent duplicates
   const resultsByCode = new Map<string, ConsolidatedJobResult>();
   const queryLower = query.toLowerCase();
 
-  // Process all items preserving original titles
+  // Single pass consolidation
   for (const item of filteredItems) {
-    if (!resultsByCode.has(item.code)) {
-      // Use the primary title from the original query
-      const primaryTitle = item.primaryTitle;
-
-      console.log('Processing search result:', {
-        code: item.code,
-        officialTitle: primaryTitle,
-        matchedTitle: item.title,
-        isAlternative: item.title !== primaryTitle,
-        alternativeTitlesCount: item.alternativeTitles?.length || 0,
-        sectorDistribution: item.sectorDistribution,
-        sector: sector ? `NAICS${sector}` : undefined,
-        topIndustries: item.topIndustries
-      });
-
-      resultsByCode.set(item.code, {
-        code: item.code,
-        primaryTitle: primaryTitle,
-        title: primaryTitle, // Use official title if found
-        description: item.description,
-        alternativeTitles: item.alternativeTitles || [],
-        matchedAlternatives: [],
-        isAlternative: false,
-        rank: 1.0,
-        majorGroup: item.majorGroup,
-        minorGroup: item.minorGroup,
-        topIndustries: item.topIndustries,
-        sectorDistribution: item.sectorDistribution // Added sectorDistribution
-      });
-    }
-  }
-
-  // Second pass - add alternative title matches only if not already included
-  for (const item of filteredItems) {
-    if (resultsByCode.has(item.code)) continue;
-
     const matchedAlt = (item.alternativeTitles || []).find(alt =>
       alt.toLowerCase().includes(queryLower) || queryLower.includes(alt.toLowerCase())
     );
 
-    if (matchedAlt) {
-      // Use the primary title from the original query
-      const primaryTitle = item.primaryTitle;
+    const existing = resultsByCode.get(item.code);
+    const primaryTitle = item.primaryTitle;
 
-      console.log('Processing search result:', {
-        code: item.code,
-        officialTitle: primaryTitle,
-        matchedTitle: item.title,
-        isAlternative: item.title !== primaryTitle,
-        alternativeTitlesCount: item.alternativeTitles?.length || 0,
-        sectorDistribution: item.sectorDistribution,
-        sector: sector ? `NAICS${sector}` : undefined,
-        topIndustries: item.topIndustries
-      });
+    console.log('Processing search result:', {
+      code: item.code,
+      officialTitle: primaryTitle,
+      matchedTitle: item.title,
+      isAlternative: item.title !== primaryTitle,
+      alternativeTitlesCount: item.alternativeTitles?.length || 0,
+      sectorDistribution: item.sectorDistribution,
+      sector: sector ? `NAICS${sector}` : undefined,
+      topIndustries: item.topIndustries,
+      matchedAlt: matchedAlt || null
+    });
 
+    if (!existing) {
       resultsByCode.set(item.code, {
         code: item.code,
         primaryTitle: primaryTitle,
-        title: primaryTitle, // Always use official title
+        title: primaryTitle,
         description: item.description,
         alternativeTitles: item.alternativeTitles || [],
-        matchedAlternatives: [matchedAlt],
-        isAlternative: true,
-        rank: 0.9,
+        matchedAlternatives: matchedAlt ? [matchedAlt] : [],
+        isAlternative: !!matchedAlt,
+        rank: matchedAlt ? 0.9 : 1.0,
         majorGroup: item.majorGroup,
         minorGroup: item.minorGroup,
         topIndustries: item.topIndustries,
-        sectorDistribution: item.sectorDistribution // Added sectorDistribution
+        sectorDistribution: item.sectorDistribution
       });
+    } else {
+      // Merge new data with existing entry
+      if (matchedAlt && !existing.matchedAlternatives.includes(matchedAlt)) {
+        existing.matchedAlternatives.push(matchedAlt);
+        existing.isAlternative = true;
+        existing.rank = Math.max(existing.rank, 0.9);
+      }
+
+      // Merge alternative titles
+      const newAltTitles = item.alternativeTitles || [];
+      newAltTitles.forEach(alt => {
+        if (!existing.alternativeTitles.includes(alt)) {
+          existing.alternativeTitles.push(alt);
+        }
+      });
+
+      // Update sector distribution if not already set
+      if (!existing.sectorDistribution && item.sectorDistribution) {
+        existing.sectorDistribution = item.sectorDistribution;
+      }
+
+      // Update top industries if not already set
+      if (!existing.topIndustries && item.topIndustries) {
+        existing.topIndustries = item.topIndustries;
+      }
     }
   }
 
