@@ -97,8 +97,8 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
   });
 
   return (
-    <div className={`flex flex-col items-center ${className}`}>
-      <div className="w-full max-w-2xl">
+    <div className={`w-full ${className}`}>
+      <div className="w-full max-w-2xl mx-auto">
         <div className="relative w-full">
           <input
             {...getInputProps()}
@@ -122,7 +122,7 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
 
         <ul
           {...getMenuProps()}
-          className={`w-full mt-4 space-y-4 ${
+          className={`w-full mt-4 space-y-2 max-h-[60vh] overflow-y-auto ${
             !isOpen || inputItems.length === 0 ? 'hidden' : ''
           }`}
         >
