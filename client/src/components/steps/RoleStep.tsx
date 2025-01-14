@@ -4,7 +4,6 @@ import WizardStep from "../wizard/WizardStep";
 import { RoleInfoCard } from "../RoleInfoCard";
 import type { JobTitleSearchResult } from "@/types/schema";
 import { useState } from "react";
-import { TopOccupations } from '../TopOccupations';
 
 export const RoleStep = () => {
   const { updateData, nextStep, data } = useWizard();
@@ -59,27 +58,12 @@ export const RoleStep = () => {
             </>
           )}
         </div>
-        <div className="mt-4 max-w-3xl mx-auto">
-          <p className="text-muted-foreground font-sf-pro mb-4">
-            Choose the role that best describes the position you're hiring for.
-          </p>
-          
-          <SOCSearch 
-            onSelect={handleSelect} 
-            sector={data.industry} 
-            placeholder="Search for a job title (e.g., Software Developer, IT Manager)"
-            className="mb-4"
-          />
-
-          {data.role && <RoleInfoCard />}
-        </div>
-        
-        <div className="fixed right-8 top-32 w-80">
-          <TopOccupations
-            sector={data.industry}
-            onSelect={handleSelect}
-          />
-        </div>
+        <SOCSearch 
+          onSelect={handleSelect} 
+          placeholder="Search for a job title (e.g., Software Developer, IT Manager)"
+          sector={data.industry}
+        />
+        <RoleInfoCard />
       </div>
     </WizardStep>
   );
