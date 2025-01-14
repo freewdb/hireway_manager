@@ -59,18 +59,27 @@ export const RoleStep = () => {
             </>
           )}
         </div>
-        <div className="mt-4 pr-96">
+        <div className="mt-4 max-w-3xl mx-auto">
+          <p className="text-muted-foreground font-sf-pro mb-4">
+            Choose the role that best describes the position you're hiring for.
+          </p>
+          
           <SOCSearch 
             onSelect={handleSelect} 
             sector={data.industry} 
             placeholder="Search for a job title (e.g., Software Developer, IT Manager)"
+            className="mb-4"
+          />
+
+          {data.role && <RoleInfoCard />}
+        </div>
+        
+        <div className="fixed right-8 top-32 w-80">
+          <TopOccupations
+            sector={data.industry}
+            onSelect={handleSelect}
           />
         </div>
-        <TopOccupations
-          sector={data.industry}
-          onSelect={handleSelect}
-        />
-        <RoleInfoCard />
       </div>
     </WizardStep>
   );
