@@ -169,9 +169,17 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
     }
 
     if (!resultsByCode.has(item.code)) {
+      // Get the official title from detailed occupations if this is an alternative match
+      const officialTitle = item.isAlternative ? 
+        (await db.query.socDetailedOccupations.findFirst({
+          where: eq(socDetailedOccupations.code, item.code),
+          columns: { title: true }
+        }))?.title || item.title : 
+        item.title;
+
       resultsByCode.set(item.code, {
         code: item.code,
-        title: item.title, // Use official title
+        title: officialTitle,
         description: item.description || undefined,
         alternativeTitles,
         matchedAlternatives: matchedAlternative ? [matchedAlternative] : [],
@@ -185,7 +193,8 @@ function consolidateResults(items: any[], query: string, sector?: string, showAl
           code: item.minorGroup.code,
           title: item.minorGroup.title
         } : undefined,
-        topIndustries: item.topIndustries
+        topIndustries: item.topIndustries,
+        sectorDistribution: item.sectorDistribution
       });
     } else {
       const existing = resultsByCode.get(item.code)!;
