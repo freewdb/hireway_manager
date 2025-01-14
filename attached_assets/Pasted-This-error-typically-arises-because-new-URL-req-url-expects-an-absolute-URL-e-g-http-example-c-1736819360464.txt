@@ -1,0 +1,106 @@
+This error typically arises because new URL(req.url) expects an absolute URL (e.g. "http://example.com/api/soc/top?sector=21"), but the string your Express route receives (e.g. "/api/soc/top?sector=21") is only a relative path. In Node.js, attempting to instantiate a URL object with a relative path throws ERR_INVALID_URL.
+
+Below are some steps and approaches to fix it:
+
+1. Don’t Use new URL() with a Relative Path
+
+If all you need is to parse query parameters in an Express route, you can bypass using new URL(). Instead, rely on:
+	•	req.query (in legacy Express) or
+	•	the modern approach in TypeScript by reading req.query.sector or req.params.
+
+Example:
+
+export async function GET(req: Request) {
+  try {
+    // Instead of using "new URL(req.url)", simply parse the query param from Express:
+    // In your code, you might have: 
+    // const url = new URL(req.url); <-- remove this usage
+
+    // If you’re using plain Express:
+    //   const sector = req.query.sector as string | undefined;
+    
+    // If you’re mixing Node’s "Request" object from "fetch" or Next.js:
+    //   const urlObj = new URL(req.url, 'http://localhost'); // or some base
+    //   const sector = urlObj.searchParams.get('sector');
+
+    // For an Express-style route, do:
+    const sector = (req as any).query.sector; // or parse from "req.params"
+    if (!sector) {
+      return Response.json([]);
+    }
+
+    // ...
+    // proceed with your logic
+    // ...
+  } catch (error) {
+    console.error('Error fetching top occupations:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+Key: If you are using plain Express in Node, you already have access to req.query.sector. The library automatically parses the query string from the URL. There’s typically no need for manual new URL() calls.
+
+2. If You Must Use new URL(), Provide a Base
+
+Sometimes folks do want a URL object for convenience (like .searchParams.get()). But you need a fully qualified, absolute URL. In Node/Express, the request’s .url property is just the path and query string, e.g. "/api/soc/top?sector=21".
+
+You can do something like:
+
+// Make up a base origin (like http://localhost) or real domain if you have it:
+const fullUrl = `http://${req.headers.host}${req.url}`;
+const urlObj = new URL(fullUrl);
+const sector = urlObj.searchParams.get("sector");
+
+Caveat: This requires that:
+	1.	req.headers.host is valid (in local dev or behind a proxy).
+	2.	The code is correct for your environment if you’re behind a custom proxy or using Docker or Replit.
+
+3. Check If You’re Using Node’s Request Object vs. Express’s req
+
+Depending on your codebase, you might be mixing up:
+	•	Express request object (commonly typed as req: Request from the @types/express library).
+	•	Node’s built-in Request from the fetch API or Next.js environment (where req.url is an absolute or partial URL).
+
+If your file is an Express route:
+
+app.get("/api/soc/top", (req, res) => {
+  // "req.url" is relative, e.g. "/api/soc/top?sector=21"
+  // "req.query" is an object: { sector: '21' }
+
+  const sector = req.query.sector;
+  if (!sector) {
+    return res.json([]);
+  }
+  // ...
+});
+
+No need for new URL() at all.
+
+4. Common Pattern: “Invalid URL” Because req.url is Just "/api/...“
+
+In short, the Node built-in new URL(string) is strict: it demands string to be something like "https://example.com/some/path". If you feed it only "/some/path", you get ERR_INVALID_URL.
+
+Hence:
+
+// This will break if the string is only "/api/soc/top?sector=21"
+const urlObj = new URL(req.url); // => ERR_INVALID_URL
+
+Solution: Provide a base:
+
+const base = `http://localhost:3000`; // or your domain
+const urlObj = new URL(req.url, base);
+const sector = urlObj.searchParams.get('sector');
+
+Or simpler: don’t use URL at all in an Express route.
+
+5. Summary
+	•	Problem: Invalid URL error from new URL(req.url) because req.url is a relative path (no protocol/host).
+	•	Quick Fix: Remove new URL() usage. Use req.query.sector directly from Express.
+	•	Alternate: If you want the convenience of URL.searchParams, pass a base:
+
+new URL(req.url, `http://${req.headers.host}`);
+
+
+	•	Check your environment if you’re mixing Next.js / Node Request vs. Express req.
+
+Once you fix that, your endpoint /api/soc/top?sector=21 should no longer throw the TypeError: Invalid URL.
