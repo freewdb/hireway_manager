@@ -99,11 +99,9 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
   });
 
   return (
-    <div className={`relative w-full ${className}`}>
-      {topOccupations.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Popular roles in this industry:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div className={`flex gap-6 ${className}`}>
+      <div className="flex-1">
+        <div className="flex items-center mb-4">
             {topOccupations.map((occ) => {
               const isExclusive = occ.sectorDistribution >= 90;
               const isRare = occ.sectorDistribution < 5;
@@ -141,9 +139,12 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
               );
             })}
           </div>
-        </div>
-      )}
-      <div className="flex items-center"> {/* Added flex to align input and button */}
+          <ul
+            {...getMenuProps()}
+            className={`w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-auto ${
+              !isOpen || inputItems.length === 0 ? 'hidden' : ''
+            }`}
+          >
         <div className="relative w-full">
           <input
             {...getInputProps()}
@@ -164,11 +165,12 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
         </button> {/* Added Show All toggle button */}
       </div>
 
-      <ul
-        {...getMenuProps()}
-        className={`absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-auto ${
-          !isOpen || inputItems.length === 0 ? 'hidden' : ''
-        }`}
+      </div>
+      </div>
+      {topOccupations.length > 0 && (
+        <div className="w-80 shrink-0">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Popular roles in this industry:</h3>
+          <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-200px)]">
       >
         {error ? (
           <li className="px-4 py-2 text-red-500">{error}</li>
