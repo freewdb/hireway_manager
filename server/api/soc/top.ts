@@ -16,6 +16,11 @@ export async function GET(req: Request) {
     }
 
     const sectorLabel = `NAICS${sector}`;
+    console.log('Executing top occupations query with:', {
+      sector,
+      sectorLabel
+    });
+    
     const results = await db.select({
       code: socDetailedOccupations.code,
       title: socDetailedOccupations.title,

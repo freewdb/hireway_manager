@@ -58,12 +58,15 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
         columns: { title: true }
       });
 
-      console.log('Processing result:', {
+      console.log('Processing search result:', {
         code: item.code,
         officialTitle: primaryTitle?.title,
         matchedTitle: item.title,
         isAlternative: item.title !== primaryTitle?.title,
-        alternativeTitlesCount: item.alternativeTitles?.length || 0
+        alternativeTitlesCount: item.alternativeTitles?.length || 0,
+        sectorDistribution: item.sectorDistribution,
+        sector: sector ? `NAICS${sector}` : undefined,
+        topIndustries: item.topIndustries
       });
 
       resultsByCode.set(item.code, {
@@ -98,12 +101,15 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
         columns: { title: true }
       });
 
-      console.log('Processing result:', {
+      console.log('Processing search result:', {
         code: item.code,
         officialTitle: primaryTitle?.title,
         matchedTitle: item.title,
         isAlternative: item.title !== primaryTitle?.title,
-        alternativeTitlesCount: item.alternativeTitles?.length || 0
+        alternativeTitlesCount: item.alternativeTitles?.length || 0,
+        sectorDistribution: item.sectorDistribution,
+        sector: sector ? `NAICS${sector}` : undefined,
+        topIndustries: item.topIndustries
       });
 
       resultsByCode.set(item.code, {

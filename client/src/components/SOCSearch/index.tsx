@@ -97,11 +97,18 @@ export function SOCSearch({
   // Debounce the search to avoid too many API calls
   const debouncedSearch = useCallback(debounce(searchSOC, 300), []);
 
-  const handleSelect = (item: JobTitleSearchResult) => {
-    const uniqueId = `${item.code}-${item.title}`;
-    if (!selectedItems.some(selected => `${selected.code}-${selected.title}` === uniqueId)) {
-      onSelect(item);
-      setSelectedItem(item);
+  const handleSelect = (result: any) => {
+    console.log('Selected result:', {
+      code: result.code,
+      title: result.title,
+      primaryTitle: result.primaryTitle,
+      isAlternative: result.isAlternative,
+      sectorDistribution: result.sectorDistribution,
+      sector: sector
+    });
+
+    if (onSelect) {
+      onSelect(result);
     }
   };
 
