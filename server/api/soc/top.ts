@@ -5,8 +5,7 @@ import { socDetailedOccupations, socSectorDistribution } from '../../../db/schem
 
 export async function GET(req: Request) {
   try {
-    const url = new URL(req.url);
-    const sector = url.searchParams.get('sector');
+    const sector = new URLSearchParams(req.url.split('?')[1]).get('sector');
 
     if (!sector) {
       return new Response(JSON.stringify({ error: 'Sector parameter is required' }), {
