@@ -4,6 +4,7 @@ import WizardStep from "../wizard/WizardStep";
 import { RoleInfoCard } from "../RoleInfoCard";
 import type { JobTitleSearchResult } from "@/types/schema";
 import { useState } from "react";
+import { TopOccupations } from '../TopOccupations';
 
 export const RoleStep = () => {
   const { updateData, nextStep, data } = useWizard();
@@ -58,11 +59,19 @@ export const RoleStep = () => {
             </>
           )}
         </div>
-        <SOCSearch 
-          onSelect={handleSelect} 
-          placeholder="Search for a job title (e.g., Software Developer, IT Manager)"
-          sector={data.industry}
-        />
+        <div className="mt-4 flex gap-6">
+          <div className="flex-1">
+            <SOCSearch 
+              onSelect={handleSelect} 
+              sector={data.industry} 
+              placeholder="Search for a job title (e.g., Software Developer, IT Manager)"
+            />
+          </div>
+          <TopOccupations
+            sector={data.industry}
+            onSelect={handleSelect}
+          />
+        </div>
         <RoleInfoCard />
       </div>
     </WizardStep>
