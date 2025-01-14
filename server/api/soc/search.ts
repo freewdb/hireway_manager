@@ -7,6 +7,7 @@ import Fuse from 'fuse.js';
 interface ConsolidatedJobResult {
   code: string;
   primaryTitle: string;
+  title: string; // Added title field for consistency
   description: string | undefined;
   alternativeTitles: string[];
   matchedAlternatives: string[];
@@ -21,6 +22,7 @@ interface ConsolidatedJobResult {
     title: string;
   };
   topIndustries?: { sector: string; percentage: number }[];
+  sectorDistribution?: number; // Added sectorDistribution
 }
 
 interface SearchResponse {
@@ -51,14 +53,15 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
   for (const item of filteredItems) {
     if (!resultsByCode.has(item.code)) {
       // Get official title from detailed occupations
-      const officialTitle = await db.query.socDetailedOccupations.findFirst({
+      const primaryTitle = await db.query.socDetailedOccupations.findFirst({
         where: eq(socDetailedOccupations.code, item.code),
         columns: { title: true }
       });
 
       resultsByCode.set(item.code, {
         code: item.code,
-        title: officialTitle?.title || item.title, // Use official title if found
+        primaryTitle: primaryTitle?.title || item.title,
+        title: primaryTitle?.title || item.title, // Use official title if found
         description: item.description,
         alternativeTitles: item.alternativeTitles || [],
         matchedAlternatives: [],
@@ -66,7 +69,8 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
         rank: 1.0,
         majorGroup: item.majorGroup,
         minorGroup: item.minorGroup,
-        topIndustries: item.topIndustries
+        topIndustries: item.topIndustries,
+        sectorDistribution: item.sectorDistribution // Added sectorDistribution
       });
     }
   }
@@ -75,20 +79,21 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
   for (const item of filteredItems) {
     if (resultsByCode.has(item.code)) continue;
 
-    const matchedAlt = (item.alternativeTitles || []).find(alt => 
+    const matchedAlt = (item.alternativeTitles || []).find(alt =>
       alt.toLowerCase().includes(queryLower) || queryLower.includes(alt.toLowerCase())
     );
 
     if (matchedAlt) {
       // Get official title from detailed occupations
-      const officialTitle = await db.query.socDetailedOccupations.findFirst({
+      const primaryTitle = await db.query.socDetailedOccupations.findFirst({
         where: eq(socDetailedOccupations.code, item.code),
         columns: { title: true }
       });
 
       resultsByCode.set(item.code, {
         code: item.code,
-        primaryTitle: officialTitle?.title || item.title, // Always use official title
+        primaryTitle: primaryTitle?.title || item.title,
+        title: primaryTitle?.title || item.title, // Always use official title
         description: item.description,
         alternativeTitles: item.alternativeTitles || [],
         matchedAlternatives: [matchedAlt],
@@ -96,7 +101,8 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
         rank: 0.9,
         majorGroup: item.majorGroup,
         minorGroup: item.minorGroup,
-        topIndustries: item.topIndustries
+        topIndustries: item.topIndustries,
+        sectorDistribution: item.sectorDistribution // Added sectorDistribution
       });
     }
   }
@@ -106,8 +112,8 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
     const alternativeTitles = item.alternativeTitles || [];
 
     // Find which alternative title matched (if any)
-    const matchedAlternative = alternativeTitles.find(alt => 
-      alt.toLowerCase().includes(queryLower) || 
+    const matchedAlternative = alternativeTitles.find(alt =>
+      alt.toLowerCase().includes(queryLower) ||
       queryLower.includes(alt.toLowerCase())
     );
 
@@ -182,14 +188,15 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
 
     if (!resultsByCode.has(item.code)) {
       // Get the official title from detailed occupations if this is an alternative match
-      const officialTitle = await db.query.socDetailedOccupations.findFirst({
+      const primaryTitle = await db.query.socDetailedOccupations.findFirst({
         where: eq(socDetailedOccupations.code, item.code),
         columns: { title: true }
       });
 
       resultsByCode.set(item.code, {
         code: item.code,
-        title: officialTitle?.title || item.title,
+        primaryTitle: primaryTitle?.title || item.title,
+        title: primaryTitle?.title || item.title,
         description: item.description || undefined,
         alternativeTitles,
         matchedAlternatives: matchedAlternative ? [matchedAlternative] : [],
@@ -413,50 +420,12 @@ export async function GET(req: Request) {
             (
               SELECT percentage::numeric
               FROM ${socSectorDistribution} sd
-              INNER JOIN ${sectorLookup} sl ON sl.concat = sd.sector_label
+              INNER JOIN ${socSectorDistribution} sl ON sl.soc_code = sd.soc_code AND sl.sector_label = ${sector ? `NAICS${sector}` : 'NONE'}
               WHERE sd.soc_code = ${socDetailedOccupations.code}
-              AND sl.naics = ${sector}
               LIMIT 1
             ),
             0
           )`.as('sector_distribution'),
-        debug_sector: sql`
-          SELECT json_build_object(
-            'soc_code', ${socDetailedOccupations.code},
-            'sector_label', ${`NAICS${sector}`},
-            'query', 'SELECT percentage FROM soc_sector_distribution WHERE soc_code = ' || quote_literal(${socDetailedOccupations.code}) || ' AND sector_label = ' || quote_literal(${`NAICS${sector}`}),
-            'found_record', EXISTS(
-              SELECT 1 FROM ${socSectorDistribution}
-              WHERE soc_code = ${socDetailedOccupations.code}
-              AND sector_label = ${`NAICS${sector}`}
-            )
-          )
-        `.as('debug_sector'),
-        debug_distribution: sql`
-          SELECT json_build_object(
-            'soc_code', ${socDetailedOccupations.code},
-            'sector', ${sector},
-            'distribution', (
-              SELECT percentage::numeric 
-              FROM ${socSectorDistribution} 
-              WHERE soc_code = ${socDetailedOccupations.code} 
-              AND sector_label = ${`NAICS${sector}`}
-            ),
-            'debug', json_build_object(
-              'query', format('SELECT percentage FROM soc_sector_distribution WHERE soc_code = %L AND sector_label = %L',
-                            ${socDetailedOccupations.code},
-                            ${`NAICS${sector}`}),
-              'result', (
-                SELECT row_to_json(dist)
-                FROM (
-                  SELECT * FROM ${socSectorDistribution}
-                  WHERE soc_code = ${socDetailedOccupations.code} 
-                  AND sector_label = ${`NAICS${sector}`}
-                ) dist
-              )
-            )
-          )
-        `.as('debug_distribution'),
         majorGroup: {
           code: socMajorGroups.code,
           title: socMajorGroups.title,
@@ -622,7 +591,7 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error('Error in job title search:', error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error occurred'
     }), {
