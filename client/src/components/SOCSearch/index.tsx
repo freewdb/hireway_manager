@@ -97,9 +97,9 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
   });
 
   return (
-    <div className={`flex gap-6 ${className}`}>
-      <div className="flex-1">
-        <div className="flex items-center mb-4">
+    <div className={`flex flex-col ${className}`}>
+      <div className="flex gap-6">
+        <div className="flex-1">
           <div className="relative w-full">
             <input
               {...getInputProps()}
@@ -119,8 +119,8 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
             {showAll ? 'Show Fewer' : 'Show All'}
           </button>
         </div>
-
-        <ul
+      </div>
+      <ul
           {...getMenuProps()}
           className={`w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-auto ${
             !isOpen || inputItems.length === 0 ? 'hidden' : ''
