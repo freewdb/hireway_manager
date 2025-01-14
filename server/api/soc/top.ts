@@ -23,6 +23,25 @@ export async function GET(req: Request) {
     
     console.log('Using sector label:', sectorLabel);
     
+    // First check if we have any sector distribution data at all
+    const sectorCheck = await db
+      .select({
+        count: sql`count(*)`.mapWith(Number)
+      })
+      .from(socSectorDistribution)
+      .where(sql`sector_label = ${sectorLabel}`);
+    
+    console.log('Sector distribution records for', sectorLabel, ':', sectorCheck[0].count);
+
+    // Get sample records to verify data
+    const sectorSample = await db
+      .select()
+      .from(socSectorDistribution)
+      .where(sql`sector_label = ${sectorLabel}`)
+      .limit(5);
+      
+    console.log('Sample sector distribution records:', sectorSample);
+    
     const results = await db.select({
       code: socDetailedOccupations.code,
       title: socDetailedOccupations.title,
