@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from 'react';
 import type { JobTitleSearchResult } from '../types/schema';
 
 interface TopOccupationsProps {
