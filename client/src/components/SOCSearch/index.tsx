@@ -27,13 +27,34 @@ export function SOCSearch({
   const [selectedItems, setSelectedItems] = useState<JobTitleSearchResult[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [topOccupations, setTopOccupations] = useState<JobTitleSearchResult[]>([]);
+  const [topOccupationsError, setTopOccupationsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (sector) {
       fetch(`/api/soc/top?sector=${encodeURIComponent(sector)}`)
-        .then(res => res.json())
-        .then(data => setTopOccupations(data))
-        .catch(err => console.error('Failed to fetch top occupations:', err));
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`Failed to fetch: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then(data => {
+          if (Array.isArray(data)) {
+            setTopOccupations(data);
+          } else if (data.error) {
+            setTopOccupationsError(data.error);
+          } else {
+            setTopOccupations([]);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to fetch top occupations:', err);
+          setTopOccupationsError(err.message);
+          setTopOccupations([]);
+        });
+    } else {
+      setTopOccupations([]);
+      setTopOccupationsError(null);
     }
   }, [sector]);
 
