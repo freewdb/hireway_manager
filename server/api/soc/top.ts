@@ -1,6 +1,6 @@
 import { db } from '../../../db';
 import { socDetailedOccupations, socSectorDistribution } from '../../../db/schema';
-import { sql, desc } from 'drizzle-orm';
+import { sql, desc, and, eq } from 'drizzle-orm';
 
 export async function GET(req: Request) {
   try {
