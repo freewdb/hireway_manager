@@ -1,0 +1,325 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+5:33:00 PM [express] serving on port 3000
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+Executing top occupations query with: { sector: '21', sectorLabel: 'NAICS21' }
+Using sector label: NAICS21
+Sector distribution records for NAICS21 : 644
+Sample sector distribution records: [
+  {
+    id: 28871,
+    socCode: '11-1011.00',
+    sectorLabel: 'NAICS21',
+    percentage: '2.10'
+  },
+  {
+    id: 28888,
+    socCode: '11-1021.00',
+    sectorLabel: 'NAICS21',
+    percentage: '8.50'
+  },
+  {
+    id: 28919,
+    socCode: '11-2011.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  },
+  {
+    id: 28943,
+    socCode: '11-2021.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  },
+  {
+    id: 28963,
+    socCode: '11-3012.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  }
+]
+Error in top occupations: ReferenceError: and is not defined
+    at Module.GET (/home/runner/workspace/server/api/soc/top.ts:53:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:177:24)
+5:33:32 PM [express] GET /api/soc/top 500 in 1005ms :: {"error":"Internal server error","message":"a…
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+Executing top occupations query with: { sector: '21', sectorLabel: 'NAICS21' }
+Using sector label: NAICS21
+Sector distribution records for NAICS21 : 644
+Sample sector distribution records: [
+  {
+    id: 28871,
+    socCode: '11-1011.00',
+    sectorLabel: 'NAICS21',
+    percentage: '2.10'
+  },
+  {
+    id: 28888,
+    socCode: '11-1021.00',
+    sectorLabel: 'NAICS21',
+    percentage: '8.50'
+  },
+  {
+    id: 28919,
+    socCode: '11-2011.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  },
+  {
+    id: 28943,
+    socCode: '11-2021.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  },
+  {
+    id: 28963,
+    socCode: '11-3012.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  }
+]
+Error in top occupations: ReferenceError: and is not defined
+    at Module.GET (/home/runner/workspace/server/api/soc/top.ts:53:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:177:24)
+5:33:32 PM [express] GET /api/soc/top 500 in 74ms :: {"error":"Internal server error","message":"and…
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+Executing top occupations query with: { sector: '21', sectorLabel: 'NAICS21' }
+Using sector label: NAICS21
+Sector distribution records for NAICS21 : 644
+Sample sector distribution records: [
+  {
+    id: 28871,
+    socCode: '11-1011.00',
+    sectorLabel: 'NAICS21',
+    percentage: '2.10'
+  },
+  {
+    id: 28888,
+    socCode: '11-1021.00',
+    sectorLabel: 'NAICS21',
+    percentage: '8.50'
+  },
+  {
+    id: 28919,
+    socCode: '11-2011.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  },
+  {
+    id: 28943,
+    socCode: '11-2021.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  },
+  {
+    id: 28963,
+    socCode: '11-3012.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  }
+]
+Error in top occupations: ReferenceError: and is not defined
+    at Module.GET (/home/runner/workspace/server/api/soc/top.ts:53:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:177:24)
+5:33:32 PM [express] GET /api/soc/top 500 in 72ms :: {"error":"Internal server error","message":"and…
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+Executing top occupations query with: { sector: '21', sectorLabel: 'NAICS21' }
+Using sector label: NAICS21
+Sector distribution records for NAICS21 : 644
+Sample sector distribution records: [
+  {
+    id: 28871,
+    socCode: '11-1011.00',
+    sectorLabel: 'NAICS21',
+    percentage: '2.10'
+  },
+  {
+    id: 28888,
+    socCode: '11-1021.00',
+    sectorLabel: 'NAICS21',
+    percentage: '8.50'
+  },
+  {
+    id: 28919,
+    socCode: '11-2011.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  },
+  {
+    id: 28943,
+    socCode: '11-2021.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  },
+  {
+    id: 28963,
+    socCode: '11-3012.00',
+    sectorLabel: 'NAICS21',
+    percentage: '0.00'
+  }
+]
+Error in top occupations: ReferenceError: and is not defined
+    at Module.GET (/home/runner/workspace/server/api/soc/top.ts:53:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:177:24)
+5:33:32 PM [express] GET /api/soc/top 500 in 106ms :: {"error":"Internal server error","message":"an…
+Search request received: {
+  searchTerm: 'f',
+  queryParams: { search: 'f', sector: '21' },
+  path: '/api/job-titles'
+}
+Search term too short or undefined
+5:33:38 PM [express] GET /api/job-titles 304 in 4ms :: []
+Search request received: {
+  searchTerm: 'for',
+  queryParams: { search: 'for', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: for
+Initial database query results: {
+  count: 607,
+  searchTerm: 'for',
+  firstResult: {
+    code: '11-1011.00',
+    title: 'Chief Executives',
+    searchableText: 'Chief Executives Determine and formulate policies and provide overall direction of companies or priv'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 38033,
+  fuseResultsCount: 37543,
+  topResults: [
+    { title: 'Forger', score: 0.0005946035575013605 },
+    { title: 'Forgesmith', score: 0.0005946035575013605 },
+    { title: 'Forker', score: 0.0006938954699932039 }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '19-1032.00',
+    title: 'Foresters',
+    isAlternative: false,
+    rank: 0.9992091329433231,
+    description: "Manage public and private forested lands for economic, recreational, and conservation purposes. May inventory the type, amount, and location of standing timber, appraise the timber's worth, negotiate the purchase, and draw up contracts for procurement. May determine how to conserve wildlife habitats, creek beds, water quality, and soil stability, and how best to comply with environmental regulations. May devise plans for planting and growing new trees, monitor trees for healthy growth, and determine optimal harvesting schedules.",
+    majorGroup: {
+      id: 6,
+      code: '19-0000',
+      title: 'Major Group 19',
+      description: 'Major occupational group 19',
+      searchVector: 'Major Group 19'
+    },
+    minorGroup: {
+      id: 6,
+      code: '19--000',
+      majorGroupCode: '19-0000',
+      title: 'Minor Group 19--000',
+      description: 'Minor occupational group 19--000',
+      searchVector: 'Minor Group 19--000'
+    }
+  }
+}
+5:33:41 PM [express] GET /api/job-titles 304 in 1832ms :: [{"code":"19-1032.00","title":"Foresters",…
+Search request received: {
+  searchTerm: 'forkli',
+  queryParams: { search: 'forkli', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: forkli
+Search request received: {
+  searchTerm: 'forklift',
+  queryParams: { search: 'forklift', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: forklift
+Initial database query results: {
+  count: 4,
+  searchTerm: 'forkli',
+  firstResult: {
+    code: '47-2073.00',
+    title: 'Operating Engineers and Other Construction Equipment Operators',
+    searchableText: 'Operating Engineers and Other Construction Equipment Operators Operate one or several types of power'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 285,
+  fuseResultsCount: 285,
+  topResults: [
+    { title: 'Forklift Driver', score: 0.007045942480668157 },
+    { title: 'Forklift Operator', score: 0.007045942480668157 },
+    { title: 'Forklift Technician', score: 0.007045942480668157 }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '53-7051.00',
+    title: 'Forklift Driver',
+    isAlternative: true,
+    rank: 0.8936586517673987,
+    description: 'Operate industrial trucks or tractors equipped to move materials around a warehouse, storage yard, factory, construction site, or similar location.',
+    majorGroup: {
+      id: 23,
+      code: '53-0000',
+      title: 'Major Group 53',
+      description: 'Major occupational group 53',
+      searchVector: 'Major Group 53'
+    },
+    minorGroup: {
+      id: 23,
+      code: '53--000',
+      majorGroupCode: '53-0000',
+      title: 'Minor Group 53--000',
+      description: 'Minor occupational group 53--000',
+      searchVector: 'Minor Group 53--000'
+    }
+  }
+}
+5:33:41 PM [express] GET /api/job-titles 304 in 137ms :: [{"code":"53-7051.00","title":"Forklift Dri…
+Initial database query results: {
+  count: 4,
+  searchTerm: 'forklift',
+  firstResult: {
+    code: '47-2073.00',
+    title: 'Operating Engineers and Other Construction Equipment Operators',
+    searchableText: 'Operating Engineers and Other Construction Equipment Operators Operate one or several types of power'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 285,
+  fuseResultsCount: 285,
+  topResults: [
+    { title: 'Forklift Driver', score: 0.007096001898217786 },
+    { title: 'Forklift Operator', score: 0.007096001898217786 },
+    { title: 'Forklift Technician', score: 0.007096001898217786 }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '53-7051.00',
+    title: 'Forklift Driver',
+    isAlternative: true,
+    rank: 0.893613598291604,
+    description: 'Operate industrial trucks or tractors equipped to move materials around a warehouse, storage yard, factory, construction site, or similar location.',
+    majorGroup: {
+      id: 23,
+      code: '53-0000',
+      title: 'Major Group 53',
+      description: 'Major occupational group 53',
+      searchVector: 'Major Group 53'
+    },
+    minorGroup: {
+      id: 23,
+      code: '53--000',
+      majorGroupCode: '53-0000',
+      title: 'Minor Group 53--000',
+      description: 'Minor occupational group 53--000',
+      searchVector: 'Minor Group 53--000'
+    }
+  }
+}
+5:33:41 PM [express] GET /api/job-titles 304 in 410ms :: [{"code":"53-7051.00","title":"Forklift Dri…
