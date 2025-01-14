@@ -124,7 +124,7 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
       {topOccupations.length > 0 && (
         <div className="mb-6">
           <h3 className="text-sm font-medium text-gray-700 mb-3">Popular roles in this industry:</h3>
-          <div className="space-y-3">
+          <div className="h-96 overflow-y-auto pr-2 space-y-3">
             {topOccupations.map((occ) => {
               const isExclusive = occ.sectorDistribution >= 90;
               const isRare = occ.sectorDistribution < 5;
@@ -133,7 +133,7 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
                 <button
                   key={occ.code}
                   onClick={() => handleSelect(occ)}
-                  className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
+                  className="w-full p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
                 >
                   <div className="flex items-start justify-between">
                     <div className="font-medium text-gray-900">{occ.title}</div>
