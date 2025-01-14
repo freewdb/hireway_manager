@@ -41,7 +41,8 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
       const url = `/api/soc/search?search=${encodeURIComponent(query)}${sector ? `&sector=${encodeURIComponent(sector)}` : ''}${showAll ? '&showAll=true' : ''}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch results');
-      const results: JobTitleSearchResult[] = await response.json();
+      const data = await response.json();
+      const results: JobTitleSearchResult[] = Array.isArray(data) ? data : [];
 
       const uniqueResults = Array.from(
         results.reduce((map, item) => {

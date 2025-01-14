@@ -42,7 +42,7 @@ export async function GET(req: Request) {
       )
       .limit(25);
 
-    return new Response(JSON.stringify({ items: results }), {
+    return new Response(JSON.stringify(results), {
       headers: { 'Content-Type': 'application/json' }
     });
 
