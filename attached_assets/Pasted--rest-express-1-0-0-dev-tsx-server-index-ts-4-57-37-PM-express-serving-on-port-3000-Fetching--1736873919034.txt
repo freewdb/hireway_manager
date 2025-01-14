@@ -1,0 +1,101 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+4:57:37 PM [express] serving on port 3000
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+Executing top occupations query with: { sector: '21', sectorLabel: 'NAICS21' }
+Using sector label: NAICS21
+Sample result record: {
+  code: '29-2035.00',
+  title: 'Magnetic Resonance Imaging Technologists',
+  description: 'Operate Magnetic Resonance Imaging (MRI) scanners. Monitor patient safety and comfort, and view images of area being scanned to ensure quality of pictures. May administer gadolinium contrast dosage intravenously. May interview patient, explain MRI procedures, and position patient on examining table. May enter into the computer data such as patient history, anatomical area to be scanned, orientation specified, and position of entry.',
+  sectorDistribution: null,
+  socCode: null,
+  sectorLabel: null
+}
+Top occupations found: {
+  count: 10,
+  first: {
+    code: '29-2035.00',
+    title: 'Magnetic Resonance Imaging Technologists',
+    description: 'Operate Magnetic Resonance Imaging (MRI) scanners. Monitor patient safety and comfort, and view images of area being scanned to ensure quality of pictures. May administer gadolinium contrast dosage intravenously. May interview patient, explain MRI procedures, and position patient on examining table. May enter into the computer data such as patient history, anatomical area to be scanned, orientation specified, and position of entry.',
+    sectorDistribution: null,
+    socCode: null,
+    sectorLabel: null
+  },
+  sector: 'NAICS21'
+}
+4:57:51 PM [express] GET /api/soc/top 200 in 221ms :: {"items":[{"code":"29-2035.00","title":"Magnet…
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+Executing top occupations query with: { sector: '21', sectorLabel: 'NAICS21' }
+Using sector label: NAICS21
+Sample result record: {
+  code: '29-2035.00',
+  title: 'Magnetic Resonance Imaging Technologists',
+  description: 'Operate Magnetic Resonance Imaging (MRI) scanners. Monitor patient safety and comfort, and view images of area being scanned to ensure quality of pictures. May administer gadolinium contrast dosage intravenously. May interview patient, explain MRI procedures, and position patient on examining table. May enter into the computer data such as patient history, anatomical area to be scanned, orientation specified, and position of entry.',
+  sectorDistribution: null,
+  socCode: null,
+  sectorLabel: null
+}
+Top occupations found: {
+  count: 10,
+  first: {
+    code: '29-2035.00',
+    title: 'Magnetic Resonance Imaging Technologists',
+    description: 'Operate Magnetic Resonance Imaging (MRI) scanners. Monitor patient safety and comfort, and view images of area being scanned to ensure quality of pictures. May administer gadolinium contrast dosage intravenously. May interview patient, explain MRI procedures, and position patient on examining table. May enter into the computer data such as patient history, anatomical area to be scanned, orientation specified, and position of entry.',
+    sectorDistribution: null,
+    socCode: null,
+    sectorLabel: null
+  },
+  sector: 'NAICS21'
+}
+4:57:51 PM [express] GET /api/soc/top 304 in 33ms :: {"items":[{"code":"29-2035.00","title":"Magneti…
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+Executing top occupations query with: { sector: '21', sectorLabel: 'NAICS21' }
+Using sector label: NAICS21
+Sample result record: {
+  code: '29-2035.00',
+  title: 'Magnetic Resonance Imaging Technologists',
+  description: 'Operate Magnetic Resonance Imaging (MRI) scanners. Monitor patient safety and comfort, and view images of area being scanned to ensure quality of pictures. May administer gadolinium contrast dosage intravenously. May interview patient, explain MRI procedures, and position patient on examining table. May enter into the computer data such as patient history, anatomical area to be scanned, orientation specified, and position of entry.',
+  sectorDistribution: null,
+  socCode: null,
+  sectorLabel: null
+}
+Top occupations found: {
+  count: 10,
+  first: {
+    code: '29-2035.00',
+    title: 'Magnetic Resonance Imaging Technologists',
+    description: 'Operate Magnetic Resonance Imaging (MRI) scanners. Monitor patient safety and comfort, and view images of area being scanned to ensure quality of pictures. May administer gadolinium contrast dosage intravenously. May interview patient, explain MRI procedures, and position patient on examining table. May enter into the computer data such as patient history, anatomical area to be scanned, orientation specified, and position of entry.',
+    sectorDistribution: null,
+    socCode: null,
+    sectorLabel: null
+  },
+  sector: 'NAICS21'
+}
+4:57:51 PM [express] GET /api/soc/top 304 in 33ms :: {"items":[{"code":"29-2035.00","title":"Magneti…
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+Executing top occupations query with: { sector: '21', sectorLabel: 'NAICS21' }
+Using sector label: NAICS21
+Sample result record: {
+  code: '29-2035.00',
+  title: 'Magnetic Resonance Imaging Technologists',
+  description: 'Operate Magnetic Resonance Imaging (MRI) scanners. Monitor patient safety and comfort, and view images of area being scanned to ensure quality of pictures. May administer gadolinium contrast dosage intravenously. May interview patient, explain MRI procedures, and position patient on examining table. May enter into the computer data such as patient history, anatomical area to be scanned, orientation specified, and position of entry.',
+  sectorDistribution: null,
+  socCode: null,
+  sectorLabel: null
+}
+Top occupations found: {
+  count: 10,
+  first: {
+    code: '29-2035.00',
+    title: 'Magnetic Resonance Imaging Technologists',
+    description: 'Operate Magnetic Resonance Imaging (MRI) scanners. Monitor patient safety and comfort, and view images of area being scanned to ensure quality of pictures. May administer gadolinium contrast dosage intravenously. May interview patient, explain MRI procedures, and position patient on examining table. May enter into the computer data such as patient history, anatomical area to be scanned, orientation specified, and position of entry.',
+    sectorDistribution: null,
+    socCode: null,
+    sectorLabel: null
+  },
+  sector: 'NAICS21'
+}
+4:57:51 PM [express] GET /api/soc/top 304 in 41ms :: {"items":[{"code":"29-2035.00","title":"Magneti…
