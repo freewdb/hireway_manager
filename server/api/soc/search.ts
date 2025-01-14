@@ -225,15 +225,26 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const query = url.searchParams.get('search')?.trim() || '';
     const sector = url.searchParams.get('sector')?.trim();
+    const showAll = url.searchParams.get('showAll') === 'true';
 
-    console.log('Search params:', {
+    console.log('Search request details:', {
       query,
       sector,
+      showAll,
       rawQuery: url.searchParams.toString(),
       sectorLabel: sector ? `NAICS${sector}` : 'none',
       constructedLabel: `NAICS${sector}`,
       timestamp: new Date().toISOString()
     });
+
+    // Log query parameters
+    const searchParams = {
+      title: `%${query}%`,
+      searchText: query,
+      sectorLabel: sector ? `NAICS${sector}` : null
+    };
+    
+    console.log('Search parameters:', searchParams);
 
     // Debug sector distribution query
     if (sector) {
@@ -467,8 +478,20 @@ export async function GET(req: Request) {
       )
       .limit(100);
 
+    console.log('Exact matches found:', {
+      count: exactMatches.length,
+      firstMatch: exactMatches[0],
+      query,
+      sector
+    });
+
     if (exactMatches.length >= 5) {
       const results = consolidateResults(exactMatches, query, sector);
+      console.log('Consolidated results:', {
+        count: results.length,
+        firstResult: results[0],
+        sector
+      });
 
       // Check for duplicates
       const codeFrequency = results.reduce((acc, curr) => {
