@@ -1,0 +1,88 @@
+A big part of the trouble is coming from how you do “two‐pass” consolidation and the fact that in the second pass you skip items already stored in resultsByCode. That effectively discards any data in the second pass (like alternative titles, sector distribution, etc.) for items already processed in the first pass. In other words:
+
+// Second pass - add alternative title matches only if not already included
+for (const item of filteredItems) {
+  if (resultsByCode.has(item.code)) continue;
+  // ...
+}
+
+Because of if (resultsByCode.has(item.code)) continue;, anything for an SOC code that was first added in pass one is never updated or merged in pass two.
+
+Why it loses data
+
+From your logs, you can see:
+	•	In pass one, you pick up “Continuous Mining Machine Operators” (SOC 47–5041.00) as the primary title from the database.
+	•	In pass two, you attempt to add any “Forklift Operator” alternative titles to the same code, but that line
+
+if (resultsByCode.has(item.code)) continue;
+
+means you skip it altogether since that code is already in resultsByCode.
+
+As a result, the second‐pass data (where you might be setting isAlternative = true, or adding matched alt titles, or even preserving sectorDistribution) never merges in for that item. That’s why you are “not preserving the primary title” or losing sector distribution data.
+
+How to fix it
+
+There are two common ways to fix it:
+
+1) Merge everything in a single pass
+
+Instead of doing a “first pass adds items, second pass adds alt titles,” unify the logic so that in one loop you:
+	1.	Check if the code is already in resultsByCode.
+	2.	If not, create it.
+	3.	If yes, merge/append any alternative titles or other fields onto the existing record.
+
+You can still do the rank calculation in the same pass; just keep track of whether the match came from a primary title or from an alternative. Something like:
+
+for (const item of filteredItems) {
+  const existing = resultsByCode.get(item.code);
+
+  // Did we find an alt title match?
+  const matchedAlt = (item.alternativeTitles || []).find(alt => {
+    // ...
+  });
+
+  if (!existing) {
+    // This code has never been seen, so create it
+    resultsByCode.set(item.code, {
+      code: item.code,
+      primaryTitle: item.primaryTitle,
+      title: item.primaryTitle, // or item.title
+      // etc.
+      matchedAlternatives: matchedAlt ? [matchedAlt] : [],
+      // ...
+    });
+  } else {
+    // We already have this code; merge or update
+    if (matchedAlt && !existing.matchedAlternatives.includes(matchedAlt)) {
+      existing.matchedAlternatives.push(matchedAlt);
+      existing.isAlternative = true;
+    }
+    // Add alt titles, update rank, merge sector distribution, etc.
+  }
+}
+
+That way you never lose data, because each item is merged exactly once.
+
+2) Keep a second pass but actually merge existing items
+
+If you truly need two passes (say for code‐organization reasons), then do not continue; when the code is already in the map. Instead, grab it and update/merge:
+
+for (const item of filteredItems) {
+  if (!resultsByCode.has(item.code)) {
+    // Item wasn't handled in pass 1; create a new result entry
+    resultsByCode.set(item.code, { ... });
+  } else {
+    // Already exists from pass 1, so merge or update
+    const existing = resultsByCode.get(item.code)!;
+    // If this item has an alt title match or sector dist that wasn't preserved, fix it here
+    // existing.alternativeTitles.push(...)
+    // existing.sectorDistribution = item.sectorDistribution
+    // ...
+  }
+}
+
+This way, the second pass will extend the existing entry rather than ignoring it.
+
+Bottom line
+
+Whichever approach you choose—merging everything in a single pass, or genuinely merging in two passes—the key is to make sure you do not skip items that are already in the map. That continue; is why you “lose” the alternative‐title version or the sector distribution. Remove that check (or do a true merge) and you’ll preserve the data.
