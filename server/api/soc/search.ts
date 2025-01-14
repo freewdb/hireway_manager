@@ -379,6 +379,7 @@ export async function GET(req: Request) {
         description: socDetailedOccupations.description,
         alternativeTitles: socDetailedOccupations.alternativeTitles,
         searchableText: socDetailedOccupations.searchableText,
+        sectorDistribution: sector ? socSectorDistribution.percentage : sql<number>`0`,
         majorGroup: {
           code: socMajorGroups.code,
           title: socMajorGroups.title,
@@ -390,6 +391,13 @@ export async function GET(req: Request) {
           description: socMinorGroups.description,
         }
       })
+      .leftJoin(
+        socSectorDistribution,
+        and(
+          eq(socDetailedOccupations.code, socSectorDistribution.socCode),
+          eq(socSectorDistribution.sectorLabel, sector ? `NAICS${sector}` : sql`''`)
+        )
+      )
       .from(socDetailedOccupations)
       .leftJoin(
         socMinorGroups,
