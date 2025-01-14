@@ -39,17 +39,20 @@ export function SOCSearch({
           return res.json();
         })
         .then(data => {
-          if (Array.isArray(data)) {
-            setTopOccupations(data);
+          if (data.items && Array.isArray(data.items)) {
+            setTopOccupations(data.items);
           } else if (data.error) {
-            setTopOccupationsError(data.error);
+            console.error('Top occupations error:', data.error, data.message);
+            setTopOccupationsError(data.message || data.error);
+            setTopOccupations([]);
           } else {
+            console.warn('Unexpected top occupations response:', data);
             setTopOccupations([]);
           }
         })
         .catch(err => {
           console.error('Failed to fetch top occupations:', err);
-          setTopOccupationsError(err.message);
+          setTopOccupationsError(err.message || 'Failed to fetch top occupations');
           setTopOccupations([]);
         });
     } else {
