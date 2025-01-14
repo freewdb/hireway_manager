@@ -125,6 +125,7 @@ export function SOCSearch({
     getInputProps,
     getItemProps,
     highlightedIndex,
+    selectedItem
   } = useCombobox({
     items: inputItems,
     onInputValueChange: ({ inputValue }) => {
@@ -136,6 +137,8 @@ export function SOCSearch({
         handleSelect(selectedItem);
       }
     },
+    selectedItem: null,
+    defaultHighlightedIndex: 0,
   });
 
   if (topOccupationsOnly) {

@@ -46,15 +46,15 @@ export async function GET(req: Request) {
       code: socDetailedOccupations.code,
       title: socDetailedOccupations.title,
       description: socDetailedOccupations.description,
-      sectorDistribution: socSectorDistribution.percentage,
-      socCode: socSectorDistribution.socCode,
-      sectorLabel: socSectorDistribution.sectorLabel
+      sectorDistribution: socSectorDistribution.percentage
     })
     .from(socDetailedOccupations)
     .leftJoin(
       socSectorDistribution,
-      sql`${socDetailedOccupations.code} = ${socSectorDistribution.socCode} 
-      AND ${socSectorDistribution.sectorLabel} = ${sectorLabel}`
+      and(
+        eq(socDetailedOccupations.code, socSectorDistribution.socCode),
+        eq(socSectorDistribution.sectorLabel, sectorLabel)
+      )
     )
     .orderBy(desc(socSectorDistribution.percentage))
     .limit(10);
