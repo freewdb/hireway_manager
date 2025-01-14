@@ -7,7 +7,9 @@ interface SOCSearchProps {
   onSelect: (result: JobTitleSearchResult) => void;
   placeholder?: string;
   className?: string;
-  sector?: string; // Added sector prop
+  sector?: string;
+  hideTopOccupations?: boolean;
+  topOccupationsOnly?: boolean;
 }
 
 export function SOCSearch({ onSelect, placeholder = 'Search for a job title...', className = '', sector }: SOCSearchProps) {
@@ -98,9 +100,38 @@ export function SOCSearch({ onSelect, placeholder = 'Search for a job title...',
     },
   });
 
+  if (topOccupationsOnly) {
+    return (
+      <div className={className}>
+        {topOccupations.map((occ) => {
+          const isExclusive = occ.sectorDistribution >= 90;
+          const isRare = occ.sectorDistribution < 5;
+
+          return (
+            <button
+              key={occ.code}
+              onClick={() => handleSelect(occ)}
+              className="w-full p-3 text-left bg-white hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+            >
+              <div className="flex items-start justify-between">
+                <div className="font-medium text-gray-900">{occ.title}</div>
+                <span className="text-xs font-mono text-gray-500">{occ.code}</span>
+              </div>
+              <div className="mt-1 text-sm text-gray-500">
+                {Math.round(occ.sectorDistribution)}% in this industry
+                {isExclusive && <span className="ml-2 text-green-600">•&nbsp;Primary</span>}
+                {isRare && <span className="ml-2 text-yellow-600">•&nbsp;Rare</span>}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className={`relative w-full ${className}`}>
-      {topOccupations.length > 0 && (
+      {!hideTopOccupations && topOccupations.length > 0 && (
         <div className="mb-6">
           <h3 className="text-sm font-medium text-gray-700 mb-3">Popular roles in this industry:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
