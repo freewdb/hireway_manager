@@ -145,8 +145,10 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
       const distribution = parseFloat(item.sectorDistribution);
       const originalRank = rank;
 
-      if (distribution > 0) {
-        // Normalize distribution to 0-100 scale and apply logarithmic boost
+      if (distribution === undefined || distribution === null) {
+        // No penalty for missing data
+        rank *= 1.0;
+      } else if (distribution > 0) {
         const normalizedDist = Math.min(100, distribution);
         const boost = 1 + (Math.log10(normalizedDist + 1) / Math.log10(101));
         rank *= boost;
@@ -156,7 +158,8 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
           rank *= 1.5;
         }
       } else {
-        rank *= 0.5; // Significant penalty for occupations not represented in sector
+        // Only apply penalty for confirmed 0% distribution
+        rank *= 0.75; // Reduced penalty from 0.5 to 0.75
       }
     }
 
