@@ -4,6 +4,8 @@ import { db } from "@db";
 import { socDetailedOccupations, socMajorGroups, socMinorGroups } from "@db/schema";
 import { sql, eq, or, and } from "drizzle-orm";
 import Fuse from 'fuse.js';
+import * as top from "./api/soc/top";
+import * as search from "./api/soc/search";
 
 export function registerRoutes(app: Express): Server {
   app.get("/api/job-titles", async (req, res) => {
@@ -167,6 +169,17 @@ export function registerRoutes(app: Express): Server {
         error: "Failed to search job titles",
         details: process.env.NODE_ENV === 'development' ? String(error) : undefined
       });
+    }
+  });
+
+  app.get("/api/soc/top", async (req, res) => {
+    try {
+      const response = await top.GET(req);
+      const data = await response.json();
+      res.status(response.status || 200).json(data);
+    } catch (error) {
+      console.error("Error in /api/soc/top:", error);
+      res.status(500).json({ error: "Failed to fetch top SOC data" });
     }
   });
 
