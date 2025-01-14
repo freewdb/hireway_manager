@@ -4,64 +4,33 @@ import { sql, desc, and, eq } from 'drizzle-orm';
 
 export async function GET(req: Request) {
   try {
-    // Get sector directly from request URL
-    const sector = new URLSearchParams(req.url.split('?')[1]).get('sector')?.trim();
+    const url = new URL(req.url);
+    const sector = url.searchParams.get('sector')?.trim();
+    const sectorLabel = sector ? `NAICS${sector}` : null;
 
-    console.log('Fetching top occupations:', { sector, sectorLabel: sector ? `NAICS${sector}` : null });
+    console.log('Fetching top occupations:', { sector, sectorLabel });
 
-    if (!sector) {
+    if (!sectorLabel) {
       return new Response(JSON.stringify({ items: [] }), {
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const sectorLabel = `NAICS${sector}`;
-    console.log('Executing top occupations query with:', {
-      sector,
-      sectorLabel
-    });
-    
-    console.log('Using sector label:', sectorLabel);
-    
-    // First check if we have any sector distribution data at all
-    const sectorCheck = await db
+    const results = await db
       .select({
-        count: sql`count(*)`.mapWith(Number)
+        code: socDetailedOccupations.code,
+        title: socDetailedOccupations.title,
+        description: socDetailedOccupations.description,
+        sectorDistribution: socSectorDistribution.percentage
       })
       .from(socSectorDistribution)
-      .where(sql`sector_label = ${sectorLabel}`);
-    
-    console.log('Sector distribution records for', sectorLabel, ':', sectorCheck[0].count);
-
-    // Get sample records to verify data
-    const sectorSample = await db
-      .select()
-      .from(socSectorDistribution)
-      .where(sql`sector_label = ${sectorLabel}`)
-      .limit(5);
-      
-    console.log('Sample sector distribution records:', sectorSample);
-    
-    const results = await db.select({
-      code: socDetailedOccupations.code,
-      title: socDetailedOccupations.title,
-      description: socDetailedOccupations.description,
-      sectorDistribution: socSectorDistribution.percentage
-    })
-    .from(socDetailedOccupations)
-    .leftJoin(
-      socSectorDistribution,
-      and(
-        eq(socDetailedOccupations.code, socSectorDistribution.socCode),
-        eq(socSectorDistribution.sectorLabel, sectorLabel)
+      .innerJoin(
+        socDetailedOccupations,
+        eq(socDetailedOccupations.code, socSectorDistribution.socCode)
       )
-    )
-    .orderBy(desc(socSectorDistribution.percentage))
-    .limit(10);
-
-    console.log('Sample result record:', results[0]);
-
-    console.log('Top occupations found:', { count: results.length, first: results[0], sector: sectorLabel });
+      .where(eq(socSectorDistribution.sectorLabel, sectorLabel))
+      .orderBy(desc(socSectorDistribution.percentage))
+      .limit(10);
 
     return new Response(JSON.stringify({ items: results }), {
       headers: { 'Content-Type': 'application/json' }
