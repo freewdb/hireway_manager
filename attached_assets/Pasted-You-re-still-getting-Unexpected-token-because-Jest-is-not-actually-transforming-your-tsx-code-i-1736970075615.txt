@@ -1,0 +1,137 @@
+You’re still getting Unexpected token '<' because Jest is not actually transforming your .tsx code into plain JavaScript before running the test. In other words, Jest sees raw JSX and chokes on the < token.
+
+Below are the most common causes (and solutions) for that error—pick the one(s) that match your setup:
+
+1. Make Sure Jest Actually Uses Your jest.config.ts
+
+A. Rename or point Jest to your config
+
+By default, Jest will look for jest.config.js or a "jest" field in package.json. If your config is named jest.config.ts, you often need to explicitly tell Jest to use it, for example in your package.json scripts:
+
+{
+  "scripts": {
+    "test": "jest --config jest.config.ts"
+  }
+}
+
+Or rename the config to jest.config.js and export via module.exports:
+
+// jest.config.js
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  // etc...
+};
+
+(Then Jest will automatically pick it up without extra flags.)
+
+B. Confirm that your config is at the root of the project
+
+If your config is in a subfolder (e.g., /client/jest.config.ts), you may need to run:
+
+cd client
+npm test
+
+or:
+
+npm test -- --config ./client/jest.config.ts
+
+So that Jest can find the config file.
+
+2. Verify Your tsconfig.json Settings
+
+Jest + ts-jest relies on your TypeScript config to correctly parse .tsx. Make sure you have something like:
+
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "module": "CommonJS",
+    "jsx": "react",         // or "react-jsx" for newer React
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "client/src",           
+    // and include your test files if they're outside the main folder:
+    "client/src/components/SOCSearch/__tests__"
+  ]
+}
+
+Key points:
+	•	"jsx": "react" tells TypeScript to handle JSX syntax.
+	•	"module": "CommonJS" ensures that your .tsx code compiles in a Node-compatible way for Jest.
+	•	Make sure the path to your test files is included in "include" (otherwise TS might skip them).
+
+3. Double-Check the transform and testMatch in Jest Config
+
+Inside your Jest config, confirm you have:
+
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  transform: {
+    '^.+\\.(ts|tsx)$': 'ts-jest'
+  },
+  testMatch: [
+    '**/__tests__/**/*.(test|spec).(ts|tsx)'
+  ],
+  // ...
+};
+
+	•	'^.+\\.(ts|tsx)$': 'ts-jest' is crucial. If that’s missing, Jest won’t transform .tsx files.
+	•	testMatch should match where your test files live (SOCSearch.test.tsx in this case).
+
+4. Check for ESM vs CommonJS Conflicts
+
+If your entire project (or package.json) is set to "type": "module", Jest might need to be configured for ESM:
+	•	If you want to keep ESM style, switch to an ESM-compatible Jest preset, for example:
+
+// jest.config.js
+export default {
+  preset: 'ts-jest/presets/js-with-ts-esm',
+  testEnvironment: 'jsdom',
+  globals: {
+    'ts-jest': {
+      useESM: true
+    }
+  },
+  // ...
+};
+
+
+	•	Otherwise, ensure "type": "commonjs" in your package.json so that Jest can load your config and tests using CommonJS.
+
+(For most React + Jest + TypeScript setups, "commonjs" is simpler.)
+
+5. If You Use Babel, Ensure It’s Configured
+
+Some projects also use a Babel config (.babelrc or babel.config.js) for advanced transformations. Typically, though, ts-jest works by itself without needing Babel. If you do have Babel, confirm it’s set to handle React and TypeScript:
+
+// babel.config.js
+module.exports = {
+  presets: [
+    '@babel/preset-env',
+    '@babel/preset-react',
+    '@babel/preset-typescript'
+  ]
+};
+
+And in your Jest config:
+
+module.exports = {
+  // ...
+  transform: {
+    '^.+\\.(ts|tsx)$': 'babel-jest'
+  }
+};
+
+(Either Babel or ts-jest can handle TS; just don’t conflict them.)
+
+Putting It All Together
+	1.	Pick one approach to transform TypeScript + TSX in Jest: either ts-jest or Babel (with TypeScript presets).
+	2.	Ensure your jest.config.* is recognized by running npm test -- --config=jest.config.ts or moving the file to jest.config.js.
+	3.	Check your tsconfig.json so it supports React’s JSX and uses "module": "commonjs" (or set up ESM properly).
+	4.	Run your tests again.
+
+Once Jest correctly transforms .tsx files, you’ll no longer get Unexpected token '<'. Instead, it will actually run your test assertion (renders search input) and should pass—provided everything else is wired up correctly!
