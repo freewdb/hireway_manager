@@ -1,0 +1,83 @@
+That error typically means some part of your Jest or TypeScript config is referencing jest-preset-angular, which is intended for Angular testing—not React. Since you’re testing React code, you should remove all references to jest-preset-angular.
+
+Why This Error Happens
+	•	jest-preset-angular is for Angular projects. It includes an InlineFilesTransformer (among others) that helps transform Angular templates.
+	•	In a React project (or any non-Angular project), you don’t need jest-preset-angular. If your config or dependencies point to it, Jest will try to load Angular-specific code and fail with File not found: jest-preset-angular/build/InlineFilesTransformer.
+
+How to Fix It
+
+1. Remove jest-preset-angular from Your Dependencies
+
+Check your package.json for "jest-preset-angular" in dependencies or devDependencies. If you find it, remove it:
+
+npm uninstall jest-preset-angular
+
+Or edit package.json directly and then do npm install again.
+
+2. Check Your Jest Config for jest-preset-angular References
+
+Look at whichever Jest config file you’re using—jest.config.js, jest.config.ts, or a "jest" key in package.json. If you see:
+
+preset: 'jest-preset-angular'
+
+…then remove or replace it with:
+
+preset: 'ts-jest'
+
+For a React + TypeScript setup, you typically want:
+
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  // ...
+};
+
+3. Purge Leftover Angular Config
+
+Sometimes a leftover Angular config snippet can appear in a project that was previously an Angular codebase, or a template included it. For instance:
+	•	'jest-preset-angular/build/InlineFilesTransformer' might be in a transform array or a transformers block in your config.
+	•	A leftover setupJest.ts might be importing 'jest-preset-angular/setupJest'.
+
+Search your project for “jest-preset-angular” or “InlineFilesTransformer” and remove any references.
+
+4. Verify You’re Using ts-jest (Not Babel or Angular Tools)
+
+For a simple React + TypeScript project, your Jest config might look like this:
+
+// jest.config.js (or jest.config.ts)
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  transform: {
+    '^.+\\.(ts|tsx)$': 'ts-jest'
+  },
+  testMatch: [
+    '**/__tests__/**/*.(test|spec).(ts|tsx)'
+  ]
+  // ...
+};
+
+Or if you wrote it in TypeScript (jest.config.ts), be sure Jest picks that up:
+
+{
+  "scripts": {
+    "test": "jest --config jest.config.ts"
+  }
+}
+
+5. Remove Conflicting Angular-Specific Files (If Any)
+
+If your repo was once an Angular project (or includes Angular code), there could be leftover Angular-specific files or references. For example:
+	•	angular.json or karma.conf.js
+	•	A leftover src/test.ts that references jest-preset-angular
+	•	An older .babelrc that might import Angular transformations
+
+Remove or rename them so they don’t interfere with your React/Jest setup.
+
+Summary
+	•	You’ve got a React project, so you don’t need jest-preset-angular.
+	•	Uninstall or remove all references to jest-preset-angular.
+	•	Make sure your Jest config uses ts-jest (for TypeScript) and jsdom (for React DOM testing).
+	•	After cleaning up, re-run npm test.
+
+Once those Angular references are gone, Jest will stop looking for InlineFilesTransformer, and you should no longer see the File not found: jest-preset-angular/build/InlineFilesTransformer error.
