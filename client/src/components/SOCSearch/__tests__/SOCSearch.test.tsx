@@ -2,6 +2,7 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SOCSearch } from '../index';
+import type { JobTitleSearchResult } from '@/types/schema';
 
 describe('SOCSearch', () => {
   it('renders search input', () => {
