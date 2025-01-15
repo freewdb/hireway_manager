@@ -1,0 +1,124 @@
+You’re still seeing the same “Unexpected token <” error, which means Jest is not actually transforming your .tsx file into valid JavaScript before running it. This usually boils down to one (or more) of the following:
+	1.	Jest is ignoring your config (it’s not picking up the jest.config.ts you created).
+	2.	Your tsconfig.json or jest.config still isn’t set up quite right (for example, an ESM vs CommonJS mismatch).
+	3.	You have a package/module setup that needs additional Babel or Jest transforms.
+
+Below are the most likely fixes.
+
+1. Make Sure Jest Actually Uses Your jest.config.ts
+
+By default, Jest looks for these files in the project root:
+	•	jest.config.js, jest.config.cjs, or jest.config.mjs
+	•	A "jest" field in package.json
+	•	Or a jest.config.ts only if certain conditions are met
+
+If you’re using jest.config.ts, you often have to explicitly tell Jest to use it. One way is to adjust your package.json test script:
+
+{
+  "scripts": {
+    "test": "jest --config jest.config.ts"
+  }
+}
+
+So you’d run:
+
+npm test
+
+This ensures Jest reads jest.config.ts. Otherwise, it might be ignoring it and using a default config that doesn’t process TSX.
+
+Alternatively, rename the config to jest.config.js and export with module.exports:
+
+// jest.config.js
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  // ...
+};
+
+Then no extra --config flag is needed—Jest automatically picks it up.
+
+2. Confirm tsconfig.json is Compatible with ts-jest
+
+ts-jest needs a suitable TypeScript config. At minimum:
+
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "module": "CommonJS",
+    "lib": ["DOM", "ES2019"],
+    "jsx": "react",             // or "react-jsx" for React 17+
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "client/src"
+    // And if your tests are outside `client/src`, add them:
+    // "client/src/components/SOCSearch/__tests__"
+  ]
+}
+
+	•	"jsx": "react" (or "react-jsx") is crucial for TS to parse <JSX> syntax.
+	•	"module": "CommonJS" is recommended if you want the simplest Jest setup (since Jest runs in a Node environment).
+	•	If your entire project is set to ESM ("type": "module" in package.json), you’d need an ESM-based config for Jest. That’s more complicated (see Jest docs on ESM).
+
+3. Double-Check the transform in Your Jest Config
+
+In your jest.config.ts, you have:
+
+transform: {
+  '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.json' }]
+},
+
+That’s good. It tells Jest to pass all .ts/.tsx files to ts-jest, using tsconfig.json. Just be sure tsconfig.json is at the same level as jest.config.ts (or adjust the path accordingly).
+
+Also, confirm your testMatch:
+
+testMatch: ['**/__tests__/**/*.(test|spec).(ts|tsx)']
+
+Make sure it indeed matches client/src/components/SOCSearch/__tests__/SOCSearch.test.tsx. You could do something simpler, like:
+
+testMatch: ['**/?(*.)+(test|spec).[tj]s?(x)']
+
+(Which picks up any *.test.tsx or *.spec.tsx.)
+
+4. Check for Babel Conflicts or Old Config
+
+Sometimes, a leftover Babel config can override or conflict with ts-jest. For a typical TypeScript + React + Jest setup, you don’t need Babel—just ts-jest.
+	•	If you have a .babelrc or babel.config.js, remove or rename them temporarily to see if they’re interfering.
+	•	If you do want Babel for other reasons, then you might set transform: { '^.+\\.(ts|tsx)$': 'babel-jest' } and add @babel/preset-typescript + @babel/preset-react.
+
+5. Confirm No transformIgnorePatterns Is Skipping Your Code
+
+If your jest config has something like:
+
+transformIgnorePatterns: ['node_modules/'],
+
+That’s normal. But if for some reason your src code is matched by an ignore pattern, it would skip transformation and blow up on <JSX>.
+(Likewise if your code is inside node_modules, which is unusual.)
+
+6. Verify or Remove "type": "module" (If Present)
+
+If your package.json has "type": "module", you’re telling Node to treat the code as ESM. Jest needs some extra steps to handle ESM + TypeScript + JSX together. If you don’t specifically need ESM, switching to "type": "commonjs" makes life easier with Jest:
+
+{
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest"
+  },
+  // ...
+}
+
+Then your config files can be standard CommonJS or TypeScript via ts-jest.
+
+Summary of Next Steps
+	1.	Ensure Jest sees your config:
+	•	If it’s jest.config.ts, run npm test -- --config jest.config.ts or rename it to jest.config.js.
+	2.	Double-check:
+	•	tsconfig.json has "jsx": "react" or "react-jsx" and "module": "CommonJS".
+	•	jest.config has transform: { '^.+\\.(ts|tsx)$': 'ts-jest' }.
+	3.	Remove any Babel config if you’re not intentionally using Babel.
+	4.	Confirm there’s no ESM vs CommonJS conflict ("type": "module" in package.json).
+	5.	Try again with npm test.
+
+With those steps aligned, Jest should properly transpile your .tsx test file (no more < syntax errors) and run the test as expected.
