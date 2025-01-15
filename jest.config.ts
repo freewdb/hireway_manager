@@ -8,14 +8,7 @@ const config: Config = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
       tsconfig: './tsconfig.json',
-      jsx: 'react-jsx',
-      diagnostics: {
-        ignoreCodes: [1343]
-      },
-      astTransformers: {
-        before: [],
-        after: ['jest-preset-angular/build/InlineFilesTransformer', 'jest-preset-angular/build/StripStylesTransformer']
-      }
+      jsx: 'react-jsx'
     }]
   },
   moduleNameMapper: {
