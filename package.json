@@ -4,6 +4,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
+    "test": "jest",
     "import:sector": "tsx scripts/import_sector_distribution.ts",
     "import-sector-lookup": "tsx scripts/import-sector-lookup.ts",
     "dev": "tsx server/index.ts",
