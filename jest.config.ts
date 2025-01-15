@@ -4,10 +4,11 @@ import type { Config } from 'jest';
 const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  roots: ['<rootDir>/client/src'],
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.json'
+    '^.+\\.tsx?$': ['ts-jest', {
+      tsconfig: 'tsconfig.json',
+      jsx: 'react-jsx'
     }]
   },
   moduleNameMapper: {
@@ -16,7 +17,8 @@ const config: Config = {
     '^../../../db/schema$': '<rootDir>/client/src/types/schema'
   },
   setupFilesAfterEnv: ['<rootDir>/client/src/setupTests.ts'],
-  testMatch: ['**/__tests__/**/*.(test|spec).(ts|tsx)']
+  testMatch: ['**/__tests__/**/*.(test|spec).(ts|tsx)'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node']
 };
 
 export default config;
