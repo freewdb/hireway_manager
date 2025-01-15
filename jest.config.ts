@@ -7,8 +7,15 @@ const config: Config = {
   roots: ['<rootDir>/client/src'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
-      jsx: 'react-jsx'
+      tsconfig: './tsconfig.json',
+      jsx: 'react-jsx',
+      diagnostics: {
+        ignoreCodes: [1343]
+      },
+      astTransformers: {
+        before: [],
+        after: ['jest-preset-angular/build/InlineFilesTransformer', 'jest-preset-angular/build/StripStylesTransformer']
+      }
     }]
   },
   moduleNameMapper: {
@@ -17,7 +24,7 @@ const config: Config = {
     '^../../../db/schema$': '<rootDir>/client/src/types/schema'
   },
   setupFilesAfterEnv: ['<rootDir>/client/src/setupTests.ts'],
-  testMatch: ['**/__tests__/**/*.(test|spec).(ts|tsx)'],
+  testMatch: ['**/__tests__/**/*.(test|spec).[jt]s?(x)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node']
 };
 
