@@ -34,15 +34,14 @@ interface SearchResponse {
 }
 
 async function consolidateResults(items: any[], query: string, sector?: string, showAll?: boolean): Promise<ConsolidatedJobResult[]> {
-  const SECTOR_FILTER_THRESHOLD = 1.0;
+  const SECTOR_FILTER_THRESHOLD = 0.0; // Remove initial threshold to see all results
 
   let filteredItems = items;
-  if (!showAll && sector) {
-    filteredItems = filteredItems.filter(item => {
-      const dist = item.sector_distribution ?? 0;
-      return dist >= SECTOR_FILTER_THRESHOLD;
-    });
-  }
+  console.log('Consolidating items:', {
+    totalItems: items.length,
+    firstItem: items[0],
+    sector
+  });
 
   const resultsByCode = new Map<string, ConsolidatedJobResult>();
   const queryLower = query.toLowerCase();
@@ -99,8 +98,8 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
         }
       });
 
-      // Update sector distribution if not already set
-      if (!existing.sectorDistribution && item.sectorDistribution) {
+      // Always take the highest sector distribution
+      if (item.sectorDistribution > (existing.sectorDistribution || 0)) {
         existing.sectorDistribution = item.sectorDistribution;
       }
 
