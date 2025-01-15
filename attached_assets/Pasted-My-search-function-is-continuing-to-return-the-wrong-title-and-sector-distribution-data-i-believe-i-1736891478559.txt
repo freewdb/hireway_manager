@@ -1,0 +1,394 @@
+My search function is continuing to return the wrong title and sector distribution data. i believe it has something to do with the way deduplication is occurring. Please review the logs and code and help diagnose the problem(s).
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+9:42:38 PM [express] serving on port 3000
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+Fetching top occupations: { sector: '21', sectorLabel: 'NAICS21' }
+9:42:56 PM [express] GET /api/soc/top 200 in 414ms :: {"items":[{"code":"47-5041.00","title":"Contin…
+9:42:56 PM [express] GET /api/soc/top 200 in 382ms :: {"items":[{"code":"47-5041.00","title":"Contin…
+9:42:56 PM [express] GET /api/soc/top 200 in 432ms :: {"items":[{"code":"47-5041.00","title":"Contin…
+9:42:56 PM [express] GET /api/soc/top 200 in 383ms :: {"items":[{"code":"47-5041.00","title":"Contin…
+Search request received: {
+  searchTerm: 'Forklift operator',
+  queryParams: { search: 'Forklift operator', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: Forklift operator
+Initial database query results: {
+  count: 3,
+  searchTerm: 'Forklift operator',
+  firstResult: {
+    code: '47-2073.00',
+    title: 'Operating Engineers and Other Construction Equipment Operators',
+    searchableText: 'Operating Engineers and Other Construction Equipment Operators Operate one or several types of power'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 222,
+  fuseResultsCount: 222,
+  topResults: [
+    { title: 'Forklift Operator', score: 0.05947176957043451 },
+    { title: 'Forklift Operator', score: 0.06144114080425127 },
+    { title: 'Forklift Operator', score: 0.06254017281936673 }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '53-7051.00',
+    title: 'Forklift Operator',
+    isAlternative: true,
+    rank: 0.846475407386609,
+    description: 'Operate industrial trucks or tractors equipped to move materials around a warehouse, storage yard, factory, construction site, or similar location.',
+    majorGroup: {
+      id: 23,
+      code: '53-0000',
+      title: 'Major Group 53',
+      description: 'Major occupational group 53',
+      searchVector: 'Major Group 53'
+    },
+    minorGroup: {
+      id: 23,
+      code: '53--000',
+      majorGroupCode: '53-0000',
+      title: 'Minor Group 53--000',
+      description: 'Minor occupational group 53--000',
+      searchVector: 'Minor Group 53--000'
+    }
+  }
+}
+9:43:11 PM [express] GET /api/job-titles 200 in 341ms :: [{"code":"53-7051.00","title":"Forklift Ope…
+Search request received: {
+  searchTerm: 'Forklift operato',
+  queryParams: { search: 'Forklift operato', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: Forklift operato
+Initial database query results: {
+  count: 3,
+  searchTerm: 'Forklift operato',
+  firstResult: {
+    code: '47-2073.00',
+    title: 'Operating Engineers and Other Construction Equipment Operators',
+    searchableText: 'Operating Engineers and Other Construction Equipment Operators Operate one or several types of power'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 222,
+  fuseResultsCount: 222,
+  topResults: [
+    { title: 'Forklift Operator', score: 0.05798104306702944 },
+    { title: 'Forklift Operator', score: 0.060220960883504364 },
+    { title: 'Forklift Operator', score: 0.06149072312186553 }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '53-7051.00',
+    title: 'Forklift Operator',
+    isAlternative: true,
+    rank: 0.8478170612396735,
+    description: 'Operate industrial trucks or tractors equipped to move materials around a warehouse, storage yard, factory, construction site, or similar location.',
+    majorGroup: {
+      id: 23,
+      code: '53-0000',
+      title: 'Major Group 53',
+      description: 'Major occupational group 53',
+      searchVector: 'Major Group 53'
+    },
+    minorGroup: {
+      id: 23,
+      code: '53--000',
+      majorGroupCode: '53-0000',
+      title: 'Minor Group 53--000',
+      description: 'Minor occupational group 53--000',
+      searchVector: 'Minor Group 53--000'
+    }
+  }
+}
+9:43:18 PM [express] GET /api/job-titles 200 in 159ms :: [{"code":"53-7051.00","title":"Forklift Ope…
+Search request received: {
+  searchTerm: 'Contin',
+  queryParams: { search: 'Contin', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: Contin
+Initial database query results: {
+  count: 28,
+  searchTerm: 'Contin',
+  firstResult: {
+    code: '11-9033.00',
+    title: 'Education Administrators, Postsecondary',
+    searchableText: 'Education Administrators, Postsecondary Plan, direct, or coordinate student instruction, administrat'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 7116,
+  fuseResultsCount: 7116,
+  topResults: [
+    { title: 'Continuity Manager', score: 0.006202684608570963 },
+    { title: 'Continuity Editor', score: 0.006424852687181443 },
+    { title: 'Continuity Reader', score: 0.006424852687181443 }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '47-5041.00',
+    title: 'Continuous Mining Machine Operators',
+    isAlternative: false,
+    rank: 0.9709844441000498,
+    description: 'Operate self-propelled mining machines that rip coal, metal and nonmetal ores, rock, stone, or sand from the mine face and load it onto conveyors, shuttle cars, or trucks in a continuous operation.',
+    majorGroup: {
+      id: 12,
+      code: '47-0000',
+      title: 'Major Group 47',
+      description: 'Major occupational group 47',
+      searchVector: 'Major Group 47'
+    },
+    minorGroup: {
+      id: 12,
+      code: '47--000',
+      majorGroupCode: '47-0000',
+      title: 'Minor Group 47--000',
+      description: 'Minor occupational group 47--000',
+      searchVector: 'Minor Group 47--000'
+    }
+  }
+}
+9:43:22 PM [express] GET /api/job-titles 200 in 443ms :: [{"code":"47-5041.00","title":"Continuous M…
+Search request received: {
+  searchTerm: 'Continuous ',
+  queryParams: { search: 'Continuous ', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: Continuous 
+Initial database query results: {
+  count: 15,
+  searchTerm: 'Continuous ',
+  firstResult: {
+    code: '13-1081.01',
+    title: 'Logistics Engineers',
+    searchableText: 'Logistics Engineers Design or analyze operational solutions for projects such as transportation opti'
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 5714,
+  fuseResultsCount: 5714,
+  topResults: [
+    { title: 'Continuous Miner', score: 0.007209481069954119 },
+    { title: 'Continuous Still Operator', score: 0.013856843493219176 },
+    {
+      title: 'Continuous Crusher Operator',
+      score: 0.017372032769653795
+    }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '47-5041.00',
+    title: 'Continuous Mining Machine Operators',
+    isAlternative: false,
+    rank: 0.9698765988120919,
+    description: 'Operate self-propelled mining machines that rip coal, metal and nonmetal ores, rock, stone, or sand from the mine face and load it onto conveyors, shuttle cars, or trucks in a continuous operation.',
+    majorGroup: {
+      id: 12,
+      code: '47-0000',
+      title: 'Major Group 47',
+      description: 'Major occupational group 47',
+      searchVector: 'Major Group 47'
+    },
+    minorGroup: {
+      id: 12,
+      code: '47--000',
+      majorGroupCode: '47-0000',
+      title: 'Minor Group 47--000',
+      description: 'Minor occupational group 47--000',
+      searchVector: 'Minor Group 47--000'
+    }
+  }
+}
+9:43:23 PM [express] GET /api/job-titles 200 in 580ms :: [{"code":"47-5041.00","title":"Continuous M…
+Search request received: {
+  searchTerm: 'Continuous minin',
+  queryParams: { search: 'Continuous minin', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: Continuous minin
+Initial database query results: {
+  count: 1,
+  searchTerm: 'Continuous minin',
+  firstResult: {
+    code: '47-5041.00',
+    title: 'Continuous Mining Machine Operators',
+    searchableText: 'Continuous Mining Machine Operators Operate self-propelled mining machines that rip coal, metal and '
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 35,
+  fuseResultsCount: 35,
+  topResults: [
+    {
+      title: 'Continuous Mining Machine Operators',
+      score: 0.1445546717381799
+    },
+    {
+      title: 'Continuous Mining Machine Miner',
+      score: 0.1445546717381799
+    },
+    {
+      title: 'Continuous Mining Machine Operator',
+      score: 0.1445546717381799
+    }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '47-5041.00',
+    title: 'Continuous Mining Machine Operators',
+    isAlternative: false,
+    rank: 0.8554453282618201,
+    description: 'Operate self-propelled mining machines that rip coal, metal and nonmetal ores, rock, stone, or sand from the mine face and load it onto conveyors, shuttle cars, or trucks in a continuous operation.',
+    majorGroup: {
+      id: 12,
+      code: '47-0000',
+      title: 'Major Group 47',
+      description: 'Major occupational group 47',
+      searchVector: 'Major Group 47'
+    },
+    minorGroup: {
+      id: 12,
+      code: '47--000',
+      majorGroupCode: '47-0000',
+      title: 'Minor Group 47--000',
+      description: 'Minor occupational group 47--000',
+      searchVector: 'Minor Group 47--000'
+    }
+  }
+}
+9:43:24 PM [express] GET /api/job-titles 200 in 124ms :: [{"code":"47-5041.00","title":"Continuous M…
+Search request received: {
+  searchTerm: 'Continuous mining ',
+  queryParams: { search: 'Continuous mining ', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: Continuous mining 
+Initial database query results: {
+  count: 1,
+  searchTerm: 'Continuous mining ',
+  firstResult: {
+    code: '47-5041.00',
+    title: 'Continuous Mining Machine Operators',
+    searchableText: 'Continuous Mining Machine Operators Operate self-propelled mining machines that rip coal, metal and '
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 35,
+  fuseResultsCount: 35,
+  topResults: [
+    {
+      title: 'Continuous Mining Machine Operators',
+      score: 0.1445546717381799
+    },
+    {
+      title: 'Continuous Mining Machine Miner',
+      score: 0.1445546717381799
+    },
+    {
+      title: 'Continuous Mining Machine Operator',
+      score: 0.1445546717381799
+    }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '47-5041.00',
+    title: 'Continuous Mining Machine Operators',
+    isAlternative: false,
+    rank: 0.8554453282618201,
+    description: 'Operate self-propelled mining machines that rip coal, metal and nonmetal ores, rock, stone, or sand from the mine face and load it onto conveyors, shuttle cars, or trucks in a continuous operation.',
+    majorGroup: {
+      id: 12,
+      code: '47-0000',
+      title: 'Major Group 47',
+      description: 'Major occupational group 47',
+      searchVector: 'Major Group 47'
+    },
+    minorGroup: {
+      id: 12,
+      code: '47--000',
+      majorGroupCode: '47-0000',
+      title: 'Minor Group 47--000',
+      description: 'Minor occupational group 47--000',
+      searchVector: 'Minor Group 47--000'
+    }
+  }
+}
+9:43:27 PM [express] GET /api/job-titles 200 in 140ms :: [{"code":"47-5041.00","title":"Continuous M…
+Search request received: {
+  searchTerm: 'Continuous mining machine operators',
+  queryParams: { search: 'Continuous mining machine operators', sector: '21' },
+  path: '/api/job-titles'
+}
+Attempting exact match search for: Continuous mining machine operators
+Initial database query results: {
+  count: 1,
+  searchTerm: 'Continuous mining machine operators',
+  firstResult: {
+    code: '47-5041.00',
+    title: 'Continuous Mining Machine Operators',
+    searchableText: 'Continuous Mining Machine Operators Operate self-propelled mining machines that rip coal, metal and '
+  }
+}
+Fuzzy search results: {
+  searchItemsCount: 35,
+  fuseResultsCount: 35,
+  topResults: [
+    {
+      title: 'Continuous Mining Machine Operators',
+      score: 0.21371843564918871
+    },
+    {
+      title: 'Continuous Mining Machine Operator',
+      score: 0.25310764559414434
+    },
+    {
+      title: 'Continuous Mining Machine Miner',
+      score: 0.3678540927194842
+    }
+  ]
+}
+Returning results: {
+  count: 20,
+  firstResult: {
+    code: '47-5041.00',
+    title: 'Continuous Mining Machine Operators',
+    isAlternative: false,
+    rank: 0.7862815643508113,
+    description: 'Operate self-propelled mining machines that rip coal, metal and nonmetal ores, rock, stone, or sand from the mine face and load it onto conveyors, shuttle cars, or trucks in a continuous operation.',
+    majorGroup: {
+      id: 12,
+      code: '47-0000',
+      title: 'Major Group 47',
+      description: 'Major occupational group 47',
+      searchVector: 'Major Group 47'
+    },
+    minorGroup: {
+      id: 12,
+      code: '47--000',
+      majorGroupCode: '47-0000',
+      title: 'Minor Group 47--000',
+      description: 'Minor occupational group 47--000',
+      searchVector: 'Minor Group 47--000'
+    }
+  }
+}
+9:43:29 PM [express] GET /api/job-titles 200 in 117ms :: [{"code":"47-5041.00","title":"Continuous M…
