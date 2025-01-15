@@ -5,6 +5,7 @@ import { SOCSearch } from '../index';
 describe('SOCSearch', () => {
   it('renders search input', () => {
     render(<SOCSearch onSelect={() => {}} />);
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    const input = screen.getByRole('combobox');
+    expect(input).toBeInTheDocument();
   });
 });
