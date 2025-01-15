@@ -1,0 +1,158 @@
+You’re seeing two separate issues in your Jest test run:
+	1.	Jest can’t parse JSX/TSX (the “Unexpected token <” error).
+	2.	TypeScript can’t find the ../../../db/schema module (the “Cannot find module … or its corresponding type declarations” error).
+
+Below are typical steps to fix both. Most often, you need to configure Jest to handle TypeScript + React (TSX) properly and make sure your TypeScript paths/modules are set up.
+
+1. Configure Jest for TypeScript & React
+
+A. Install necessary dev dependencies
+
+Make sure you have all of the following installed:
+
+npm install --save-dev \
+  jest \
+  ts-jest \
+  @types/jest \
+  @testing-library/react \
+  @testing-library/jest-dom \
+  @testing-library/user-event \
+  typescript
+
+(Some of these you may already have.)
+
+B. Add (or update) your Jest config
+
+Create a jest.config.js or jest.config.ts at your project root with something like:
+
+/** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
+module.exports = {
+  // Use ts-jest preset which preconfigures a TypeScript environment
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+
+  // If your files are in `src/`, adjust patterns as needed
+  testMatch: ['**/__tests__/**/*.+(ts|tsx|js)'],
+  
+  // Transform TS/TSX via ts-jest
+  transform: {
+    '^.+\\.(ts|tsx)$': 'ts-jest',
+  },
+
+  // If you have custom module path aliases in tsconfig, replicate them here
+  // moduleNameMapper: {
+  //   '^@/(.*)$': '<rootDir>/src/$1'
+  // },
+
+  // Optionally, ignore transforms in node_modules except specific packages
+  // transformIgnorePatterns: ['node_modules/(?!some-es-lib)'],
+
+  // Add jest-dom custom matchers
+  setupFilesAfterEnv: ['@testing-library/jest-dom'],
+};
+
+Alternatively, if you have a “jest” section in your package.json or a jest field in your tsconfig.json, ensure it has at least:
+
+{
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "jsdom",
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest"
+    },
+    "setupFilesAfterEnv": ["@testing-library/jest-dom"]
+  }
+}
+
+C. Ensure you have a valid tsconfig.json
+
+At minimum, your tsconfig.json should have:
+
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "lib": ["DOM", "ES2019"],
+    "jsx": "react",
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    // ...
+  },
+  "include": [
+    "src",
+    // Include test files if they're outside "src"
+    "client/src/components/SOCSearch/__tests__"
+  ]
+}
+
+(Adjust paths, libs, and module settings to match your environment.)
+
+This ensures TypeScript knows how to compile TSX files.
+
+2. Fix the “Cannot find module ‘../../../db/schema’” error
+
+TypeScript is complaining it can’t find ../../../db/schema. Typically this means:
+	•	The file path is wrong (the folder structure doesn’t actually have db/schema in that exact location).
+	•	Or there are missing type definitions (e.g., no index.d.ts or .ts files there).
+	•	Or you have path alias misconfigurations.
+
+A. Check your folder structure
+
+Make sure client/src/components/SOCSearch/test.tsx can really import ../../../db/schema:
+
+- project root
+  ┣ db/
+  ┃ ┗ schema.ts  <-- or schema/index.ts, etc.
+  ┗ client/
+    ┣ src/
+    ┃ ┣ components/
+    ┃ ┃ ┗ SOCSearch/
+    ┃ ┃   ┣ __tests__/
+    ┃ ┃   ┣ test.tsx
+    ┃ ┗ ...
+
+If your actual project structure differs (for example, db is in a different location or named differently), you need to fix the import path.
+
+B. Check that ../../../db/schema has a valid .ts or .d.ts file
+
+If schema is a folder:
+	•	Make sure it has an index.ts or index.d.ts (or some .ts file that exports the type JobTitleSearchResult).
+
+If it’s a single file named schema.ts, ensure that’s the correct file name. If it’s written in JavaScript with JSDoc, TypeScript might not automatically pick up the types.
+
+C. Verify your import
+
+If your file is db/schema.ts, import it directly:
+
+import type { JobTitleSearchResult } from '../../../db/schema';
+
+But if it’s db/schema/index.ts, do:
+
+import type { JobTitleSearchResult } from '../../../db/schema/index';
+
+Or if you have a baseUrl or path aliases in tsconfig.json (e.g., "baseUrl": ".", "paths": { "@db/*": ["db/*"] }), you might do:
+
+import type { JobTitleSearchResult } from '@db/schema';
+
+(In that case, also configure moduleNameMapper in jest.config.js so Jest can resolve @db/....)
+
+3. Run your tests again
+
+After updating the config, try running:
+
+npm run test
+
+or
+
+jest
+
+You should no longer see the “Unexpected token <” error if Jest is correctly transforming .tsx files.
+And if TypeScript can now resolve ../../../db/schema, the “Cannot find module … or its corresponding type declarations” error should be resolved.
+
+Summary
+	1.	Install ts-jest, update your Jest config to handle TypeScript + React (TSX).
+	2.	Check the import path and make sure the file or folder ../../../db/schema actually exists and exports JobTitleSearchResult.
+	3.	Adjust your tsconfig.json to include the paths where your code/tests live, and ensure you have the right compiler options (e.g., "jsx": "react").
+
+With these steps, your tests should pass (assuming there aren’t actual test failures).

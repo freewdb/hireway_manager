@@ -1,0 +1,76 @@
+Looks like you’ve successfully installed (or moved) those testing libraries into devDependencies. The next steps are usually:
+	1.	Create or update your Jest config (jest.config.js or jest.config.ts)
+	2.	Check your tsconfig.json to make sure it’s set up correctly for React/TypeScript testing
+	3.	Run tests with npm test (or jest) again
+
+Below is a quick outline of what that might look like:
+
+1. Create/Update a Jest Config
+
+In your project’s root directory, create jest.config.js (if you don’t already have one).
+(Or if you prefer TypeScript configs, name it jest.config.ts.)
+
+jest.config.js example:
+
+/** @type {import('ts-jest').JestConfigWithTsJest} */
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  testMatch: [
+    '**/__tests__/**/*.(test|spec).(ts|tsx)'
+  ],
+  transform: {
+    '^.+\\.(ts|tsx)$': 'ts-jest',
+  },
+  setupFilesAfterEnv: [
+    '@testing-library/jest-dom'
+  ],
+  // If you have path aliases in tsconfig, mirror them here with `moduleNameMapper`.
+  // moduleNameMapper: {
+  //   '^@/(.*)$': '<rootDir>/src/$1'
+  // },
+};
+
+In many setups, "jest": { ... } can also live inside your package.json or inside a jest field in tsconfig.json; but having a dedicated jest.config.js is more common.
+
+2. Verify Your tsconfig.json
+
+Make sure your tsconfig.json is set up to handle React (TSX). For example:
+
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "module": "CommonJS",
+    "lib": ["DOM", "ES2019"],
+    "jsx": "react",  // or "react-jsx" if using React 17+
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    // other options...
+  },
+  "include": [
+    "src",
+    // If your tests or other code are outside "src", add those paths:
+    "client/src/components/SOCSearch/__tests__"
+  ]
+}
+
+(Adjust directories/path names to match your actual project structure.)
+
+3. Run Tests
+
+When everything is in place, run:
+
+npm test
+
+(Or jest directly, if that’s how your scripts are set up.)
+
+If everything is configured properly, Jest should now be able to compile .tsx files and run your tests without the “Unexpected token <” error. It should also be able to find your types and resolve imports like ../../../db/schema.
+
+Summary
+	•	You’ve installed the right dev dependencies for TypeScript + Jest + Testing Library.
+	•	Add a Jest config (or ensure one already exists) specifying ts-jest for transforms.
+	•	Update tsconfig.json to handle React TSX.
+	•	Run npm test and confirm the tests can parse .tsx and find the modules.
+
+With these steps, you’ll typically fix those parsing and module resolution errors and be able to successfully run your React + TypeScript tests.
