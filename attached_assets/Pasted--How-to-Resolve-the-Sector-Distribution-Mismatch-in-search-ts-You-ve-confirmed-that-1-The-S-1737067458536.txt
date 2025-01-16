@@ -1,0 +1,102 @@
+# How to Resolve the Sector Distribution Mismatch in `search.ts`
+
+You’ve confirmed that:
+
+1. The **SOC code** fields match exactly in both tables (no “.00” vs. no “.00” mismatch).  
+2. There is **no trailing space** or case difference in the `sector_label` field (e.g., `'NAICS21'` vs. `'NAICS21 '`).
+
+Given that, the remaining culprit is almost certainly **how the `search.ts` code is constructing and using the sector label** in the SQL subselect. While `top.ts` uses a string variable (like `"NAICS21"`), your `search.ts` code might be doing something like:
+
+```ts
+WHERE sd.sector_label = NAICS${sector}
+```
+
+…which can be misinterpreted by drizzle or your SQL as a column reference instead of a string.
+
+Below are **direct instructions** for your dev team to fix this:
+
+---
+
+## 1. Construct the Same `sectorLabel` in `search.ts` as in `top.ts`
+
+In **`top.ts`**, you do something like:
+
+```ts
+const sector = url.searchParams.get('sector')?.trim();
+const sectorLabel = sector ? `NAICS${sector}` : null;
+```
+
+**Use that same approach** in **`search.ts`**. For example:
+
+```ts
+// search.ts
+
+const url = new URL(req.url);
+const rawSector = url.searchParams.get('sector')?.trim();
+const sectorLabel = rawSector ? `NAICS${rawSector}` : null;
+```
+
+This ensures you have a **string** like `"NAICS21"` when `rawSector` is `"21"`.
+
+---
+
+## 2. Pass `sectorLabel` Properly in the Subselect
+
+In **`search.ts`**, change your subselect logic from something like:
+
+```ts
+sectorDistribution: sql<number>`
+  COALESCE(
+    (
+      SELECT percentage::numeric
+      FROM ${socSectorDistribution} sd 
+      WHERE sd.soc_code = ${socDetailedOccupations.code}
+        AND sd.sector_label = NAICS${sector}
+    ),
+    0
+  )`.as('sector_distribution'),
+```
+
+…to:
+
+```ts
+sectorDistribution: sql<number>`
+  COALESCE(
+    (
+      SELECT percentage::numeric
+      FROM ${socSectorDistribution} sd
+      WHERE sd.soc_code = ${socDetailedOccupations.code}
+        AND sd.sector_label = ${sectorLabel}
+    ),
+    0
+  )`.as('sector_distribution'),
+```
+
+Notice that we’re now using **`${sectorLabel}`** (the string) rather than some interpolation that might be interpreted as a column reference. Drizzle will properly convert **`${sectorLabel}`** into the SQL string `'NAICS21'`, matching the data in `soc_sector_distribution`.
+
+---
+
+## 3. Verify It Works
+
+1. **Run a direct SQL query** in your DB console to confirm that rows exist where:
+   ```sql
+   soc_code = '47-5041.00'
+   AND sector_label = 'NAICS21';
+   ```
+   You should see at least one row with a non-zero percentage.  
+
+2. **Reload your server**, then query:
+   ```
+   GET /api/job-titles?search=forklift%20operator&sector=21
+   ```
+   Check the `sectorDistribution` field for `47-5041.00`. It should now be non-zero (e.g., `100`) and get boosted above other forklift codes with zero distribution for NAICS21.
+
+---
+
+## 4. Confirm No Other Mismatches
+
+- **SOC code**: Ensure `47-5041.00` is consistently stored both in `socDetailedOccupations` and `soc_sector_distribution`.  
+- **Sector label**: Ensure you only use `'NAICS21'` (no spaces, no punctuation).  
+- **Test**: Write a Jest test or manual test that verifies you get the same distribution from `search.ts` as you do from `top.ts` when looking at the same code.
+
+Once you apply these changes, the mismatch in sector distribution between `top.ts` and `search.ts` should disappear, and you’ll see the correct data in both endpoints.
