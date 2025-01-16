@@ -207,11 +207,12 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const query = url.searchParams.get('search')?.trim() || '';
-    const sector = url.searchParams.get('sector')?.trim();
+    const rawSector = url.searchParams.get('sector')?.trim();
+    const sectorLabel = rawSector ? `NAICS${rawSector}` : null;
 
     console.log('Search request:', {
       query,
-      sector,
+      sector: rawSector,
       alternativeTitles: true, // Flag to show we're checking alt titles
       timestamp: new Date().toISOString()
     });
@@ -282,7 +283,7 @@ export async function GET(req: Request) {
               SELECT percentage::numeric
               FROM ${socSectorDistribution} sd 
               WHERE sd.soc_code = ${socDetailedOccupations.code}
-              AND sd.sector_label = ${sector ? `NAICS${sector}` : sql`'NONE'`}
+                AND sd.sector_label = ${sectorLabel}
             ),
             0
           )`.as('sector_distribution'),
@@ -316,7 +317,7 @@ export async function GET(req: Request) {
       .limit(100);
 
     if (exactMatches.length >= 5) {
-      const results = await consolidateResults(exactMatches, query, sector);
+      const results = await consolidateResults(exactMatches, query, rawSector);
 
       const codeFrequency = results.reduce((acc, curr) => {
         acc[curr.code] = (acc[curr.code] || 0) + 1;
@@ -356,7 +357,7 @@ export async function GET(req: Request) {
         description: socDetailedOccupations.description,
         alternativeTitles: socDetailedOccupations.alternativeTitles,
         searchableText: socDetailedOccupations.searchableText,
-        sectorDistribution: sector ? socSectorDistribution.percentage : sql<number>`0`,
+        sectorDistribution: sectorLabel ? socSectorDistribution.percentage : sql<number>`0`,
         majorGroup: {
           code: socMajorGroups.code,
           title: socMajorGroups.title,
@@ -372,7 +373,7 @@ export async function GET(req: Request) {
         socSectorDistribution,
         and(
           eq(socDetailedOccupations.code, socSectorDistribution.socCode),
-          eq(socSectorDistribution.sectorLabel, sector ? `NAICS${sector}` : sql`''`)
+          eq(socSectorDistribution.sectorLabel, sectorLabel ? sectorLabel : sql`''`)
         )
       )
       .from(socDetailedOccupations)
@@ -403,7 +404,7 @@ export async function GET(req: Request) {
     });
 
     const fuseResults = fuse.search(query);
-    const results = await consolidateResults(fuseResults.map(r => r.item), query, sector);
+    const results = await consolidateResults(fuseResults.map(r => r.item), query, rawSector);
 
     const codeFrequency = results.reduce((acc, curr) => {
       acc[curr.code] = (acc[curr.code] || 0) + 1;
