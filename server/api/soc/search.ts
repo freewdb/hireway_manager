@@ -198,6 +198,21 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
   });
 
     const results = Array.from(resultsByCode.values());
+
+    // Check DB directly for this specific combination
+    const checkOne = await db.select({
+      code: socSectorDistribution.socCode,
+      label: socSectorDistribution.sectorLabel,
+      pct: socSectorDistribution.percentage
+    })
+    .from(socSectorDistribution)
+    .where(
+      and(
+        eq(socSectorDistribution.socCode, '47-5041.00'),
+        eq(socSectorDistribution.sectorLabel, 'NAICS21')
+      )
+    );
+    console.log('Check DB for 47-5041.00 + NAICS21:', checkOne);
     
     console.log(
       'Final consolidated array check for 47-5041.00:',
@@ -337,6 +352,18 @@ export async function GET(req: Request) {
       )
       .limit(100);
 
+    // Log exact matches for 47-5041.00
+    console.log(
+      'Exact match results (checking for 47-5041.00):',
+      exactMatches
+        .filter(x => x.code === '47-5041.00')
+        .map(x => ({
+          code: x.code,
+          distribution: x.sectorDistribution,
+          altTitles: x.alternativeTitles,
+        }))
+    );
+
     //Added logging as per the request
     const checkMiningDistribution = await db.select({
       code: socSectorDistribution.socCode,
@@ -438,6 +465,17 @@ export async function GET(req: Request) {
       )
       .orderBy(sql`similarity(${socDetailedOccupations.searchableText}, ${query}) DESC`)
       .limit(100);
+
+    console.log(
+      'Fuzzy search (potentialMatches) for 47-5041.00:',
+      potentialMatches
+        .filter(x => x.code === '47-5041.00')
+        .map(x => ({
+          code: x.code,
+          distribution: x.sectorDistribution,
+          altTitles: x.alternativeTitles
+        }))
+    );
 
     const fuse = new Fuse(potentialMatches, {
       keys: [
