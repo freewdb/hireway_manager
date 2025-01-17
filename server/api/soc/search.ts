@@ -36,6 +36,15 @@ interface SearchResponse {
 async function consolidateResults(items: any[], query: string, sector?: string, showAll?: boolean): Promise<ConsolidatedJobResult[]> {
   const SECTOR_FILTER_THRESHOLD = 0.0; // Remove initial threshold to see all results
 
+  // Log items with code 47-5041.00 before consolidation
+  console.log('Items before consolidation (47-5041.00):', 
+    items.filter(x => x.code === '47-5041.00').map(x => ({
+      code: x.code,
+      distribution: x.sectorDistribution,
+      rank: x.rank
+    }))
+  );
+
   let filteredItems = items;
   console.log('Consolidating items:', {
     totalItems: items.length,
@@ -291,6 +300,21 @@ export async function GET(req: Request) {
     }
 
     // First try exact match with title and alternative titles
+    // Check DB directly for this specific combination
+    const checkMiningDistribution = await db.select({
+      code: socSectorDistribution.socCode,
+      label: socSectorDistribution.sectorLabel,
+      pct: socSectorDistribution.percentage
+    })
+    .from(socSectorDistribution)
+    .where(
+      and(
+        eq(socSectorDistribution.socCode, '47-5041.00'),
+        eq(socSectorDistribution.sectorLabel, sectorLabel || '')
+      )
+    );
+    console.log('Check DB for 47-5041.00 + NAICS21:', checkMiningDistribution);
+
     const exactMatches = await db
       .select({
         code: socDetailedOccupations.code,
@@ -351,6 +375,17 @@ export async function GET(req: Request) {
         )
       )
       .limit(100);
+
+    console.log(
+      'Exact match results (checking for 47-5041.00):',
+      exactMatches
+        .filter(x => x.code === '47-5041.00')
+        .map(x => ({
+          code: x.code,
+          distribution: x.sectorDistribution,
+          altTitles: x.alternativeTitles,
+        }))
+    );
 
     // Log exact matches for 47-5041.00
     console.log(
@@ -444,6 +479,17 @@ export async function GET(req: Request) {
           description: socMinorGroups.description,
         }
       })
+
+    console.log(
+      'Fuzzy search (potentialMatches) for 47-5041.00:',
+      potentialMatches
+        .filter(x => x.code === '47-5041.00')
+        .map(x => ({
+          code: x.code,
+          distribution: x.sectorDistribution,
+          altTitles: x.alternativeTitles
+        }))
+    );
       .leftJoin(
         socSectorDistribution,
         and(
