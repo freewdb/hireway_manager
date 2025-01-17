@@ -188,19 +188,20 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
     }
   });
 
-  return Array.from(resultsByCode.values())
-    .sort((a, b) => {
-      // First sort by rank
-      const rankDiff = b.rank - a.rank;
-      if (rankDiff !== 0) return rankDiff;
+    const results = Array.from(resultsByCode.values());
 
-      // Then by whether it's a primary title match
-      if (!a.isAlternative && b.isAlternative) return -1;
-      if (a.isAlternative && !b.isAlternative) return 1;
+    // Log post-consolidation results for specific codes
+    console.log('Post-consolidation results:', 
+      results.filter(x => x.code.startsWith('47-5041') || x.code.startsWith('53-7051'))
+      .map(x => ({
+        code: x.code,
+        title: x.title,
+        sectorDistribution: x.sectorDistribution,
+        rank: x.rank
+      }))
+    );
 
-      // Then by number of matched alternatives
-      return b.matchedAlternatives.length - a.matchedAlternatives.length;
-    });
+    return results
 }
 
 export async function GET(req: Request) {
@@ -315,6 +316,19 @@ export async function GET(req: Request) {
         )
       )
       .limit(100);
+
+    //Added logging as per the request
+    console.log(
+      'Exact match results (preview of sectorDistribution):',
+      exactMatches
+        .filter(x => x.code === '47-5041.00') 
+        .map(x => ({
+          code: x.code,
+          sector: sectorLabel,
+          distribution: x.sectorDistribution
+        }))
+    );
+
 
     if (exactMatches.length >= 5) {
       const results = await consolidateResults(exactMatches, query, rawSector);
