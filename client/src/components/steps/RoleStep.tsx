@@ -70,7 +70,7 @@ export const RoleStep = () => {
 
           <RoleInfoCard />
         </div>
-        <div className="w-80 fixed right-8 top-8">
+        <div className="w-80 sticky top-8 self-start ml-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-4 border-b border-gray-200">
               <h3 className="font-medium text-gray-900">Top Roles in This Industry</h3>
