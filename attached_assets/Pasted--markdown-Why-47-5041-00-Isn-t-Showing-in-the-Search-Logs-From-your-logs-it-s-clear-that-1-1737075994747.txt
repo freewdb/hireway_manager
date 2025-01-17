@@ -1,0 +1,117 @@
+```markdown
+# Why “47-5041.00” Isn’t Showing in the Search Logs
+
+From your logs, it’s clear that:
+
+1. **`top.ts`** consistently shows `47-5041.00` (Continuous Mining Machine Operators) for NAICS 21.  
+2. **Your search** (`/api/job-titles?search=forklift operator&sector=21`) only shows `53-7051.00` (Forklift Operator) at the top, with no log evidence of `47-5041.00` having a non-zero sector distribution.
+
+At this point, the best way to find out **why** `47-5041.00` doesn’t appear in the final search results (with a non-zero distribution) is to add **debugging logs** in a few strategic places. Specifically:
+
+---
+
+## 1. Log the Raw DB Query Results for `47-5041.00`
+
+### In the “Exact Match” Query
+Right after:
+```ts
+const exactMatches = await db
+  .select({...})
+  // ...
+  .limit(100);
+```
+Add something like:
+```ts
+console.log(
+  'Exact match: 47-5041.00 check:',
+  exactMatches.filter(x => x.code === '47-5041.00')
+);
+```
+This tells you if `47-5041.00` even comes through in the **exactMatches** array and what `sectorDistribution` is for it.
+
+### In the “Fuzzy Search” Query
+Right after:
+```ts
+const potentialMatches = await db
+  .select({...})
+  // ...
+  .limit(100);
+```
+Add:
+```ts
+console.log(
+  'Fuzzy search: 47-5041.00 check:',
+  potentialMatches.filter(x => x.code === '47-5041.00')
+);
+```
+Same idea—this shows if `47-5041.00` ever appears in the fuzzy results.
+
+**If `47-5041.00` simply isn’t there**, it means your DB subselect or join is returning zero rows for `(soc_code='47-5041.00', sector_label='NAICS21')`. Possibly a mismatch in how the data is stored (e.g., the table has `'47-5041'` instead of `'47-5041.00'`).
+
+---
+
+## 2. Confirm the DB Row Exists
+
+To verify that `search.ts` sees the same row as `top.ts`, do a quick check query:
+
+```ts
+const checkMiningDistribution = await db
+  .select({
+    code: socSectorDistribution.socCode,
+    label: socSectorDistribution.sectorLabel,
+    pct: socSectorDistribution.percentage
+  })
+  .from(socSectorDistribution)
+  .where(
+    and(
+      eq(socSectorDistribution.socCode, '47-5041.00'),
+      eq(socSectorDistribution.sectorLabel, 'NAICS21')
+    )
+  );
+
+console.log('Check DB for 47-5041.00 + NAICS21:', checkMiningDistribution);
+```
+
+- If this logs an **empty array** (`[]`), then your DB literally does **not** have the `(code='47-5041.00', label='NAICS21')` row—so the search subselect gets `0`.
+- If it shows `{ code: "47-5041.00", label: "NAICS21", pct: 100 }`, the row **does exist**, so the subselect must be failing for some other reason (e.g., code mismatch in the actual query, or an overwrite in your code).
+
+---
+
+## 3. Check for “Deduping” or Overwriting in `consolidateResults()`
+
+If the logs show `47-5041.00` **does** come back from the DB (with some distribution > 0), but you **still** don’t see it in the final array, add logs in `consolidateResults()`:
+
+```ts
+for (const item of filteredItems) {
+  if (item.code === '47-5041.00') {
+    console.log('consolidateResults BEFORE merge:', {
+      code: item.code,
+      sectorDistribution: item.sectorDistribution
+    });
+  }
+  // ...
+}
+
+const finalArray = Array.from(resultsByCode.values()).sort(...);
+
+console.log(
+  'consolidateResults AFTER sort (47-5041.00 check):',
+  finalArray.find(x => x.code === '47-5041.00')
+);
+```
+
+This ensures you see:
+
+1. The data for `47-5041.00` **before** you merge or rank items.  
+2. Whether it’s still present in the final, sorted array with a non-zero distribution.
+
+---
+
+## 4. Summary
+
+- **If “47-5041.00” is missing right from the initial DB query** (exact or fuzzy), you have a mismatch in the DB or code (`soc_code` vs. `soc_code.00`, `'NAICS21'` vs. `'NAICS-21'`, etc.).  
+- **If “47-5041.00” appears but with “sectorDistribution = 0,”** the subselect or join is failing to find the row in `socSectorDistribution`.  
+- **If it appears with a non-zero distribution in raw data** but disappears by the final step, something in your `consolidateResults` logic is overwriting or discarding it.
+
+By adding these logs, you’ll see exactly which stage the `47-5041.00` record is falling out (or reverting to 0). Once that’s clear, you can fix the code or data mismatch so “Continuous Mining Machine Operators” shows up as expected.
+```
