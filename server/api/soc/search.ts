@@ -222,7 +222,7 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
       )
     );
     console.log('Check DB for 47-5041.00 + NAICS21:', checkOne);
-    
+
     console.log(
       'Final consolidated array check for 47-5041.00:',
       results.filter(x => x.code === '47-5041.00').map(x => ({
@@ -461,7 +461,7 @@ export async function GET(req: Request) {
 
     // If not enough exact matches, try fuzzy search
     console.log('Starting fuzzy search for:', query);
-    
+
     const potentialMatches = await db
       .select({
         code: socDetailedOccupations.code,
