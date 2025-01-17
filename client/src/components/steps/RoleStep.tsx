@@ -9,6 +9,7 @@ import { useState } from "react";
 export const RoleStep = () => {
   const { updateData, nextStep, data } = useWizard();
   const [lastDistribution, setLastDistribution] = useState<number | null>(null);
+  const [showStickyMenu, setShowStickyMenu] = useState(true);
   const selectedOccupation = data.role ? {code: data.role, title: data.roleTitle} : null;
 
   const handleSelect = (result: JobTitleSearchResult) => {
@@ -67,8 +68,9 @@ export const RoleStep = () => {
           />
           <RoleInfoCard />
         </div>
-        <div className="w-80 fixed right-8 top-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {showStickyMenu && (
+          <div className="w-80 sticky top-8 self-start ml-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-4 border-b border-gray-200">
               <h3 className="font-medium text-gray-900">Top Roles in This Industry</h3>
               <p className="mt-1 text-sm text-gray-500">Popular occupations in your selected sector</p>
@@ -82,7 +84,26 @@ export const RoleStep = () => {
               />
             </div>
           </div>
-        </div>
+        )}
+        <button
+          onClick={() => setShowStickyMenu(!showStickyMenu)}
+          className="fixed right-4 top-4 p-2 bg-white rounded-full shadow-sm border border-gray-200 hover:bg-gray-50"
+          aria-label="Toggle top roles menu"
+        >
+          <svg 
+            className="w-4 h-4" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d={showStickyMenu ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} 
+            />
+          </svg>
+        </button>
       </div>
     </WizardStep>
   );
