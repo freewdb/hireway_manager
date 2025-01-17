@@ -4,7 +4,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "../componen
 // ... other imports and code ...
 
 function MyComponent() {
-  // ... other code ...
+  const [showTopRoles, setShowTopRoles] = useState(false);
   const handleSelect = (item) => {
     // ... handle selection logic ...
   };
@@ -12,7 +12,16 @@ function MyComponent() {
   return (
     // ... other components ...
     <div className="w-80 fixed right-8 top-8">
-        <Collapsible defaultOpen={true}>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-sm text-gray-600">Show Top Roles</span>
+          <Switch
+            checked={showTopRoles}
+            onCheckedChange={setShowTopRoles}
+            className="data-[state=checked]:bg-blue-600"
+          />
+        </div>
+        {showTopRoles && (
+          <Collapsible defaultOpen={true}>
           <CollapsibleTrigger className="w-full bg-white rounded-t-lg shadow-sm border border-gray-200 p-4 flex justify-between items-center hover:bg-gray-50">
             <div>
               <h3 className="font-medium text-gray-900">Top Roles in This Industry</h3>
@@ -33,6 +42,7 @@ function MyComponent() {
             </div>
           </CollapsibleContent>
         </Collapsible>
+        )}
       </div>
     // ... rest of the component ...
   );
