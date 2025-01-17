@@ -460,6 +460,8 @@ export async function GET(req: Request) {
     }
 
     // If not enough exact matches, try fuzzy search
+    console.log('Starting fuzzy search for:', query);
+    
     const potentialMatches = await db
       .select({
         code: socDetailedOccupations.code,
@@ -479,17 +481,7 @@ export async function GET(req: Request) {
           description: socMinorGroups.description,
         }
       })
-
-    console.log(
-      'Fuzzy search (potentialMatches) for 47-5041.00:',
-      potentialMatches
-        .filter(x => x.code === '47-5041.00')
-        .map(x => ({
-          code: x.code,
-          distribution: x.sectorDistribution,
-          altTitles: x.alternativeTitles
-        }))
-    );
+      .from(socDetailedOccupations)
       .leftJoin(
         socSectorDistribution,
         and(
