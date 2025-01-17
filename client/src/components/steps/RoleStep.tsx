@@ -89,7 +89,7 @@ export const RoleStep = () => {
           )}
           <button
             onClick={() => setShowStickyMenu(!showStickyMenu)}
-            className="fixed right-4 top-4 p-2 bg-white rounded-full shadow-sm border border-gray-200 hover:bg-gray-50"
+            className="fixed right-8 top-24 z-50 p-2 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50"
             aria-label="Toggle top roles menu"
           >
             <svg 
