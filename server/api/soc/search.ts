@@ -318,6 +318,20 @@ export async function GET(req: Request) {
       .limit(100);
 
     //Added logging as per the request
+    const checkMiningDistribution = await db.select({
+      code: socSectorDistribution.socCode,
+      label: socSectorDistribution.sectorLabel,
+      pct: socSectorDistribution.percentage
+    })
+    .from(socSectorDistribution)
+    .where(
+      and(
+        eq(socSectorDistribution.socCode, '47-5041.00'),
+        eq(socSectorDistribution.sectorLabel, sectorLabel || '')
+      )
+    );
+    console.log('Check DB for 47-5041.00 + NAICS21:', checkMiningDistribution);
+
     console.log(
       'Exact match results (preview of sectorDistribution):',
       exactMatches
