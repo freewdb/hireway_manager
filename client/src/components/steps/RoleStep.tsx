@@ -9,7 +9,7 @@ import { useState } from "react";
 export const RoleStep = () => {
   const { updateData, nextStep, data } = useWizard();
   const [lastDistribution, setLastDistribution] = useState<number | null>(null);
-  const [showStickyMenu, setShowStickyMenu] = useState(true);
+  const [showStickyMenu, setShowStickyMenu] = useState(false);
   const selectedOccupation = data.role ? {code: data.role, title: data.roleTitle} : null;
 
   const handleSelect = (result: JobTitleSearchResult) => {
