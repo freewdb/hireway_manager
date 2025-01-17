@@ -1,6 +1,6 @@
-
 import { useWizard } from "../wizard/WizardContext";
 import { SOCSearch } from "../SOCSearch";
+import { Switch } from "../ui/switch";
 import WizardStep from "../wizard/WizardStep";
 import { RoleInfoCard } from "../RoleInfoCard";
 import type { JobTitleSearchResult } from "@/types/schema";
@@ -9,6 +9,7 @@ import { useState } from "react";
 export const RoleStep = () => {
   const { updateData, nextStep, data } = useWizard();
   const [lastDistribution, setLastDistribution] = useState<number | null>(null);
+  const [showTopRoles, setShowTopRoles] = useState(false);
   const selectedOccupation = data.role ? {code: data.role, title: data.roleTitle} : null;
 
   const handleSelect = (result: JobTitleSearchResult) => {
@@ -48,23 +49,25 @@ export const RoleStep = () => {
                 <div><span className="font-medium">Current Selection SOC:</span> {selectedOccupation.code} - {selectedOccupation.title}</div>
                 <div><span className="font-medium">Current Query:</span> SELECT percentage FROM soc_sector_distribution WHERE soc_code = '{selectedOccupation.code}' AND sector_label = 'NAICS{data.industry}';</div>
                 <div><span className="font-medium">Current Query Results:</span> {lastDistribution?.toFixed(2)}</div>
-                <div>
-                  <span className="font-medium">Current Selection Applied Boost:</span> {lastDistribution >= 90 ? '2.0x (≥90%)' :
-                    lastDistribution >= 75 ? '1.75x (≥75%)' :
-                    lastDistribution >= 50 ? '1.5x (≥50%)' :
-                    lastDistribution >= 25 ? '1.25x (≥25%)' :
-                    lastDistribution >= 10 ? '1.1x (≥10%)' :
-                    lastDistribution < 5 ? '0.75x (<5%)' : '1.0x'}
-                </div>
               </>
             )}
           </div>
+
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm text-gray-600">Show Top Roles</span>
+            <Switch
+              checked={showTopRoles}
+              onCheckedChange={setShowTopRoles}
+              className="data-[state=checked]:bg-blue-600"
+            />
+          </div>
+
           <SOCSearch 
-            onSelect={handleSelect} 
-            placeholder="Search for a job title (e.g., Software Developer, IT Manager)"
+            onSelect={handleSelect}
             sector={data.industry}
-            hideTopOccupations
+            hideTopOccupations={!showTopRoles}
           />
+
           <RoleInfoCard />
         </div>
         <div className="w-80 fixed right-8 top-8">
