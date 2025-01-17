@@ -48,6 +48,15 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
 
   // Single pass consolidation
   for (const item of filteredItems) {
+    if (item.code === '47-5041.00') {
+      console.log('Before merging 47-5041.00:', {
+        code: item.code,
+        distribution: item.sectorDistribution,
+        title: item.title,
+        primaryTitle: item.primaryTitle
+      });
+    }
+
     const matchedAlt = (item.alternativeTitles || []).find(alt =>
       alt.toLowerCase().includes(queryLower) || queryLower.includes(alt.toLowerCase())
     );
@@ -189,6 +198,17 @@ async function consolidateResults(items: any[], query: string, sector?: string, 
   });
 
     const results = Array.from(resultsByCode.values());
+    
+    console.log(
+      'Final consolidated array check for 47-5041.00:',
+      results.filter(x => x.code === '47-5041.00').map(x => ({
+        code: x.code,
+        title: x.title,
+        primaryTitle: x.primaryTitle,
+        distribution: x.sectorDistribution,
+        rank: x.rank
+      }))
+    );
 
     // Log post-consolidation results for specific codes
     console.log('Post-consolidation results:', 
